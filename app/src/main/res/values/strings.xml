@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Mind-Ur-Set</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_therapy">Therapy</string>
+    <string name="nav_companion">Companion</string>
+    <string name="nav_profile">Profile</string>
+    <string name="menu">Menu</string>
+    <string name="settings">Settings</string>
+    <string name="data_and_consent">Data &amp; consent</string>
+    <string name="about">About</string>
+    <string name="loading">Loading…</string>
+    <string name="retry">Retry</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="back">Back</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="emotion_happy">Happy</string>
+    <string name="emotion_calm">Calm</string>
+    <string name="emotion_low">Low</string>
+    <string name="emotion_anxious">Anxious</string>
+    <string name="emotion_stressed">Stressed</string>
+</resources>
