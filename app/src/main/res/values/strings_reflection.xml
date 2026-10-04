@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Daily Reflection (CRUD) module -->
+    <string name="reflection_title">Daily Reflection</string>
+    <string name="reflection_new_entry">New entry</string>
+    <string name="reflection_row_challenge">Challenge: %1$s</string>
+
+    <string name="reflection_empty_title">No entries yet</string>
+    <string name="reflection_empty_body">Start your daily reflection — note a challenge, a kinder reframe, and something you are grateful for.</string>
+
+    <string name="reflection_day_today">Today</string>
+    <string name="reflection_day_yesterday">Yesterday</string>
+    <string name="reflection_days_ago">%1$d days ago</string>
+
+    <string name="reflection_form_title_new">New reflection</string>
+    <string name="reflection_form_title_edit">Edit reflection</string>
+    <string name="reflection_form_intro">A short daily reflection: what felt hard, how you can reframe it, and what you are grateful for.</string>
+    <string name="reflection_field_challenge">Challenge</string>
+    <string name="reflection_field_challenge_hint">What felt hard today?</string>
+    <string name="reflection_field_reframe">Reframe</string>
+    <string name="reflection_field_reframe_hint">A kinder way to look at it (optional)</string>
+    <string name="reflection_field_gratitude">Gratitude</string>
+    <string name="reflection_field_gratitude_hint">Something you are grateful for (optional)</string>
+
+    <string name="reflection_detail_title">Reflection</string>
+    <string name="reflection_detail_section_challenge">Challenge</string>
+    <string name="reflection_detail_section_reframe">Reframe</string>
+    <string name="reflection_detail_section_gratitude">Gratitude</string>
+    <string name="reflection_detail_created">Created %1$s</string>
+    <string name="reflection_detail_updated">Updated %1$s</string>
+    <string name="reflection_detail_not_found">This entry no longer exists</string>
+    <string name="reflection_detail_not_found_body">It may have been deleted. Go back to see your remaining reflections.</string>
+
+    <string name="reflection_delete_confirm_title">Delete this entry?</string>
+    <string name="reflection_delete_confirm_body">This entry will be deleted permanently</string>
+
+    <string name="reflection_error_challenge_required">Challenge is required</string>
+    <string name="reflection_error_challenge_short">Use at least 3 characters</string>
+    <string name="reflection_error_challenge_long">Keep it under 500 characters</string>
+    <string name="reflection_error_reframe_long">Keep it under 1000 characters</string>
+    <string name="reflection_error_gratitude_long">Keep it under 1000 characters</string>
+    <string name="reflection_error_no_session">You are not signed in</string>
+    <string name="reflection_error_load">Could not load your reflections</string>
+    <string name="reflection_error_generic">Something went wrong</string>
+</resources>
