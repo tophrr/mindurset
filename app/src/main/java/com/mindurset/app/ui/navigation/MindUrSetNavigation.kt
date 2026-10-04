@@ -1,18 +1,25 @@
 package com.mindurset.app.ui.navigation
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -20,7 +27,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.mindurset.app.MindUrSetApp
+import com.mindurset.app.R
 import com.mindurset.app.di.AppContainer
 import com.mindurset.app.di.LocalAppContainer
 import com.mindurset.app.ui.auth.LoginScreen
@@ -69,6 +76,19 @@ fun MindUrSetNavigation(
         }
     }
 
+    var logoutDialogVisible by remember { mutableStateOf(false) }
+    val performLogout: (Boolean) -> Unit = { deleteLocalData ->
+        scope.launch {
+            val session = container.sessionStore.current()
+            if (deleteLocalData && session != null) {
+                container.authRepository.deleteAccount(session.userId)
+            }
+            container.sessionStore.signOut()
+            logoutDialogVisible = false
+            navController.navigate(Routes.LOGIN) { popUpTo(0) { inclusive = true } }
+        }
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         gesturesEnabled = showShell,
@@ -78,7 +98,7 @@ fun MindUrSetNavigation(
                 onNavigate = navigate,
                 onLogout = {
                     closeDrawer()
-                    navController.navigate(Routes.LOGIN) { popUpTo(0) { inclusive = true } }
+                    logoutDialogVisible = true
                 },
             )
         },
@@ -177,6 +197,31 @@ fun MindUrSetNavigation(
                 composable(Routes.SETTINGS) { SettingsScreen(onBack = { navController.popBackStack() }) }
                 composable(Routes.DATA_CONSENT) { DataConsentScreen(onBack = { navController.popBackStack() }) }
                 composable(Routes.ABOUT) { AboutScreen(onBack = { navController.popBackStack() }) }
+            }
+
+            if (logoutDialogVisible) {
+                AlertDialog(
+                    onDismissRequest = { logoutDialogVisible = false },
+                    title = { Text(stringResource(R.string.profile_logout_title)) },
+                    text = {
+                        Column {
+                            Text(stringResource(R.string.profile_logout_message))
+                            TextButton(onClick = { performLogout(true) }) {
+                                Text(stringResource(R.string.profile_logout_delete))
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { performLogout(false) }) {
+                            Text(stringResource(R.string.profile_logout_keep))
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { logoutDialogVisible = false }) {
+                            Text(stringResource(R.string.profile_logout_cancel))
+                        }
+                    },
+                )
             }
         }
     }
