@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dashboard -->
+    <string name="dashboard_greeting_morning">Morning, %1$s</string>
+    <string name="dashboard_greeting_afternoon">Good afternoon, %1$s</string>
+    <string name="dashboard_greeting_evening">Good evening, %1$s</string>
+    <string name="dashboard_greeting_generic">Hello there</string>
+    <string name="dashboard_subtitle">Take a moment to check in on yourself.</string>
+    <string name="dashboard_avatar_cd">Profile avatar</string>
+
+    <string name="dashboard_checkin_title">Daily Check-in</string>
+    <string name="dashboard_checkin_prompt">How are you feeling right now?</string>
+    <string name="dashboard_checkin_cta">Check in</string>
+    <string name="dashboard_checkin_update">Update check-in</string>
+    <string name="dashboard_checkin_logged">Today you felt %1$s</string>
+    <string name="dashboard_checkin_intensity">Intensity %1$d / 10</string>
+
+    <string name="dashboard_stats_journal">Journal entries</string>
+    <string name="dashboard_stats_checkins">Check-ins</string>
+
+    <string name="dashboard_reflections_title">Latest reflections</string>
+    <string name="dashboard_reflections_empty">No reflections yet. Start your first entry.</string>
+    <string name="dashboard_reflection_untitled">Untitled reflection</string>
+
+    <string name="dashboard_shortcut_companion_title">AI Companion</string>
+    <string name="dashboard_shortcut_companion_body">Here to listen, anytime</string>
+    <string name="dashboard_shortcut_companion_cta">Chat</string>
+    <string name="dashboard_shortcut_reflection_title">Daily Reflection</string>
+    <string name="dashboard_shortcut_reflection_body">Make your entry</string>
+    <string name="dashboard_shortcut_reflection_cta">Start</string>
+    <string name="dashboard_shortcut_therapy_title">Therapy</string>
+    <string name="dashboard_shortcut_therapy_body">Guided exercises and a calm space to reset.</string>
+    <string name="dashboard_shortcut_therapy_cta">Open</string>
+
+    <string name="dashboard_empty_title">Nothing here yet</string>
+    <string name="dashboard_empty_body">Your check-ins and reflections will appear here. Start with a daily check-in.</string>
+    <string name="dashboard_empty_action">Start a check-in</string>
+    <string name="dashboard_error_body">Something went wrong while reading your data.</string>
+    <string name="dashboard_loading">Loading your day\u2026</string>
+
+    <!-- Daily check-in screen -->
+    <string name="checkin_title">Daily Check-in</string>
+    <string name="checkin_back_cd">Back to dashboard</string>
+    <string name="checkin_prompt">How are you feeling right now?</string>
+    <string name="checkin_hint_happy">Feeling good</string>
+    <string name="checkin_hint_calm">At ease</string>
+    <string name="checkin_hint_low">Flat, tired</string>
+    <string name="checkin_hint_anxious">Worried, uneasy</string>
+    <string name="checkin_hint_stressed">Overwhelmed</string>
+    <string name="checkin_intensity_label">How strong is this feeling?</string>
+    <string name="checkin_intensity_value">%1$d / 10</string>
+    <string name="checkin_note_label">Add a note (optional)</string>
+    <string name="checkin_note_placeholder">One line about your day</string>
+    <string name="checkin_continue">Continue</string>
+</resources>
