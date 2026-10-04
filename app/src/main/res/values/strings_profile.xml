@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Profile screen -->
+    <string name="profile_title">Profile</string>
+    <string name="profile_avatar_description">Profile picture</string>
+    <string name="profile_name_fallback">Your profile</string>
+    <string name="profile_member_since">Member since %1$s</string>
+    <string name="profile_email_label">Email</string>
+    <string name="profile_edit_label">Edit Profile</string>
+    <string name="profile_settings_label">Settings</string>
+    <string name="profile_logout">Log out</string>
+    <string name="profile_open_menu">Open menu</string>
+    <string name="profile_section_account">Account</string>
+
+    <!-- Log out dialog -->
+    <string name="profile_logout_title">Log out?</string>
+    <string name="profile_logout_message">Choose what happens to the data stored on this phone. Nothing is deleted unless you ask for it.</string>
+    <string name="profile_logout_keep">Log out and keep data</string>
+    <string name="profile_logout_delete">Log out and delete local data</string>
+    <string name="profile_logout_cancel">Cancel</string>
+
+    <!-- Profile edit screen -->
+    <string name="profile_edit_title">Edit profile</string>
+    <string name="profile_field_display_name">Display name</string>
+    <string name="profile_name_counter">%1$d/40</string>
+    <string name="profile_error_name_required">Enter a display name.</string>
+    <string name="profile_error_name_length">Use 1 to 40 characters.</string>
+    <string name="profile_section_reminder">Daily reminder</string>
+    <string name="profile_reminder_enabled">Remind me to check in</string>
+    <string name="profile_reminder_time">Reminder time</string>
+    <string name="profile_language_label">Language</string>
+    <string name="profile_language_en">English</string>
+    <string name="profile_language_id">Indonesian</string>
+    <string name="profile_save_button">Save changes</string>
+    <string name="profile_saving">Saving…</string>
+    <string name="profile_back">Back</string>
+
+    <!-- Settings screen -->
+    <string name="profile_settings_title">Settings</string>
+    <string name="profile_section_general">General</string>
+    <string name="profile_reminder_note">Off by default. Turn it on for a gentle daily nudge.</string>
+    <string name="profile_theme_label">Theme</string>
+    <string name="profile_theme_value_system">System default</string>
+    <string name="profile_theme_value_light">Light</string>
+    <string name="profile_theme_value_dark">Dark</string>
+    <string name="profile_theme_coming_soon">More theme options arrive in a later release.</string>
+
+    <!-- Hour picker -->
+    <string name="profile_hour_picker_title">Reminder time</string>
+    <string name="profile_hour_picker_confirm">Done</string>
+    <string name="profile_hour_picker_cancel">Cancel</string>
+    <string name="profile_time_value">%1$02d:00</string>
+
+    <!-- Therapy (CBT skills) -->
+    <string name="therapy_title">Therapy</string>
+    <string name="therapy_open_menu">Open menu</string>
+    <string name="therapy_heading">CBT Skills</string>
+    <string name="therapy_subheading">Cognitive Behavioral Skills - Work through them in order</string>
+    <string name="therapy_step1_title">Step 1: Check-In &amp; Breathe</string>
+    <string name="therapy_step1_label">Awareness</string>
+    <string name="therapy_step1_body">Tune into your physical and emotional state. Catch overthinking before it spirals.</string>
+    <string name="therapy_step2_title">Step 2: Reframe &amp; Reset</string>
+    <string name="therapy_step2_label">Cognitive Restructuring</string>
+    <string name="therapy_step2_body">Interrupt negative thought loops and challenge distorted beliefs with proven tools.</string>
+    <string name="therapy_step3_title">Step 3: Practice &amp; Integrate</string>
+    <string name="therapy_step3_label">Skill Consolidation</string>
+    <string name="therapy_step3_body">Interrupt negative thought loops and challenge distorted beliefs with proven tools.</string>
+    <string name="therapy_chip_emotion_log">Emotion Log</string>
+    <string name="therapy_chip_finger_breathing">Finger Breathing</string>
+    <string name="therapy_chip_body_scan">Body Scan</string>
+    <string name="therapy_chip_thought_triangle">Thought Triangle</string>
+    <string name="therapy_chip_anxiety_box">Anxiety Box</string>
+    <string name="therapy_chip_dopamine_menu">Dopamine Menu</string>
+    <string name="therapy_chip_art_journal">Art Journal</string>
+    <string name="therapy_chip_support_network">Support Network</string>
+    <string name="therapy_begin">Begin</string>
+    <string name="therapy_locked">Locked</string>
+
+    <!-- Companion (static preview) -->
+    <string name="companion_title">Companion</string>
+    <string name="companion_open_menu">Open menu</string>
+    <string name="companion_chip_personal">Personal</string>
+    <string name="companion_message_greeting">Hi! I\'m here to support you. How are you feeling today?</string>
+    <string name="companion_message_user">I\'ve been feeling a bit overwhelmed with work lately</string>
+    <string name="companion_input_placeholder">Type your message…</string>
+    <string name="companion_send">Send</string>
+    <string name="companion_time_first">10:30 AM</string>
+    <string name="companion_time_second">10:31 AM</string>
+    <string name="companion_note">This is a preview. The AI companion is not connected yet — it arrives in a later release, and nothing you type here is sent anywhere.</string>
+
+    <!-- Data & consent -->
+    <string name="consent_title">Data &amp; consent</string>
+    <string name="consent_heading">Your data, your rules</string>
+    <string name="consent_intro">Mind-Ur-Set keeps your check-ins and reflections on this device only. There is no account server and no cloud sync in this build.</string>
+    <string name="consent_bullet_local">Everything you record is stored locally on this phone.</string>
+    <string name="consent_bullet_no_server">Nothing is uploaded to a server, and nothing is shared with third parties.</string>
+    <string name="consent_bullet_delete">You can erase your local data at any time using Log out and delete local data.</string>
+    <string name="consent_footer">Because the data lives only here, uninstalling the app or clearing its storage also clears everything. Keep a backup of anything you would not want to lose.</string>
+
+    <!-- About -->
+    <string name="about_title">About</string>
+    <string name="about_app_name">Mind-Ur-Set</string>
+    <string name="about_version_label">Version %1$s</string>
+    <string name="about_tagline">A personal CBT companion for check-ins, reframing and daily reflection.</string>
+    <string name="about_license_heading">Licences</string>
+    <string name="about_license_code">Application code is released under the Apache License 2.0.</string>
+    <string name="about_license_corpus">Wellbeing corpus and content are released under CC BY-NC-SA 3.0 IGO.</string>
+    <string name="about_license_note">You may reuse the code under Apache-2.0 and the corpus under its Creative Commons terms.</string>
+
+</resources>
