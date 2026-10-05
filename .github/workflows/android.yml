@@ -32,6 +32,10 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # The obsolete 'tools' package is no longer resolvable and breaks sdkmanager;
+          # platform-tools plus AGP's own auto-download covers what this build needs.
+          packages: platform-tools
 
       - name: Set up Gradle (with cache)
         uses: gradle/actions/setup-gradle@v4
@@ -77,6 +81,10 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # The obsolete 'tools' package is no longer resolvable and breaks sdkmanager;
+          # platform-tools plus AGP's own auto-download covers what this build needs.
+          packages: platform-tools
 
       - name: Set up Gradle (with cache)
         uses: gradle/actions/setup-gradle@v4
