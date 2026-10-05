@@ -1,7 +1,7 @@
 package com.mindurset.app.ui.dashboard
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,20 +15,23 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -43,14 +46,18 @@ import com.mindurset.app.domain.model.CheckIn
 import com.mindurset.app.domain.model.Emotion
 import com.mindurset.app.domain.model.JournalEntry
 import com.mindurset.app.domain.usecase.DashboardSummary
+import com.mindurset.app.ui.common.AppCard
+import com.mindurset.app.ui.common.CircleIconButton
 import com.mindurset.app.ui.common.EmptyState
 import com.mindurset.app.ui.common.ErrorState
+import com.mindurset.app.ui.common.FloatingNavSpace
 import com.mindurset.app.ui.common.LoadingState
-import com.mindurset.app.ui.theme.MoodAnxious
-import com.mindurset.app.ui.theme.MoodCalm
-import com.mindurset.app.ui.theme.MoodHappy
-import com.mindurset.app.ui.theme.MoodLow
-import com.mindurset.app.ui.theme.MoodStressed
+import com.mindurset.app.ui.common.SectionTitle
+import com.mindurset.app.ui.common.emotionLabel
+import com.mindurset.app.ui.common.tint
+import com.mindurset.app.ui.theme.AppIcons
+import com.mindurset.app.ui.theme.MutedGray
+import com.mindurset.app.ui.theme.PaleBlue
 import java.text.DateFormat
 import java.util.Date
 
@@ -58,7 +65,9 @@ import java.util.Date
  * Home dashboard. Reads real Room data through [DashboardViewModel] (StateFlow) and
  * renders loading / empty / content / error. Every value updates live because the
  * ViewModel observes Room Flows, so writing a check-in or reflection refreshes it
- * without a restart.
+ * without a restart. The layout mirrors the UI mockup: monoline top-bar icons, a
+ * greeting block, the daily check-in card, two shortcut cards, a recommendation
+ * checklist and the latest reflections - all on the CanvasBlue background.
  */
 @Composable
 fun DashboardScreen(
@@ -84,67 +93,36 @@ fun DashboardScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        DashboardTopBar(onOpenDrawer = onOpenDrawer)
-        Box(modifier = Modifier.fillMaxSize()) {
-            when (val current = state) {
-                is DashboardUiState.Loading ->
-                    LoadingState(label = stringResource(R.string.dashboard_loading))
+        when (val current = state) {
+            is DashboardUiState.Loading ->
+                LoadingState(label = stringResource(R.string.dashboard_loading))
 
-                is DashboardUiState.Error ->
-                    ErrorState(
-                        message = current.message
-                            ?: stringResource(R.string.dashboard_error_body),
-                    )
+            is DashboardUiState.Error ->
+                ErrorState(
+                    message = current.message
+                        ?: stringResource(R.string.dashboard_error_body),
+                )
 
-                is DashboardUiState.Empty ->
-                    EmptyState(
-                        title = stringResource(R.string.dashboard_empty_title),
-                        body = stringResource(R.string.dashboard_empty_body),
-                        actionLabel = stringResource(R.string.dashboard_empty_action),
-                        onAction = onOpenCheckIn,
-                    )
-
-                is DashboardUiState.Content ->
-                    DashboardBody(
-                        summary = current.summary,
-                        onOpenCheckIn = onOpenCheckIn,
-                        onOpenReflection = onOpenReflection,
-                        onOpenCompanion = onOpenCompanion,
-                        onOpenTherapy = onOpenTherapy,
-                    )
+            is DashboardUiState.Empty -> {
+                DashboardHeader(displayName = "", onOpenDrawer = onOpenDrawer)
+                EmptyState(
+                    title = stringResource(R.string.dashboard_empty_title),
+                    body = stringResource(R.string.dashboard_empty_body),
+                    actionLabel = stringResource(R.string.dashboard_empty_action),
+                    onAction = onOpenCheckIn,
+                )
             }
-        }
-    }
-}
 
-@Composable
-private fun DashboardTopBar(onOpenDrawer: () -> Unit) {
-    val menuLabel = stringResource(R.string.menu)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 8.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(
-            onClick = onOpenDrawer,
-            modifier = Modifier.semantics { contentDescription = menuLabel },
-        ) {
-            Text(
-                text = "\u2630",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
+            is DashboardUiState.Content ->
+                DashboardBody(
+                    summary = current.summary,
+                    onOpenCheckIn = onOpenCheckIn,
+                    onOpenReflection = onOpenReflection,
+                    onOpenCompanion = onOpenCompanion,
+                    onOpenTherapy = onOpenTherapy,
+                    onOpenDrawer = onOpenDrawer,
+                )
         }
-        Text(
-            text = stringResource(R.string.nav_home),
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        Spacer(modifier = Modifier.size(48.dp))
     }
 }
 
@@ -155,30 +133,32 @@ private fun DashboardBody(
     onOpenReflection: () -> Unit,
     onOpenCompanion: () -> Unit,
     onOpenTherapy: () -> Unit,
+    onOpenDrawer: () -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+        contentPadding = PaddingValues(
+            start = 20.dp,
+            end = 20.dp,
+            top = 8.dp,
+            bottom = FloatingNavSpace,
+        ),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        item { GreetingHeader(displayName = summary.displayName) }
-        item { StatsRow(summary = summary) }
-        item { CheckInCard(today = summary.todayCheckIn, onOpenCheckIn = onOpenCheckIn) }
+        item { DashboardHeader(displayName = summary.displayName, onOpenDrawer = onOpenDrawer) }
+        item { StatChips(summary = summary) }
+        item { DailyCheckInCard(today = summary.todayCheckIn, onOpenCheckIn = onOpenCheckIn) }
         item { ShortcutRow(onOpenCompanion = onOpenCompanion, onOpenReflection = onOpenReflection) }
-        item { TherapyShortcut(onOpenTherapy = onOpenTherapy) }
+        item { RecommendCard() }
         item {
-            Text(
-                text = stringResource(R.string.dashboard_reflections_title),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
+            ReflectionsHeader(onSeeAll = onOpenReflection)
         }
         if (summary.latestReflections.isEmpty()) {
             item {
                 Text(
                     text = stringResource(R.string.dashboard_reflections_empty),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MutedGray,
                 )
             }
         } else {
@@ -186,11 +166,42 @@ private fun DashboardBody(
                 ReflectionCard(entry = entry, onClick = onOpenReflection)
             }
         }
+        item { TherapyShortcut(onOpenTherapy = onOpenTherapy) }
+    }
+}
+
+/* ---------------------------------------------------------------- header */
+
+@Composable
+private fun DashboardHeader(displayName: String, onOpenDrawer: () -> Unit) {
+    val menuLabel = stringResource(R.string.menu)
+    val bellLabel = stringResource(R.string.dashboard_notifications_cd)
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            CircleIconButton(
+                icon = AppIcons.Menu,
+                contentDescription = menuLabel,
+                onClick = onOpenDrawer,
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            CircleIconButton(
+                icon = AppIcons.Bell,
+                contentDescription = bellLabel,
+                onClick = {},
+            )
+        }
+        GreetingBlock(displayName = displayName)
     }
 }
 
 @Composable
-private fun GreetingHeader(displayName: String) {
+private fun GreetingBlock(displayName: String) {
     val hour = remember { java.time.LocalTime.now().hour }
     val greeting = if (displayName.isBlank()) {
         stringResource(R.string.dashboard_greeting_generic)
@@ -203,27 +214,27 @@ private fun GreetingHeader(displayName: String) {
         stringResource(pattern, displayName)
     }
     val initial = remember(displayName) {
-        displayName.trim().take(1).uppercase().ifBlank { "\u263A" }
+        displayName.trim().take(1).uppercase().ifBlank { "\u2022" }
     }
     val avatarCd = stringResource(R.string.dashboard_avatar_cd)
 
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Box(
             modifier = Modifier
-                .size(56.dp)
+                .size(52.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer)
+                .background(PaleBlue)
                 .semantics { contentDescription = avatarCd },
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = initial,
                 style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = MaterialTheme.colorScheme.primary,
             )
         }
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -235,113 +246,183 @@ private fun GreetingHeader(displayName: String) {
             Text(
                 text = stringResource(R.string.dashboard_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MutedGray,
             )
         }
     }
 }
 
+/* ------------------------------------------------------------- stat chips */
+
 @Composable
-private fun StatsRow(summary: DashboardSummary) {
+private fun StatChips(summary: DashboardSummary) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        StatCard(
-            value = summary.journalCount,
-            label = stringResource(R.string.dashboard_stats_journal),
-            modifier = Modifier.weight(1f),
-        )
-        StatCard(
-            value = summary.checkInCount,
+        StatChip(
+            count = summary.checkInCount,
             label = stringResource(R.string.dashboard_stats_checkins),
-            modifier = Modifier.weight(1f),
+        )
+        StatChip(
+            count = summary.journalCount,
+            label = stringResource(R.string.dashboard_stats_journal),
         )
     }
 }
 
 @Composable
-private fun StatCard(value: Int, label: String, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+private fun StatChip(count: Int, label: String) {
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = PaleBlue,
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Text(
-                text = value.toString(),
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+        Text(
+            text = stringResource(R.string.dashboard_stat_chip, count, label),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+        )
+    }
+}
+
+/* ---------------------------------------------------------- check-in card */
+
+@Composable
+private fun DailyCheckInCard(today: CheckIn?, onOpenCheckIn: () -> Unit) {
+    AppCard {
+        Text(
+            text = stringResource(R.string.dashboard_checkin_title),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Spacer(modifier = Modifier.size(6.dp))
+        if (today == null) {
+            NewCheckInBody(onOpenCheckIn = onOpenCheckIn)
+        } else {
+            LoggedCheckInBody(today = today, onOpenCheckIn = onOpenCheckIn)
         }
     }
 }
 
 @Composable
-private fun CheckInCard(today: CheckIn?, onOpenCheckIn: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+private fun NewCheckInBody(onOpenCheckIn: () -> Unit) {
+    var selected by remember { mutableStateOf<Emotion?>(null) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(
+            text = stringResource(R.string.dashboard_checkin_prompt),
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Text(
-                text = stringResource(R.string.dashboard_checkin_title),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            if (today == null) {
-                Text(
-                    text = stringResource(R.string.dashboard_checkin_prompt),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+            Emotion.entries.forEach { option ->
+                EmotionPill(
+                    emotion = option,
+                    selected = option == selected,
+                    onClick = { selected = option },
+                    modifier = Modifier.weight(1f),
                 )
-                Button(onClick = onOpenCheckIn, modifier = Modifier.fillMaxWidth()) {
-                    Text(text = stringResource(R.string.dashboard_checkin_cta))
-                }
-            } else {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(moodColor(today.emotion)),
-                    )
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(
-                            text = stringResource(
-                                R.string.dashboard_checkin_logged,
-                                emotionText(today.emotion),
-                            ),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                        Text(
-                            text = stringResource(
-                                R.string.dashboard_checkin_intensity,
-                                today.intensity,
-                            ),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-                OutlinedButton(onClick = onOpenCheckIn, modifier = Modifier.fillMaxWidth()) {
-                    Text(text = stringResource(R.string.dashboard_checkin_update))
-                }
             }
         }
+        Button(
+            onClick = onOpenCheckIn,
+            enabled = selected != null,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(text = stringResource(R.string.dashboard_checkin_cta))
+        }
     }
 }
+
+@Composable
+private fun EmotionPill(
+    emotion: Emotion,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val accent = emotion.tint()
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = if (selected) accent.copy(alpha = 0.16f) else PaleBlue,
+        border = if (selected) BorderStroke(2.dp, accent) else null,
+        onClick = onClick,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp, horizontal = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(12.dp)
+                    .clip(CircleShape)
+                    .background(accent),
+            )
+            Text(
+                text = emotionLabel(emotion),
+                style = MaterialTheme.typography.labelLarge,
+                color = if (selected) accent else MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
+            Text(
+                text = emotionHint(emotion),
+                style = MaterialTheme.typography.labelSmall,
+                color = MutedGray,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+            )
+        }
+    }
+}
+
+@Composable
+private fun LoggedCheckInBody(today: CheckIn, onOpenCheckIn: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(today.emotion.tint()),
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = stringResource(
+                        R.string.dashboard_checkin_logged,
+                        emotionLabel(today.emotion),
+                    ),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                Text(
+                    text = stringResource(
+                        R.string.dashboard_checkin_intensity,
+                        today.intensity,
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MutedGray,
+                )
+            }
+        }
+        OutlinedButton(onClick = onOpenCheckIn, modifier = Modifier.fillMaxWidth()) {
+            Text(text = stringResource(R.string.dashboard_checkin_update))
+        }
+    }
+}
+
+/* ------------------------------------------------------------- shortcuts */
 
 @Composable
 private fun ShortcutRow(onOpenCompanion: () -> Unit, onOpenReflection: () -> Unit) {
@@ -350,6 +431,7 @@ private fun ShortcutRow(onOpenCompanion: () -> Unit, onOpenReflection: () -> Uni
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         ShortcutCard(
+            icon = AppIcons.Sparkles,
             title = stringResource(R.string.dashboard_shortcut_companion_title),
             body = stringResource(R.string.dashboard_shortcut_companion_body),
             cta = stringResource(R.string.dashboard_shortcut_companion_cta),
@@ -357,6 +439,7 @@ private fun ShortcutRow(onOpenCompanion: () -> Unit, onOpenReflection: () -> Uni
             modifier = Modifier.weight(1f),
         )
         ShortcutCard(
+            icon = AppIcons.Book,
             title = stringResource(R.string.dashboard_shortcut_reflection_title),
             body = stringResource(R.string.dashboard_shortcut_reflection_body),
             cta = stringResource(R.string.dashboard_shortcut_reflection_cta),
@@ -368,68 +451,179 @@ private fun ShortcutRow(onOpenCompanion: () -> Unit, onOpenReflection: () -> Uni
 
 @Composable
 private fun ShortcutCard(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
     body: String,
     cta: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+    AppCard(modifier = modifier, contentPadding = PaddingValues(16.dp)) {
+        Box(
+            modifier = Modifier
+                .size(42.dp)
+                .clip(CircleShape)
+                .background(PaleBlue),
+            contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(22.dp),
+                tint = MaterialTheme.colorScheme.primary,
             )
-            Text(
-                text = body,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(modifier = Modifier.size(4.dp))
-            Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-                Text(text = cta)
-            }
+        }
+        Spacer(modifier = Modifier.size(10.dp))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Spacer(modifier = Modifier.size(2.dp))
+        Text(
+            text = body,
+            style = MaterialTheme.typography.bodySmall,
+            color = MutedGray,
+            maxLines = 2,
+        )
+        Spacer(modifier = Modifier.size(12.dp))
+        Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+            Text(text = cta)
         }
     }
 }
 
 @Composable
 private fun TherapyShortcut(onOpenTherapy: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onOpenTherapy),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    ) {
+    AppCard(onClick = onOpenTherapy) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(CircleShape)
+                    .background(PaleBlue),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = AppIcons.Therapy,
+                    contentDescription = null,
+                    modifier = Modifier.size(22.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
                 Text(
                     text = stringResource(R.string.dashboard_shortcut_therapy_title),
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = MaterialTheme.colorScheme.onBackground,
                 )
                 Text(
                     text = stringResource(R.string.dashboard_shortcut_therapy_body),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MutedGray,
+                    maxLines = 2,
                 )
             }
             Text(
                 text = stringResource(R.string.dashboard_shortcut_therapy_cta),
                 style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+}
+
+/* ------------------------------------------------------------ recommend */
+
+private val RecommendLabels = listOf(
+    R.string.dashboard_recommend_1,
+    R.string.dashboard_recommend_2,
+    R.string.dashboard_recommend_3,
+    R.string.dashboard_recommend_4,
+    R.string.dashboard_recommend_5,
+)
+
+@Composable
+private fun RecommendCard() {
+    // Local-only: the checklist is a gentle nudge, not persisted data.
+    val checked = remember { mutableStateListOf(false, false, false, false, false) }
+    AppCard {
+        SectionTitle(text = stringResource(R.string.dashboard_recommend_title))
+        Spacer(modifier = Modifier.size(8.dp))
+        RecommendLabels.forEachIndexed { index, labelRes ->
+            RecommendRow(
+                label = stringResource(labelRes),
+                checked = checked[index],
+                onToggle = { checked[index] = !checked[index] },
+            )
+        }
+    }
+}
+
+@Composable
+private fun RecommendRow(label: String, checked: Boolean, onToggle: () -> Unit) {
+    val tint = MaterialTheme.colorScheme.primary
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(PaleBlue)
+            .padding(horizontal = 12.dp, vertical = 11.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Surface(
+            shape = CircleShape,
+            color = if (checked) tint else MaterialTheme.colorScheme.surface,
+            border = if (checked) null else BorderStroke(1.5.dp, MaterialTheme.colorScheme.outline),
+            onClick = onToggle,
+        ) {
+            Box(
+                modifier = Modifier.size(24.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (checked) {
+                    Icon(
+                        imageVector = AppIcons.Check,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                    )
+                }
+            }
+        }
+        Text(
+            text = label,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+    }
+    Spacer(modifier = Modifier.size(8.dp))
+}
+
+/* ----------------------------------------------------------- reflections */
+
+@Composable
+private fun ReflectionsHeader(onSeeAll: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SectionTitle(text = stringResource(R.string.dashboard_reflections_title))
+        Spacer(modifier = Modifier.weight(1f))
+        TextButton(onClick = onSeeAll) {
+            Text(
+                text = stringResource(R.string.dashboard_reflections_seeall),
                 color = MaterialTheme.colorScheme.primary,
             )
         }
@@ -447,63 +641,48 @@ private fun ReflectionCard(entry: JournalEntry, onClick: () -> Unit) {
     val snippet = listOf(entry.reframe, entry.gratitude)
         .firstOrNull { it.isNotBlank() && it != title }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+    AppCard(onClick = onClick, contentPadding = PaddingValues(16.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(
-                    text = title,
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = date,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            if (snippet != null) {
-                Text(
-                    text = snippet,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+            Text(
+                text = title,
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = date,
+                style = MaterialTheme.typography.labelSmall,
+                color = MutedGray,
+            )
+        }
+        if (snippet != null) {
+            Spacer(modifier = Modifier.size(6.dp))
+            Text(
+                text = snippet,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MutedGray,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }
 
+/* ---------------------------------------------------------------- helpers */
+
 @Composable
-private fun emotionText(emotion: Emotion): String = stringResource(
+private fun emotionHint(emotion: Emotion): String = stringResource(
     when (emotion) {
-        Emotion.HAPPY -> R.string.emotion_happy
-        Emotion.CALM -> R.string.emotion_calm
-        Emotion.LOW -> R.string.emotion_low
-        Emotion.ANXIOUS -> R.string.emotion_anxious
-        Emotion.STRESSED -> R.string.emotion_stressed
+        Emotion.HAPPY -> R.string.checkin_hint_happy
+        Emotion.CALM -> R.string.checkin_hint_calm
+        Emotion.LOW -> R.string.checkin_hint_low
+        Emotion.ANXIOUS -> R.string.checkin_hint_anxious
+        Emotion.STRESSED -> R.string.checkin_hint_stressed
     },
 )
-
-private fun moodColor(emotion: Emotion): Color = when (emotion) {
-    Emotion.HAPPY -> MoodHappy
-    Emotion.CALM -> MoodCalm
-    Emotion.LOW -> MoodLow
-    Emotion.ANXIOUS -> MoodAnxious
-    Emotion.STRESSED -> MoodStressed
-}

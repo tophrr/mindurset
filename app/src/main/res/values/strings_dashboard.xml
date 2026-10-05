@@ -1,24 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Dashboard -->
-    <string name="dashboard_greeting_morning">Morning, %1$s</string>
+    <string name="dashboard_greeting_morning">Good morning, %1$s</string>
     <string name="dashboard_greeting_afternoon">Good afternoon, %1$s</string>
     <string name="dashboard_greeting_evening">Good evening, %1$s</string>
     <string name="dashboard_greeting_generic">Hello there</string>
-    <string name="dashboard_subtitle">Take a moment to check in on yourself.</string>
+    <string name="dashboard_subtitle">Take a moment for yourself</string>
     <string name="dashboard_avatar_cd">Profile avatar</string>
+    <string name="dashboard_notifications_cd">Notifications</string>
 
     <string name="dashboard_checkin_title">Daily Check-in</string>
     <string name="dashboard_checkin_prompt">How are you feeling right now?</string>
-    <string name="dashboard_checkin_cta">Check in</string>
+    <string name="dashboard_checkin_cta">Continue</string>
     <string name="dashboard_checkin_update">Update check-in</string>
     <string name="dashboard_checkin_logged">Today you felt %1$s</string>
     <string name="dashboard_checkin_intensity">Intensity %1$d / 10</string>
 
     <string name="dashboard_stats_journal">Journal entries</string>
     <string name="dashboard_stats_checkins">Check-ins</string>
+    <string name="dashboard_stat_chip">%1$d %2$s</string>
+
+    <string name="dashboard_recommend_title">Recommend for you</string>
+    <string name="dashboard_recommend_1">Cooking a new recipe</string>
+    <string name="dashboard_recommend_2">Hangout and talk to someone</string>
+    <string name="dashboard_recommend_3">Meditation and gratitude</string>
+    <string name="dashboard_recommend_4">Learning something new</string>
+    <string name="dashboard_recommend_5">Read one chapter</string>
 
     <string name="dashboard_reflections_title">Latest reflections</string>
+    <string name="dashboard_reflections_seeall">See all</string>
     <string name="dashboard_reflections_empty">No reflections yet. Start your first entry.</string>
     <string name="dashboard_reflection_untitled">Untitled reflection</string>
 

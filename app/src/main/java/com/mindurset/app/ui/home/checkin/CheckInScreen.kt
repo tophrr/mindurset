@@ -2,8 +2,8 @@ package com.mindurset.app.ui.home.checkin
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,13 +11,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
@@ -27,11 +27,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -39,17 +37,19 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mindurset.app.R
 import com.mindurset.app.di.LocalAppContainer
 import com.mindurset.app.domain.model.Emotion
-import com.mindurset.app.ui.theme.MoodAnxious
-import com.mindurset.app.ui.theme.MoodCalm
-import com.mindurset.app.ui.theme.MoodHappy
-import com.mindurset.app.ui.theme.MoodLow
-import com.mindurset.app.ui.theme.MoodStressed
+import com.mindurset.app.ui.common.CircleIconButton
+import com.mindurset.app.ui.common.FloatingNavSpace
+import com.mindurset.app.ui.common.emotionLabel
+import com.mindurset.app.ui.common.tint
+import com.mindurset.app.ui.theme.AppIcons
+import com.mindurset.app.ui.theme.MutedGray
 import kotlin.math.roundToInt
 
 /**
- * Daily check-in. The five emotion chips use the mockup's selected-state colours
- * (pale tint fill, 2 dp accent border, accent label) driven by the shared mood
- * palette. Selection is held in [CheckInViewModel] so it survives rotation.
+ * Daily check-in. Full-width mood cards use the mood palette's selected state
+ * (tinted fill, accent border, accent label and a check glyph), followed by the
+ * intensity slider with its value, the optional note and the Continue button.
+ * Selection is held in [CheckInViewModel] so it survives rotation.
  */
 @Composable
 fun CheckInScreen(
@@ -75,27 +75,21 @@ fun CheckInScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
+                .padding(start = 20.dp, end = 20.dp, top = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
             Text(
                 text = stringResource(R.string.checkin_prompt),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onBackground,
             )
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Emotion.entries.forEach { option ->
-                    EmotionChip(
+                    MoodCard(
                         emotion = option,
                         selected = option == emotion,
                         onClick = { vm.selectEmotion(option) },
-                        modifier = Modifier.width(92.dp),
                     )
                 }
             }
@@ -135,8 +129,6 @@ fun CheckInScreen(
                 placeholder = { Text(stringResource(R.string.checkin_note_placeholder)) },
             )
 
-            Spacer(modifier = Modifier.size(4.dp))
-
             Button(
                 onClick = { vm.save(onDone) },
                 enabled = emotion != null && !saving,
@@ -144,6 +136,8 @@ fun CheckInScreen(
             ) {
                 Text(text = stringResource(R.string.checkin_continue))
             }
+
+            Spacer(modifier = Modifier.size(FloatingNavSpace))
         }
     }
 }
@@ -154,94 +148,89 @@ private fun CheckInTopBar(onBack: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 8.dp, vertical = 8.dp),
+            .padding(horizontal = 20.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        IconButton(
+        CircleIconButton(
+            icon = AppIcons.ArrowBack,
+            contentDescription = backLabel,
             onClick = onBack,
-            modifier = Modifier.semantics { contentDescription = backLabel },
-        ) {
-            Text(
-                text = "\u2190",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-        }
+        )
         Text(
             text = stringResource(R.string.checkin_title),
             modifier = Modifier.weight(1f),
-            textAlign = TextAlign.Center,
+            textAlign = TextAlign.Start,
             style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = MaterialTheme.colorScheme.onBackground,
         )
-        Spacer(modifier = Modifier.size(48.dp))
     }
 }
 
 @Composable
-private fun EmotionChip(
+private fun MoodCard(
     emotion: Emotion,
     selected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
-    val accent = moodColor(emotion)
+    val accent = emotion.tint()
     Surface(
-        modifier = modifier.selectable(
-            selected = selected,
-            role = Role.RadioButton,
-            onClick = onClick,
-        ),
-        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectable(
+                selected = selected,
+                role = Role.RadioButton,
+                onClick = onClick,
+            ),
+        shape = RoundedCornerShape(18.dp),
         color = if (selected) accent.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surface,
         border = BorderStroke(
             width = if (selected) 2.dp else 1.dp,
             color = if (selected) accent else MaterialTheme.colorScheme.outline,
         ),
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 12.dp, horizontal = 6.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Text(
-                text = faceFor(emotion),
-                style = MaterialTheme.typography.headlineMedium,
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(CircleShape)
+                    .background(accent),
             )
-            Text(
-                text = emotionText(emotion),
-                style = MaterialTheme.typography.labelLarge,
-                color = if (selected) accent else MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-            )
-            Text(
-                text = hintFor(emotion),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-            )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(
+                    text = emotionLabel(emotion),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = if (selected) accent else MaterialTheme.colorScheme.onBackground,
+                )
+                Text(
+                    text = emotionHint(emotion),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MutedGray,
+                )
+            }
+            if (selected) {
+                Icon(
+                    imageVector = AppIcons.Check,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = accent,
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun emotionText(emotion: Emotion): String = stringResource(
-    when (emotion) {
-        Emotion.HAPPY -> R.string.emotion_happy
-        Emotion.CALM -> R.string.emotion_calm
-        Emotion.LOW -> R.string.emotion_low
-        Emotion.ANXIOUS -> R.string.emotion_anxious
-        Emotion.STRESSED -> R.string.emotion_stressed
-    },
-)
-
-@Composable
-private fun hintFor(emotion: Emotion): String = stringResource(
+private fun emotionHint(emotion: Emotion): String = stringResource(
     when (emotion) {
         Emotion.HAPPY -> R.string.checkin_hint_happy
         Emotion.CALM -> R.string.checkin_hint_calm
@@ -250,19 +239,3 @@ private fun hintFor(emotion: Emotion): String = stringResource(
         Emotion.STRESSED -> R.string.checkin_hint_stressed
     },
 )
-
-private fun faceFor(emotion: Emotion): String = when (emotion) {
-    Emotion.HAPPY -> "\uD83D\uDE04"
-    Emotion.CALM -> "\uD83D\uDE42"
-    Emotion.LOW -> "\uD83D\uDE10"
-    Emotion.ANXIOUS -> "\uD83D\uDE1F"
-    Emotion.STRESSED -> "\uD83D\uDE23"
-}
-
-private fun moodColor(emotion: Emotion): Color = when (emotion) {
-    Emotion.HAPPY -> MoodHappy
-    Emotion.CALM -> MoodCalm
-    Emotion.LOW -> MoodLow
-    Emotion.ANXIOUS -> MoodAnxious
-    Emotion.STRESSED -> MoodStressed
-}
