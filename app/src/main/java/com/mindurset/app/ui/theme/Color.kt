@@ -2,17 +2,19 @@ package com.mindurset.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Tokens sampled from the project mockups in mindurset-docs/uidesign/
-val NavyDeep = Color(0xFF203080)
-val NavyInk = Color(0xFF16225C)
-val PaleBlue = Color(0xFFE8F0F8)
+// Tokens aligned with the project mockups and the HTML prototype (background #EEF4FF).
+val CanvasBlue = Color(0xFFEEF4FF)      // app background everywhere
+val NavyDeep = Color(0xFF203080)        // primary: buttons, titles
+val NavyInk = Color(0xFF16225C)         // body text
+val PaleBlue = Color(0xFFE3ECFB)        // soft surface inside cards
 val Lavender = Color(0xFFE0D8E8)
-val SurfaceSoft = Color(0xFFF8F8F8)
+val SurfaceSoft = CanvasBlue
 val SurfaceWhite = Color(0xFFFFFFFF)
-val MutedGray = Color(0xFFB0B0B0)
-val OutlineSoft = Color(0xFFD0D8E8)
+val MutedGray = Color(0xFF8A93A6)       // secondary text, contrast-checked on white
+val OutlineSoft = Color(0xFFD3DDF0)
 val DangerRed = Color(0xFFB3261E)
 val SuccessGreen = Color(0xFF2E7D32)
+val CardShadow = Color(0x1A1B2A5E)      // soft navy shadow under cards
 
 // Emotion scale
 val MoodHappy = Color(0xFF6FB07B)

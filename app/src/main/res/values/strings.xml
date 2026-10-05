@@ -21,4 +21,19 @@
     <string name="emotion_low">Low</string>
     <string name="emotion_anxious">Anxious</string>
     <string name="emotion_stressed">Stressed</string>
+
+    <!-- Therapy screen additions (no "Locked" state) -->
+    <string name="therapy_release_note">Guided sessions arrive in a later release. Preview each step below.</string>
+    <string name="therapy_continue">Continue</string>
+    <string name="therapy_open">Open</string>
+
+    <!-- Companion screen additions (mode chips + preview bubbles) -->
+    <string name="companion_chip_negative_thoughts">Negative thoughts</string>
+    <string name="companion_chip_emotion_regulation">Emotion regulation</string>
+    <string name="companion_personal_bot">Hi! I\'m here to support you. How are you feeling today?</string>
+    <string name="companion_personal_user">I\'ve been feeling a bit overwhelmed with work lately</string>
+    <string name="companion_negative_bot">Let\'s catch that loop together. What thought keeps coming back?</string>
+    <string name="companion_negative_user">I keep telling myself I\'m not good enough</string>
+    <string name="companion_emotion_bot">Let\'s name the feeling first. What is strongest right now?</string>
+    <string name="companion_emotion_user">Anxious, I think — my chest feels tight</string>
 </resources>
