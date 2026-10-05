@@ -1,0 +1,93 @@
+name: Android CI
+
+# Runs on every push to main and on pull requests targeting main.
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Primary job: build the debug APK and run the JVM unit tests together.
+  build:
+    name: Build + unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle (with cache)
+        uses: gradle/actions/setup-gradle@v4
+
+      # gradle.properties pins org.gradle.java.home to a local Android Studio JBR,
+      # which does not exist on the runner. The command-line -D overrides it.
+      - name: Assemble debug + run unit tests
+        run: ./gradlew :app:assembleDebug :app:testDebugUnitTest -Dorg.gradle.java.home="$JAVA_HOME" --console=plain
+
+      # Lint is reported but must not fail the build yet.
+      - name: Lint (non-blocking)
+        continue-on-error: true
+        run: ./gradlew :app:lintDebug -Dorg.gradle.java.home="$JAVA_HOME" --console=plain
+
+      - name: Upload unit-test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: app/build/test-results/testDebugUnitTest/
+          if-no-files-found: ignore
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+  # Second job: the unit tests on their own, so a red build points straight at the tests.
+  unit-tests:
+    name: Unit tests only
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle (with cache)
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run unit tests
+        run: ./gradlew :app:testDebugUnitTest -Dorg.gradle.java.home="$JAVA_HOME" --console=plain
+
+      - name: Upload unit-test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results-only
+          path: app/build/test-results/testDebugUnitTest/
+          if-no-files-found: ignore
