@@ -1,24 +1,39 @@
 package com.mindurset.app.ui.navigation
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -37,6 +52,7 @@ import com.mindurset.app.ui.dashboard.DashboardScreen
 import com.mindurset.app.ui.home.checkin.CheckInScreen
 import com.mindurset.app.ui.info.AboutScreen
 import com.mindurset.app.ui.info.DataConsentScreen
+import com.mindurset.app.domain.model.UserProfile
 import com.mindurset.app.ui.menu.AppDrawer
 import com.mindurset.app.ui.profile.ProfileEditScreen
 import com.mindurset.app.ui.profile.ProfileScreen
@@ -44,7 +60,11 @@ import com.mindurset.app.ui.profile.SettingsScreen
 import com.mindurset.app.ui.reflection.ReflectionDetailScreen
 import com.mindurset.app.ui.reflection.ReflectionFormScreen
 import com.mindurset.app.ui.reflection.ReflectionListScreen
+import com.mindurset.app.ui.theme.AppIcons
+import com.mindurset.app.ui.theme.CardShadow
+import com.mindurset.app.ui.theme.SurfaceWhite
 import com.mindurset.app.ui.therapy.TherapyScreen
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
 @Composable
@@ -58,6 +78,15 @@ fun MindUrSetNavigation(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val showShell = Routes.isTopLevel(currentRoute)
+
+    val session by container.sessionStore.session.collectAsState(initial = null)
+    val userProfile by remember(session?.userId) {
+        session?.userId?.let { container.profileRepository.observe(it) } ?: flowOf<UserProfile?>(null)
+    }.collectAsState(initial = null)
+    val drawerName = userProfile?.displayName?.takeIf { it.isNotBlank() }
+        ?: session?.email?.substringBefore('@')
+        ?: "Guest"
+    val drawerEmail = session?.email.orEmpty()
 
     val openDrawer: () -> Unit = { scope.launch { drawerState.open() } }
     val closeDrawer: () -> Unit = { scope.launch { drawerState.close() } }
@@ -95,6 +124,8 @@ fun MindUrSetNavigation(
         drawerContent = {
             AppDrawer(
                 currentRoute = currentRoute,
+                userName = drawerName,
+                userEmail = drawerEmail,
                 onNavigate = navigate,
                 onLogout = {
                     closeDrawer()
@@ -106,7 +137,7 @@ fun MindUrSetNavigation(
         Scaffold(
             bottomBar = {
                 if (showShell) {
-                    BottomBar(currentRoute = currentRoute, onNavigate = navigate)
+                    FloatingPillNav(currentRoute = currentRoute, onNavigate = navigate)
                 }
             },
         ) { innerPadding ->
@@ -234,22 +265,68 @@ private fun NavHostController.toDashboard() {
     }
 }
 
+/** Floating pill navigation, as in the project mockups: white rounded bar with the
+ *  selected destination expanded into a navy pill carrying its label. */
 @Composable
-private fun BottomBar(currentRoute: String?, onNavigate: (String) -> Unit) {
+private fun FloatingPillNav(currentRoute: String?, onNavigate: (String) -> Unit) {
     val items = listOf(
-        Triple("Home", Routes.DASHBOARD, "\u2302"),
-        Triple("Therapy", Routes.THERAPY, "\u2698"),
-        Triple("Companion", Routes.COMPANION, "\u263A"),
-        Triple("Profile", Routes.PROFILE, "\u263B"),
+        Triple("Home", Routes.DASHBOARD, AppIcons.Home),
+        Triple("Therapy", Routes.THERAPY, AppIcons.Therapy),
+        Triple("Companion", Routes.COMPANION, AppIcons.Companion),
+        Triple("Profile", Routes.PROFILE, AppIcons.Profile),
     )
-    NavigationBar {
-        items.forEach { (label, route, glyph) ->
-            NavigationBarItem(
-                selected = currentRoute == route,
-                onClick = { onNavigate(route) },
-                icon = { Text(glyph) },
-                label = { Text(label) },
-            )
+    val pillShape = RoundedCornerShape(34.dp)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .padding(horizontal = 16.dp, vertical = 18.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Surface(
+            shape = pillShape,
+            color = SurfaceWhite,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(66.dp)
+                .shadow(12.dp, pillShape, ambientColor = CardShadow, spotColor = CardShadow),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly,
+            ) {
+                items.forEach { (label, route, icon) ->
+                    val selected = currentRoute == route
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        Surface(
+                            shape = RoundedCornerShape(22.dp),
+                            color = if (selected) MaterialTheme.colorScheme.primary else SurfaceWhite,
+                            onClick = { onNavigate(route) },
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            ) {
+                                Icon(
+                                    imageVector = icon,
+                                    contentDescription = label,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = if (selected) SurfaceWhite else MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                if (selected) {
+                                    Text(
+                                        text = label,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = SurfaceWhite,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

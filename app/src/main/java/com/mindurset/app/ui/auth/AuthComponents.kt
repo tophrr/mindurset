@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,6 +23,8 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,6 +42,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.mindurset.app.R
+import com.mindurset.app.ui.theme.AppIcons
 import com.mindurset.app.domain.auth.ValidateCredentials
 
 /** Stable error keys produced by the auth ViewModels and mapped to string resources here. */
@@ -160,14 +164,19 @@ fun AuthField(
 
     val trailing: (@Composable () -> Unit)? = if (isPassword) {
         {
-            Text(
-                text = stringResource(if (visible) R.string.auth_hide_password else R.string.auth_show_password),
-                modifier = Modifier
-                    .clickable { visible = !visible }
-                    .padding(horizontal = 6.dp, vertical = 8.dp),
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.labelLarge,
-            )
+            IconButton(
+                onClick = { visible = !visible },
+                modifier = Modifier.size(40.dp),
+            ) {
+                Icon(
+                    imageVector = if (visible) AppIcons.EyeOff else AppIcons.Eye,
+                    contentDescription = stringResource(
+                        if (visible) R.string.auth_hide_password else R.string.auth_show_password,
+                    ),
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     } else {
         null
