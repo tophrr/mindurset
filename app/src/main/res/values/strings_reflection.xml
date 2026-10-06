@@ -4,6 +4,24 @@
     <string name="reflection_title">Daily Reflection</string>
     <string name="reflection_new_entry">New entry</string>
     <string name="reflection_row_challenge">Challenge: %1$s</string>
+    <string name="reflection_row_reframe">Reframe: %1$s</string>
+
+    <!-- Top bar -->
+    <string name="reflection_menu">Open menu</string>
+    <string name="reflection_back">Back</string>
+    <string name="reflection_action_edit">Edit entry</string>
+    <string name="reflection_action_delete">Delete entry</string>
+
+    <!-- Today's entry -->
+    <string name="reflection_today_entry_title">Today\'s Entry</string>
+    <string name="reflection_today_entry_body">A structured reflection covering your challenge, a kinder reframe and what you are grateful for — all in one place.</string>
+    <string name="reflection_today_entry_button">Open Today\'s Reflection</string>
+
+    <!-- Views -->
+    <string name="reflection_tab_recent">Recent</string>
+    <string name="reflection_tab_calendar">Calendar</string>
+    <string name="reflection_this_week">This week: %1$s</string>
+    <string name="reflection_calendar_legend">Days with an entry</string>
 
     <string name="reflection_empty_title">No entries yet</string>
     <string name="reflection_empty_body">Start your daily reflection — note a challenge, a kinder reframe, and something you are grateful for.</string>

@@ -2,6 +2,7 @@
 
 package com.mindurset.app.ui.reflection
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,34 +13,38 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -48,17 +53,40 @@ import com.mindurset.app.R
 import com.mindurset.app.di.LocalAppContainer
 import com.mindurset.app.domain.model.JournalEntry
 import com.mindurset.app.domain.usecase.ValidateReflection
+import com.mindurset.app.ui.common.AppCard
+import com.mindurset.app.ui.common.CircleIconButton
 import com.mindurset.app.ui.common.EmptyState
 import com.mindurset.app.ui.common.ErrorState
+import com.mindurset.app.ui.common.FloatingNavSpace
 import com.mindurset.app.ui.common.LoadingState
+import com.mindurset.app.ui.common.SegmentedTabs
+import com.mindurset.app.ui.common.SectionTitle
+import com.mindurset.app.ui.theme.AppIcons
+import com.mindurset.app.ui.theme.CanvasBlue
+import com.mindurset.app.ui.theme.CardShadow
 import com.mindurset.app.ui.theme.DangerRed
+import com.mindurset.app.ui.theme.Lavender
+import com.mindurset.app.ui.theme.MoodAnxious
+import com.mindurset.app.ui.theme.MoodCalm
+import com.mindurset.app.ui.theme.MoodHappy
+import com.mindurset.app.ui.theme.MoodLow
+import com.mindurset.app.ui.theme.MutedGray
 import com.mindurset.app.ui.theme.NavyDeep
 import com.mindurset.app.ui.theme.NavyInk
-import com.mindurset.app.ui.theme.PaleBlue
 import com.mindurset.app.ui.theme.SurfaceWhite
+import java.time.DayOfWeek
+import java.time.LocalDate
 
-// Daily Reflection CRUD module: reactive list (Room), create/edit form with
-// validation, detail view, and delete behind a confirmation dialog.
+// Daily Reflection CRUD module: reactive list (Room) with a Today's Entry card
+// and Recent/Calendar views, a create/edit form with validation, a detail view,
+// and delete behind a confirmation dialog. Room persistence is untouched.
+
+private val EntryGreyBg = Color(0xFFF3F4F6)
+private val EntryGreyInk = Color(0xFF5B6472)
+private val EntryLavenderInk = Color(0xFF6D4FAF)
+private val CalendarBlank = Color(0xFFE5E7EB)
+
+private val CalendarPalette = listOf(NavyDeep, MoodAnxious, MoodCalm, MoodHappy, MoodLow)
 
 @Composable
 fun ReflectionListScreen(
@@ -74,28 +102,22 @@ fun ReflectionListScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     Scaffold(
-        containerColor = PaleBlue,
+        containerColor = CanvasBlue,
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.reflection_title), fontWeight = FontWeight.Bold) },
-                navigationIcon = { BackIcon(onBack) },
-                actions = { MenuIcon(onOpenDrawer) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SurfaceWhite,
-                    titleContentColor = NavyInk,
-                ),
-            )
-        },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onNew,
-                containerColor = NavyDeep,
-                contentColor = SurfaceWhite,
-                icon = { Text("+", style = MaterialTheme.typography.titleLarge) },
-                text = {
-                    Text(
-                        text = stringResource(R.string.reflection_new_entry),
-                        fontWeight = FontWeight.SemiBold,
+            ReflectionTopBar(
+                title = stringResource(R.string.reflection_title),
+                left = {
+                    CircleIconButton(
+                        icon = AppIcons.Menu,
+                        contentDescription = stringResource(R.string.reflection_menu),
+                        onClick = onOpenDrawer,
+                    )
+                },
+                right = {
+                    CircleIconButton(
+                        icon = AppIcons.Add,
+                        contentDescription = stringResource(R.string.reflection_new_entry),
+                        onClick = onNew,
                     )
                 },
             )
@@ -113,29 +135,263 @@ fun ReflectionListScreen(
                     )
 
                 is ReflectionListViewModel.UiState.Empty ->
+                    ReflectionListContent(entries = emptyList(), onNew = onNew, onOpen = onOpen)
+
+                is ReflectionListViewModel.UiState.Ready ->
+                    ReflectionListContent(entries = current.entries, onNew = onNew, onOpen = onOpen)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReflectionListContent(
+    entries: List<JournalEntry>,
+    onNew: () -> Unit,
+    onOpen: (String) -> Unit,
+) {
+    var selectedTab by remember { mutableIntStateOf(0) }
+    val todayEntry = entries.firstOrNull { isToday(it.createdAt) }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            start = 20.dp,
+            end = 20.dp,
+            top = 4.dp,
+            bottom = FloatingNavSpace,
+        ),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        item {
+            TodayEntryCard(
+                onOpen = {
+                    if (todayEntry != null) onOpen(todayEntry.id) else onNew()
+                },
+            )
+        }
+
+        item {
+            SegmentedTabs(
+                options = listOf(
+                    stringResource(R.string.reflection_tab_recent),
+                    stringResource(R.string.reflection_tab_calendar),
+                ),
+                selectedIndex = selectedTab,
+                onSelect = { selectedTab = it },
+            )
+        }
+
+        if (selectedTab == 0) {
+            item {
+                SectionTitle(stringResource(R.string.reflection_this_week, weekRangeLabel()))
+            }
+            if (entries.isEmpty()) {
+                item {
                     EmptyState(
                         title = stringResource(R.string.reflection_empty_title),
                         body = stringResource(R.string.reflection_empty_body),
                         actionLabel = stringResource(R.string.reflection_new_entry),
                         onAction = onNew,
                     )
+                }
+            } else {
+                items(entries, key = { it.id }) { entry ->
+                    ReflectionRow(
+                        entry = entry,
+                        index = entries.indexOf(entry),
+                        onClick = { onOpen(entry.id) },
+                    )
+                }
+            }
+        } else {
+            item {
+                ReflectionCalendar(entries = entries, onOpen = onOpen)
+            }
+        }
+    }
+}
 
-                is ReflectionListViewModel.UiState.Ready ->
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(
-                            start = 20.dp,
-                            end = 20.dp,
-                            top = 16.dp,
-                            bottom = 96.dp,
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
+@Composable
+private fun TodayEntryCard(onOpen: () -> Unit) {
+    AppCard {
+        Text(
+            text = stringResource(R.string.reflection_today_entry_title),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = NavyInk,
+        )
+        Text(
+            text = stringResource(R.string.reflection_today_entry_body),
+            modifier = Modifier.padding(top = 6.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MutedGray,
+        )
+        Button(
+            onClick = onOpen,
+            modifier = Modifier.fillMaxWidth().height(52.dp).padding(top = 14.dp),
+            shape = RoundedCornerShape(26.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = NavyDeep,
+                contentColor = SurfaceWhite,
+            ),
+        ) {
+            Text(
+                text = stringResource(R.string.reflection_today_entry_button),
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ReflectionRow(entry: JournalEntry, index: Int, onClick: () -> Unit) {
+    val lavender = index % 2 == 1
+    val background = if (lavender) Lavender else EntryGreyBg
+    val bodyInk = if (lavender) EntryLavenderInk else EntryGreyInk
+    val shape = RoundedCornerShape(18.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(3.dp, shape, ambientColor = CardShadow, spotColor = CardShadow)
+            .clip(shape)
+            .background(background)
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = relativeDayLabel(entry.createdAt),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = NavyInk,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = shortDate(entry.createdAt),
+                style = MaterialTheme.typography.labelMedium,
+                color = bodyInk,
+            )
+        }
+        Text(
+            text = stringResource(R.string.reflection_row_challenge, entry.challenge),
+            style = MaterialTheme.typography.bodyMedium,
+            color = bodyInk,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (entry.reframe.isNotBlank()) {
+            Text(
+                text = stringResource(R.string.reflection_row_reframe, entry.reframe),
+                style = MaterialTheme.typography.bodyMedium,
+                color = bodyInk,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ReflectionCalendar(entries: List<JournalEntry>, onOpen: (String) -> Unit) {
+    val today = LocalDate.now()
+    val first = today.withDayOfMonth(1)
+    val daysInMonth = first.lengthOfMonth()
+    val leading = (first.dayOfWeek.value - DayOfWeek.MONDAY.value + 7) % 7
+    val trailing = (7 - (leading + daysInMonth) % 7) % 7
+    val byDay: Map<LocalDate, JournalEntry> =
+        entries.groupBy { localDateOf(it.createdAt) }.mapValues { it.value.first() }
+    val weekdays = (0..6).map { weekdayShort(first.with(DayOfWeek.MONDAY).plusDays(it.toLong())) }
+
+    val cells = mutableListOf<LocalDate?>()
+    repeat(leading) { cells.add(null) }
+    for (day in 1..daysInMonth) cells.add(first.withDayOfMonth(day))
+    repeat(trailing) { cells.add(null) }
+
+    AppCard {
+        Text(
+            text = monthTitle(first),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = NavyInk,
+            modifier = Modifier.padding(bottom = 10.dp),
+        )
+        Row(Modifier.fillMaxWidth()) {
+            weekdays.forEach { label ->
+                Text(
+                    text = label,
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MutedGray,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+        cells.chunked(7).forEach { week ->
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                week.forEach { date ->
+                    Box(
+                        modifier = Modifier.weight(1f),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        items(items = current.entries, key = { it.id }) { entry ->
-                            ReflectionRow(entry = entry, onClick = { onOpen(entry.id) })
+                        when {
+                            date == null -> Box(
+                                Modifier.size(36.dp).clip(CircleShape).background(CalendarBlank),
+                            )
+
+                            byDay[date] != null -> {
+                                val entry = byDay.getValue(date)
+                                val color = CalendarPalette[date.dayOfYear % CalendarPalette.size]
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(color)
+                                        .clickable { onOpen(entry.id) },
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(
+                                        text = date.dayOfMonth.toString(),
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = SurfaceWhite,
+                                    )
+                                }
+                            }
+
+                            else -> Box(
+                                Modifier.size(36.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = date.dayOfMonth.toString(),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = NavyInk,
+                                )
+                            }
                         }
                     }
+                }
             }
+        }
+        Row(
+            modifier = Modifier.padding(top = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+        ) {
+            CalendarPalette.forEach { color ->
+                Box(Modifier.size(10.dp).clip(CircleShape).background(color))
+            }
+            Text(
+                text = stringResource(R.string.reflection_calendar_legend),
+                modifier = Modifier.padding(start = 4.dp),
+                style = MaterialTheme.typography.labelSmall,
+                color = MutedGray,
+            )
         }
     }
 }
@@ -152,23 +408,21 @@ fun ReflectionFormScreen(
     }
 
     Scaffold(
-        containerColor = PaleBlue,
+        containerColor = CanvasBlue,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(
-                            if (viewModel.isEdit) R.string.reflection_form_title_edit
-                            else R.string.reflection_form_title_new,
-                        ),
-                        fontWeight = FontWeight.Bold,
+            ReflectionTopBar(
+                title = stringResource(
+                    if (viewModel.isEdit) R.string.reflection_form_title_edit
+                    else R.string.reflection_form_title_new,
+                ),
+                left = {
+                    CircleIconButton(
+                        icon = AppIcons.ArrowBack,
+                        contentDescription = stringResource(R.string.reflection_back),
+                        onClick = onBack,
                     )
                 },
-                navigationIcon = { BackIcon(onBack) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SurfaceWhite,
-                    titleContentColor = NavyInk,
-                ),
+                right = {},
             )
         },
     ) { innerPadding ->
@@ -202,23 +456,29 @@ fun ReflectionDetailScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     Scaffold(
-        containerColor = PaleBlue,
+        containerColor = CanvasBlue,
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.reflection_detail_title), fontWeight = FontWeight.Bold) },
-                navigationIcon = { BackIcon(onBack) },
-                actions = {
-                    TextButton(onClick = onEdit) {
-                        Text(stringResource(R.string.edit), color = NavyInk)
-                    }
-                    TextButton(onClick = { showDeleteDialog = true }) {
-                        Text(stringResource(R.string.delete), color = DangerRed)
-                    }
+            ReflectionTopBar(
+                title = stringResource(R.string.reflection_detail_title),
+                left = {
+                    CircleIconButton(
+                        icon = AppIcons.ArrowBack,
+                        contentDescription = stringResource(R.string.reflection_back),
+                        onClick = onBack,
+                    )
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SurfaceWhite,
-                    titleContentColor = NavyInk,
-                ),
+                right = {
+                    CircleIconButton(
+                        icon = AppIcons.Edit,
+                        contentDescription = stringResource(R.string.reflection_action_edit),
+                        onClick = onEdit,
+                    )
+                    CircleIconButton(
+                        icon = AppIcons.Trash,
+                        contentDescription = stringResource(R.string.reflection_action_delete),
+                        onClick = { showDeleteDialog = true },
+                    )
+                },
             )
         },
     ) { innerPadding ->
@@ -269,43 +529,6 @@ fun ReflectionDetailScreen(
 }
 
 @Composable
-private fun ReflectionRow(entry: JournalEntry, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = relativeDayLabel(entry.createdAt),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = NavyInk,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    text = shortDate(entry.createdAt),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Text(
-                text = stringResource(R.string.reflection_row_challenge, entry.challenge),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
-}
-
-@Composable
 private fun ReflectionFormBody(
     viewModel: ReflectionFormViewModel,
     contentPadding: PaddingValues,
@@ -321,47 +544,49 @@ private fun ReflectionFormBody(
             .fillMaxSize()
             .padding(contentPadding)
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 16.dp),
+            .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = FloatingNavSpace),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(
             text = stringResource(R.string.reflection_form_intro),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MutedGray,
         )
 
-        OutlinedTextField(
-            value = viewModel.challenge,
-            onValueChange = viewModel::onChallengeChange,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(stringResource(R.string.reflection_field_challenge)) },
-            placeholder = { Text(stringResource(R.string.reflection_field_challenge_hint)) },
-            isError = viewModel.challengeTouched && challengeError != null,
-            supportingText = fieldSupportingText(viewModel.challengeTouched, challengeError),
-            minLines = 3,
-        )
+        AppCard {
+            OutlinedTextField(
+                value = viewModel.challenge,
+                onValueChange = viewModel::onChallengeChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(stringResource(R.string.reflection_field_challenge)) },
+                placeholder = { Text(stringResource(R.string.reflection_field_challenge_hint)) },
+                isError = viewModel.challengeTouched && challengeError != null,
+                supportingText = fieldSupportingText(viewModel.challengeTouched, challengeError),
+                minLines = 3,
+            )
 
-        OutlinedTextField(
-            value = viewModel.reframe,
-            onValueChange = viewModel::onReframeChange,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(stringResource(R.string.reflection_field_reframe)) },
-            placeholder = { Text(stringResource(R.string.reflection_field_reframe_hint)) },
-            isError = viewModel.reframeTouched && reframeError != null,
-            supportingText = fieldSupportingText(viewModel.reframeTouched, reframeError),
-            minLines = 2,
-        )
+            OutlinedTextField(
+                value = viewModel.reframe,
+                onValueChange = viewModel::onReframeChange,
+                modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
+                label = { Text(stringResource(R.string.reflection_field_reframe)) },
+                placeholder = { Text(stringResource(R.string.reflection_field_reframe_hint)) },
+                isError = viewModel.reframeTouched && reframeError != null,
+                supportingText = fieldSupportingText(viewModel.reframeTouched, reframeError),
+                minLines = 2,
+            )
 
-        OutlinedTextField(
-            value = viewModel.gratitude,
-            onValueChange = viewModel::onGratitudeChange,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(stringResource(R.string.reflection_field_gratitude)) },
-            placeholder = { Text(stringResource(R.string.reflection_field_gratitude_hint)) },
-            isError = viewModel.gratitudeTouched && gratitudeError != null,
-            supportingText = fieldSupportingText(viewModel.gratitudeTouched, gratitudeError),
-            minLines = 2,
-        )
+            OutlinedTextField(
+                value = viewModel.gratitude,
+                onValueChange = viewModel::onGratitudeChange,
+                modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
+                label = { Text(stringResource(R.string.reflection_field_gratitude)) },
+                placeholder = { Text(stringResource(R.string.reflection_field_gratitude_hint)) },
+                isError = viewModel.gratitudeTouched && gratitudeError != null,
+                supportingText = fieldSupportingText(viewModel.gratitudeTouched, gratitudeError),
+                minLines = 2,
+            )
+        }
 
         Button(
             onClick = {
@@ -386,7 +611,7 @@ private fun ReflectionDetailBody(entry: JournalEntry) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(20.dp),
+            .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = FloatingNavSpace),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(
@@ -414,13 +639,13 @@ private fun ReflectionDetailBody(entry: JournalEntry) {
         Text(
             text = stringResource(R.string.reflection_detail_created, fullDate(entry.createdAt)),
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MutedGray,
         )
         if (entry.updatedAt != entry.createdAt) {
             Text(
                 text = stringResource(R.string.reflection_detail_updated, fullDate(entry.updatedAt)),
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MutedGray,
             )
         }
     }
@@ -428,28 +653,63 @@ private fun ReflectionDetailBody(entry: JournalEntry) {
 
 @Composable
 private fun ReflectionFieldCard(label: String, value: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    AppCard {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = MutedGray,
+        )
+        Text(
+            text = value,
+            modifier = Modifier.padding(top = 6.dp),
+            style = MaterialTheme.typography.bodyLarge,
+            color = NavyInk,
+        )
+    }
+}
+
+/** Shared top bar: a monoline circle on the left, the title centred, actions on the right. */
+@Composable
+private fun ReflectionTopBar(
+    title: String,
+    left: @Composable () -> Unit,
+    right: @Composable () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyLarge,
-                color = NavyInk,
-            )
+            Box(
+                modifier = Modifier.size(42.dp),
+                contentAlignment = Alignment.CenterStart,
+            ) { left() }
+            Box(
+                modifier = Modifier.height(42.dp),
+                contentAlignment = Alignment.CenterEnd,
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) { right() }
+            }
         }
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = NavyInk,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -465,17 +725,3 @@ private fun fieldSupportingText(show: Boolean, errorKey: String?): (@Composable 
     } else {
         null
     }
-
-@Composable
-private fun BackIcon(onBack: () -> Unit) {
-    IconButton(onClick = onBack) {
-        Text("\u2190", style = MaterialTheme.typography.titleLarge, color = NavyInk)
-    }
-}
-
-@Composable
-private fun MenuIcon(onOpenDrawer: () -> Unit) {
-    IconButton(onClick = onOpenDrawer) {
-        Text("\u2630", style = MaterialTheme.typography.titleLarge, color = NavyInk)
-    }
-}
