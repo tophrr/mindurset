@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -144,7 +145,9 @@ fun MindUrSetNavigation(
             NavHost(
                 navController = navController,
                 startDestination = startDestination,
-                modifier = Modifier.padding(innerPadding),
+                // Bottom inset is owned by each screen (FloatingNavSpace); taking it here as
+                // well double-counted the pill height and lifted bottom-pinned content.
+                modifier = Modifier.padding(PaddingValues(top = innerPadding.calculateTopPadding())),
             ) {
                 composable(Routes.LOGIN) {
                     LoginScreen(

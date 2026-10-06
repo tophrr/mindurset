@@ -36,4 +36,24 @@
     <string name="companion_negative_user">I keep telling myself I\'m not good enough</string>
     <string name="companion_emotion_bot">Let\'s name the feeling first. What is strongest right now?</string>
     <string name="companion_emotion_user">Anxious, I think — my chest feels tight</string>
+
+    <!-- Companion preview: second and third canned exchanges per mode -->
+    <string name="companion_personal_bot_2">That sounds heavy. What has been weighing on you most this week?</string>
+    <string name="companion_personal_user_2">Mostly deadlines — I keep falling behind no matter how hard I try</string>
+    <string name="companion_personal_bot_3">Falling behind doesn\'t mean you\'re failing. Could we pick one small thing to start with?</string>
+    <string name="companion_personal_user_3">Maybe just replying to the messages I\'ve been avoiding</string>
+    <string name="companion_negative_bot_2">Thank you for naming it. Where did you first learn to speak to yourself that way?</string>
+    <string name="companion_negative_user_2">I think it started at school — nothing I did was ever quite enough</string>
+    <string name="companion_negative_bot_3">That voice was learned, so it can be unlearned. What would you tell a friend who felt this?</string>
+    <string name="companion_negative_user_3">I\'d tell them they\'re doing far better than they think</string>
+    <string name="companion_emotion_bot_2">A tight chest is a real signal. Let\'s slow the breath: in for four, out for six.</string>
+    <string name="companion_emotion_user_2">Okay… doing that now. It feels a little easier</string>
+    <string name="companion_emotion_bot_3">Good. On a scale of one to ten, where is the anxiety sitting now?</string>
+    <string name="companion_emotion_user_3">Maybe a six, down from an eight</string>
+    <string name="companion_personal_bot_4">Let\'s start with the smallest one: replying to a single message, nothing more.</string>
+    <string name="companion_personal_user_4">Okay, I can do one message tonight</string>
+    <string name="companion_negative_bot_4">Say that sentence to yourself once, in the second person, the way a friend would.</string>
+    <string name="companion_negative_user_4">You are doing better than you think</string>
+    <string name="companion_emotion_bot_4">Then keep the six-count exhale for another minute and check in with me after.</string>
+    <string name="companion_emotion_user_4">Feels steadier already, thank you</string>
 </resources>

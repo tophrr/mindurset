@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -37,9 +38,19 @@ import com.mindurset.app.ui.theme.AppIcons
 import com.mindurset.app.ui.theme.CanvasBlue
 import com.mindurset.app.ui.theme.MutedGray
 import com.mindurset.app.ui.theme.NavyDeep
-import com.mindurset.app.ui.theme.NavyInk
-import com.mindurset.app.ui.theme.PaleBlue
 import com.mindurset.app.ui.theme.SurfaceWhite
+
+/**
+ * Per-step accent triples for the CBT skills cards, as in the mockup: each step keeps
+ * its own colour — green, blue, purple. The tint is the soft card surface (chips, icon
+ * box), the accent drives titles, labels, chip text and the action button.
+ */
+private val Step1Tint = Color(0xFFE2F2E4)
+private val Step1Accent = Color(0xFF2F7D4F)
+private val Step2Tint = Color(0xFFE3EDFB)
+private val Step2Accent = Color(0xFF2F6FBF)
+private val Step3Tint = Color(0xFFF1EAFB)
+private val Step3Accent = Color(0xFF7A4FBF)
 
 /**
  * Static CBT skills screen matching uidesign/Product Page.jpg. All three steps are
@@ -89,6 +100,8 @@ fun TherapyScreen(
 
             StepCard(
                 icon = AppIcons.Therapy,
+                tint = Step1Tint,
+                accent = Step1Accent,
                 title = stringResource(R.string.therapy_step1_title),
                 label = stringResource(R.string.therapy_step1_label),
                 body = stringResource(R.string.therapy_step1_body),
@@ -104,6 +117,8 @@ fun TherapyScreen(
 
             StepCard(
                 icon = AppIcons.Refresh,
+                tint = Step2Tint,
+                accent = Step2Accent,
                 title = stringResource(R.string.therapy_step2_title),
                 label = stringResource(R.string.therapy_step2_label),
                 body = stringResource(R.string.therapy_step2_body),
@@ -119,6 +134,8 @@ fun TherapyScreen(
 
             StepCard(
                 icon = AppIcons.Book,
+                tint = Step3Tint,
+                accent = Step3Accent,
                 title = stringResource(R.string.therapy_step3_title),
                 label = stringResource(R.string.therapy_step3_label),
                 body = stringResource(R.string.therapy_step3_body),
@@ -164,6 +181,8 @@ private fun ScreenTopBar(
 @Composable
 private fun StepCard(
     icon: ImageVector,
+    tint: Color,
+    accent: Color,
     title: String,
     label: String,
     body: String,
@@ -176,20 +195,20 @@ private fun StepCard(
                 modifier = Modifier
                     .size(52.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(PaleBlue),
+                    .background(tint),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
                     modifier = Modifier.size(26.dp),
-                    tint = NavyDeep,
+                    tint = accent,
                 )
             }
             Column(Modifier.weight(1f)) {
                 Text(
                     text = title,
-                    color = NavyInk,
+                    color = accent,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     lineHeight = 23.sp,
@@ -197,7 +216,7 @@ private fun StepCard(
                 Spacer(Modifier.height(5.dp))
                 Text(
                     text = label,
-                    color = NavyDeep,
+                    color = accent,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                 )
@@ -222,12 +241,12 @@ private fun StepCard(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
-                            .background(PaleBlue)
+                            .background(tint)
                             .padding(horizontal = 14.dp, vertical = 7.dp),
                     ) {
                         Text(
                             text = chip,
-                            color = NavyInk,
+                            color = accent,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
                         )
@@ -242,7 +261,7 @@ private fun StepCard(
             onClick = {},
             shape = RoundedCornerShape(28.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = NavyDeep,
+                containerColor = accent,
                 contentColor = SurfaceWhite,
             ),
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
