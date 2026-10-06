@@ -304,15 +304,15 @@ private fun FloatingPillNav(currentRoute: String?, onNavigate: (String) -> Unit)
                             color = if (selected) MaterialTheme.colorScheme.primary else SurfaceWhite,
                             onClick = { onNavigate(route) },
                         ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            Column(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(3.dp),
                             ) {
                                 Icon(
                                     imageVector = icon,
                                     contentDescription = label,
-                                    modifier = Modifier.size(20.dp),
+                                    modifier = Modifier.size(24.dp),
                                     tint = if (selected) SurfaceWhite else MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                                 if (selected) {
@@ -320,6 +320,8 @@ private fun FloatingPillNav(currentRoute: String?, onNavigate: (String) -> Unit)
                                         text = label,
                                         style = MaterialTheme.typography.labelMedium,
                                         color = SurfaceWhite,
+                                        maxLines = 1,
+                                        softWrap = false,
                                     )
                                 }
                             }

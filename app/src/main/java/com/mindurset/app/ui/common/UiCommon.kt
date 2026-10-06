@@ -49,9 +49,11 @@ fun AppCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val shape = RoundedCornerShape(20.dp)
+    // A soft but visible lift, as in the mockups: the elevation carries the shadow,
+    // and clip = false keeps it from being cut off at the card's own bounds.
     val base = modifier
         .fillMaxWidth()
-        .shadow(6.dp, shape, ambientColor = CardShadow, spotColor = CardShadow)
+        .shadow(elevation = 10.dp, shape = shape, clip = false)
     if (onClick == null) {
         Card(
             colors = CardDefaults.cardColors(containerColor = SurfaceWhite),

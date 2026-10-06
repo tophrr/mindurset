@@ -23,6 +23,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -55,6 +56,7 @@ import com.mindurset.app.ui.theme.MutedGray
 import com.mindurset.app.ui.theme.NavyDeep
 import com.mindurset.app.ui.theme.NavyInk
 import com.mindurset.app.ui.theme.PaleBlue
+import com.mindurset.app.ui.theme.SurfaceWhite
 
 // ---------------------------------------------------------------------------
 // Profile
@@ -410,6 +412,16 @@ fun SettingsScreen(onBack: () -> Unit) {
                         Switch(
                             checked = state.reminderEnabled,
                             onCheckedChange = vm::setReminderEnabled,
+                            // The default off state sat on a near-white track, so it had no
+                            // contrast against the white card; give both states real colours.
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = SurfaceWhite,
+                                checkedTrackColor = NavyDeep,
+                                checkedBorderColor = NavyDeep,
+                                uncheckedThumbColor = SurfaceWhite,
+                                uncheckedTrackColor = MutedGray.copy(alpha = 0.55f),
+                                uncheckedBorderColor = MutedGray,
+                            ),
                         )
                     }
                     Text(

@@ -42,6 +42,7 @@ import com.mindurset.app.ui.common.FloatingNavSpace
 import com.mindurset.app.ui.common.emotionLabel
 import com.mindurset.app.ui.common.tint
 import com.mindurset.app.ui.theme.AppIcons
+import com.mindurset.app.ui.theme.NavyInk
 import com.mindurset.app.ui.theme.MutedGray
 import kotlin.math.roundToInt
 
@@ -196,11 +197,11 @@ private fun MoodCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Box(
-                modifier = Modifier
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .background(accent),
+            Icon(
+                imageVector = moodFaceIcon(emotion),
+                contentDescription = null,
+                modifier = Modifier.size(32.dp),
+                tint = if (selected) accent else NavyInk,
             )
             Column(
                 modifier = Modifier.weight(1f),
@@ -227,6 +228,14 @@ private fun MoodCard(
             }
         }
     }
+}
+
+private fun moodFaceIcon(emotion: Emotion): androidx.compose.ui.graphics.vector.ImageVector = when (emotion) {
+    Emotion.HAPPY -> AppIcons.FaceHappy
+    Emotion.CALM -> AppIcons.FaceCalm
+    Emotion.LOW -> AppIcons.FaceLow
+    Emotion.ANXIOUS -> AppIcons.FaceAnxious
+    Emotion.STRESSED -> AppIcons.FaceStressed
 }
 
 @Composable

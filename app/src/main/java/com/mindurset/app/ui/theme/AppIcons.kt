@@ -136,6 +136,51 @@ object AppIcons {
     val Chart: ImageVector by lazy {
         icon("Chart", "M4.5 19 h15", "M4.5 15.5 l4.5-4.5 3 3 6.5-7")
     }
+    val FaceHappy: ImageVector by lazy {
+        icon(
+            "FaceHappy",
+            "M12 3.5 a8.5 8.5 0 1 0 0 17 a8.5 8.5 0 1 0 0 -17",
+            "M9 9.3 a0.9 0.9 0 1 0 0 1.8 a0.9 0.9 0 1 0 0 -1.8",
+            "M15 9.3 a0.9 0.9 0 1 0 0 1.8 a0.9 0.9 0 1 0 0 -1.8",
+            "M8 14 q4 4 8 0",
+        )
+    }
+    val FaceCalm: ImageVector by lazy {
+        icon(
+            "FaceCalm",
+            "M12 3.5 a8.5 8.5 0 1 0 0 17 a8.5 8.5 0 1 0 0 -17",
+            "M9 9.3 a0.9 0.9 0 1 0 0 1.8 a0.9 0.9 0 1 0 0 -1.8",
+            "M15 9.3 a0.9 0.9 0 1 0 0 1.8 a0.9 0.9 0 1 0 0 -1.8",
+            "M8.5 14.6 h7",
+        )
+    }
+    val FaceLow: ImageVector by lazy {
+        icon(
+            "FaceLow",
+            "M12 3.5 a8.5 8.5 0 1 0 0 17 a8.5 8.5 0 1 0 0 -17",
+            "M9 9.3 a0.9 0.9 0 1 0 0 1.8 a0.9 0.9 0 1 0 0 -1.8",
+            "M15 9.3 a0.9 0.9 0 1 0 0 1.8 a0.9 0.9 0 1 0 0 -1.8",
+            "M8 15.6 q4 -3 8 0",
+        )
+    }
+    val FaceAnxious: ImageVector by lazy {
+        icon(
+            "FaceAnxious",
+            "M12 3.5 a8.5 8.5 0 1 0 0 17 a8.5 8.5 0 1 0 0 -17",
+            "M9 9.3 a0.9 0.9 0 1 0 0 1.8 a0.9 0.9 0 1 0 0 -1.8",
+            "M15 9.3 a0.9 0.9 0 1 0 0 1.8 a0.9 0.9 0 1 0 0 -1.8",
+            "M8 14.6 q2 -1.8 4 0 t4 0",
+        )
+    }
+    val FaceStressed: ImageVector by lazy {
+        icon(
+            "FaceStressed",
+            "M12 3.5 a8.5 8.5 0 1 0 0 17 a8.5 8.5 0 1 0 0 -17",
+            "M9 9.3 a0.9 0.9 0 1 0 0 1.8 a0.9 0.9 0 1 0 0 -1.8",
+            "M15 9.3 a0.9 0.9 0 1 0 0 1.8 a0.9 0.9 0 1 0 0 -1.8",
+            "M8 15.2 l2 -2 2 2 2 -2",
+        )
+    }
     val Eye: ImageVector by lazy {
         icon(
             "Eye",
