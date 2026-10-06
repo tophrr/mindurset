@@ -3,7 +3,6 @@ package com.mindurset.app.ui.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mindurset.app.domain.model.UserProfile
-import com.mindurset.app.domain.repository.PreferencesStore
 import com.mindurset.app.domain.repository.ProfileRepository
 import com.mindurset.app.domain.repository.SessionStore
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,18 +18,19 @@ enum class NameError { REQUIRED, LENGTH }
 data class ProfileEditUiState(
     val loading: Boolean = true,
     val displayName: String = "",
-    val reminderEnabled: Boolean = false,
-    val reminderHour: Int = 19,
-    val language: String = "en",
     val nameError: NameError? = null,
     val saving: Boolean = false,
     val saved: Boolean = false,
 )
 
+/**
+ * Edit profile owns only the display name. The daily reminder, its time and the
+ * language selector live in Settings (backed by the DataStore PreferencesStore),
+ * so they are not duplicated here. On save we preserve whatever those already stored.
+ */
 class ProfileEditViewModel(
     private val profileRepository: ProfileRepository,
     private val sessionStore: SessionStore,
-    private val preferencesStore: PreferencesStore,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileEditUiState())
@@ -50,31 +50,13 @@ class ProfileEditViewModel(
             profileRepository.ensureProfile(session.userId, session.email)
             val profile = profileRepository.observe(session.userId).first()
             _uiState.update {
-                it.copy(
-                    loading = false,
-                    displayName = profile?.displayName.orEmpty(),
-                    reminderEnabled = preferencesStore.reminderEnabled.first(),
-                    reminderHour = preferencesStore.reminderHour.first(),
-                    language = preferencesStore.language.first(),
-                )
+                it.copy(loading = false, displayName = profile?.displayName.orEmpty())
             }
         }
     }
 
     fun onDisplayNameChange(value: String) {
         _uiState.update { it.copy(displayName = value, nameError = null) }
-    }
-
-    fun onReminderEnabledChange(enabled: Boolean) {
-        _uiState.update { it.copy(reminderEnabled = enabled) }
-    }
-
-    fun onReminderHourChange(hour: Int) {
-        _uiState.update { it.copy(reminderHour = hour.coerceIn(0, 23)) }
-    }
-
-    fun onLanguageChange(language: String) {
-        _uiState.update { it.copy(language = language) }
     }
 
     fun save() {
@@ -103,32 +85,17 @@ class ProfileEditViewModel(
                     userId = session.userId,
                     displayName = name,
                     joinedAt = existing?.joinedAt ?: System.currentTimeMillis(),
-                    reminderEnabled = current.reminderEnabled,
-                    reminderHour = current.reminderHour,
-                    language = current.language,
+                    reminderHour = existing?.reminderHour ?: DEFAULT_REMINDER_HOUR,
+                    reminderEnabled = existing?.reminderEnabled ?: false,
+                    language = existing?.language ?: "en",
                 ),
             )
-            preferencesStore.setReminderEnabled(current.reminderEnabled)
-            preferencesStore.setReminderHour(current.reminderHour)
-            preferencesStore.setLanguage(current.language)
-
-            // Re-read from Room / DataStore so the screen reflects what survives a restart.
-            val persisted = profileRepository.observe(session.userId).first()
-            _uiState.update {
-                it.copy(
-                    loading = false,
-                    saving = false,
-                    displayName = persisted?.displayName ?: name,
-                    reminderEnabled = preferencesStore.reminderEnabled.first(),
-                    reminderHour = preferencesStore.reminderHour.first(),
-                    language = preferencesStore.language.first(),
-                    saved = true,
-                )
-            }
+            _uiState.update { it.copy(saving = false, saved = true) }
         }
     }
 
     companion object {
         const val MAX_NAME_LENGTH = 40
+        private const val DEFAULT_REMINDER_HOUR = 19
     }
 }
