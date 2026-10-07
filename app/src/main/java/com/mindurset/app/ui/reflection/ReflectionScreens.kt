@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -543,6 +544,7 @@ private fun ReflectionFormBody(
         modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding)
+            .imePadding()
             .verticalScroll(rememberScrollState())
             .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = FloatingNavSpace),
         verticalArrangement = Arrangement.spacedBy(16.dp),

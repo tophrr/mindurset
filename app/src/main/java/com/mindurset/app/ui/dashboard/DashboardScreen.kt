@@ -47,8 +47,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mindurset.app.R
 import com.mindurset.app.di.LocalAppContainer
 import com.mindurset.app.domain.model.CheckIn
-import com.mindurset.app.domain.usecase.DashboardSummary
 import com.mindurset.app.domain.model.Emotion
+import com.mindurset.app.domain.usecase.DashboardSummary
 import com.mindurset.app.domain.model.JournalEntry
 import com.mindurset.app.ui.common.AppCard
 import com.mindurset.app.ui.common.CircleIconButton
@@ -76,7 +76,7 @@ import java.util.Date
  */
 @Composable
 fun DashboardScreen(
-    onOpenCheckIn: () -> Unit,
+    onOpenCheckIn: (Emotion) -> Unit,
     onOpenReflection: () -> Unit,
     onOpenCompanion: () -> Unit,
     onOpenTherapy: () -> Unit,
@@ -136,7 +136,7 @@ fun DashboardScreen(
 @Composable
 private fun DashboardBody(
     summary: DashboardSummary,
-    onOpenCheckIn: () -> Unit,
+    onOpenCheckIn: (Emotion) -> Unit,
     onOpenReflection: () -> Unit,
     onOpenCompanion: () -> Unit,
     onOpenTherapy: () -> Unit,
@@ -296,7 +296,7 @@ private fun StatChip(count: Int, label: String) {
 /* ---------------------------------------------------------- check-in card */
 
 @Composable
-private fun DailyCheckInCard(today: CheckIn?, onOpenCheckIn: () -> Unit) {
+private fun DailyCheckInCard(today: CheckIn?, onOpenCheckIn: (Emotion) -> Unit) {
     // The five moods stay on screen in both states; when a check-in already exists the
     // logged emotion simply starts out selected (see Daily check in mood 2.0).
     var selected by remember(today?.emotion) { mutableStateOf(today?.emotion) }
@@ -338,7 +338,7 @@ private fun DailyCheckInCard(today: CheckIn?, onOpenCheckIn: () -> Unit) {
         }
         Spacer(modifier = Modifier.size(18.dp))
         Button(
-            onClick = onOpenCheckIn,
+            onClick = { selected?.let(onOpenCheckIn) },
             enabled = selected != null,
             modifier = Modifier.fillMaxWidth().height(52.dp),
             shape = RoundedCornerShape(26.dp),

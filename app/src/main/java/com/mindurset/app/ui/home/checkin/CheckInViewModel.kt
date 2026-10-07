@@ -20,11 +20,13 @@ import java.util.UUID
 class CheckInViewModel(
     private val checkInRepository: CheckInRepository,
     private val sessionStore: SessionStore,
+    /** Emotion already picked on the home card, so the form opens pre-filled. */
+    initialEmotion: Emotion? = null,
     private val clock: () -> Long = System::currentTimeMillis,
     private val newId: () -> String = { UUID.randomUUID().toString() },
 ) : ViewModel() {
 
-    private val _emotion = MutableStateFlow<Emotion?>(null)
+    private val _emotion = MutableStateFlow(initialEmotion)
     val emotion: StateFlow<Emotion?> = _emotion.asStateFlow()
 
     private val _intensity = MutableStateFlow(DEFAULT_INTENSITY)

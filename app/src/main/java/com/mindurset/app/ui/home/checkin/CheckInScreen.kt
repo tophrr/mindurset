@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -24,10 +27,15 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
@@ -56,26 +64,47 @@ import kotlin.math.roundToInt
 fun CheckInScreen(
     onDone: () -> Unit,
     onBack: () -> Unit,
+    initialEmotion: Emotion? = null,
 ) {
     val container = LocalAppContainer.current
     val vm: CheckInViewModel = viewModel {
-        CheckInViewModel(container.checkInRepository, container.sessionStore)
+        CheckInViewModel(
+            checkInRepository = container.checkInRepository,
+            sessionStore = container.sessionStore,
+            initialEmotion = initialEmotion,
+        )
     }
     val emotion by vm.emotion.collectAsStateWithLifecycle()
     val intensity by vm.intensity.collectAsStateWithLifecycle()
     val note by vm.note.collectAsStateWithLifecycle()
     val saving by vm.saving.collectAsStateWithLifecycle()
 
+    val noteFocus = remember { FocusRequester() }
+    val scrollState = rememberScrollState()
+
+    // Reached by pressing Continue on the home card, the note is what the user came for, so
+    // the field takes focus straight away and the column scrolls to the end: the input then
+    // sits just above the keyboard instead of hiding behind it.
+    val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
+    // The pill navigation is hidden behind the keyboard, so its reserved space is dropped
+    // while typing: the note and Continue then sit right above the keyboard.
+    val bottomSpace = if (imeBottom > 0) 16.dp else FloatingNavSpace
+    LaunchedEffect(Unit) { noteFocus.requestFocus() }
+    LaunchedEffect(imeBottom) {
+        if (imeBottom > 0) scrollState.animateScrollTo(scrollState.maxValue)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+            .background(MaterialTheme.colorScheme.background)
+            .imePadding(),
     ) {
         CheckInTopBar(onBack = onBack)
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(start = 20.dp, end = 20.dp, top = 8.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
@@ -124,7 +153,7 @@ fun CheckInScreen(
             OutlinedTextField(
                 value = note,
                 onValueChange = vm::setNote,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().focusRequester(noteFocus),
                 singleLine = true,
                 label = { Text(stringResource(R.string.checkin_note_label)) },
                 placeholder = { Text(stringResource(R.string.checkin_note_placeholder)) },
@@ -138,7 +167,7 @@ fun CheckInScreen(
                 Text(text = stringResource(R.string.checkin_continue))
             }
 
-            Spacer(modifier = Modifier.size(FloatingNavSpace))
+            Spacer(modifier = Modifier.size(bottomSpace))
         }
     }
 }

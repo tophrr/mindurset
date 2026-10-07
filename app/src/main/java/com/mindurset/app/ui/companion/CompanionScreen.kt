@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -37,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.res.stringResource
@@ -56,10 +59,7 @@ import com.mindurset.app.ui.theme.SurfaceWhite
 import com.mindurset.app.ui.theme.MutedGray
 import com.mindurset.app.ui.theme.NavyDeep
 import com.mindurset.app.ui.theme.NavyInk
-import com.mindurset.app.ui.theme.NavyDeep
-import com.mindurset.app.ui.theme.NavyInk
 import com.mindurset.app.ui.theme.PaleBlue
-import com.mindurset.app.ui.theme.SurfaceWhite
 
 /** A selectable companion mode: its chip label plus the canned preview conversation. */
 private data class CompanionMode(
@@ -135,6 +135,9 @@ fun CompanionScreen(
     var typedMessages by remember { mutableStateOf(listOf<String>()) }
     val mode = CompanionModes[selectedMode]
     val scrollState = rememberScrollState()
+    // With the keyboard up the pill navigation is hidden, so the input only needs a small
+    // gap; without it the row keeps clear of the floating pill.
+    val keyboardUp = WindowInsets.ime.getBottom(LocalDensity.current) > 0
 
     // Jump to the newest message so a sent line is never left off-screen.
     LaunchedEffect(typedMessages.size) {
@@ -161,7 +164,8 @@ fun CompanionScreen(
                 .background(CanvasBlue)
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp)
-                .padding(top = 10.dp, bottom = FloatingNavSpace + 26.dp),
+                .imePadding()
+                .padding(top = 10.dp, bottom = if (keyboardUp) 16.dp else FloatingNavSpace + 26.dp),
         ) {
             Column(
                 modifier = Modifier

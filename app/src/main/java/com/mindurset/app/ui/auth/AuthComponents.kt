@@ -10,12 +10,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -81,6 +81,7 @@ fun AuthScreenFrame(content: @Composable ColumnScope.() -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp, vertical = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally,

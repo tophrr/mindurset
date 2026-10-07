@@ -40,9 +40,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.mindurset.app.R
 import com.mindurset.app.di.AppContainer
 import com.mindurset.app.di.LocalAppContainer
@@ -53,6 +53,7 @@ import com.mindurset.app.ui.dashboard.DashboardScreen
 import com.mindurset.app.ui.home.checkin.CheckInScreen
 import com.mindurset.app.ui.info.AboutScreen
 import com.mindurset.app.ui.info.DataConsentScreen
+import com.mindurset.app.domain.model.Emotion
 import com.mindurset.app.domain.model.UserProfile
 import com.mindurset.app.ui.common.LogoutConfirmDialog
 import com.mindurset.app.ui.menu.AppDrawer
@@ -169,15 +170,29 @@ fun MindUrSetNavigation(
                 }
                 composable(Routes.DASHBOARD) {
                     DashboardScreen(
-                        onOpenCheckIn = { navController.navigate(Routes.CHECK_IN) },
+                        onOpenCheckIn = { emotion ->
+                            navController.navigate(Routes.checkIn(emotion.name))
+                        },
                         onOpenReflection = { navController.navigate(Routes.REFLECTION_LIST) },
                         onOpenCompanion = { navController.navigate(Routes.COMPANION) },
                         onOpenTherapy = { navController.navigate(Routes.THERAPY) },
                         onOpenDrawer = openDrawer,
                     )
                 }
-                composable(Routes.CHECK_IN) {
+                composable(
+                    route = Routes.CHECK_IN_ROUTE,
+                    arguments = listOf(
+                        navArgument(Routes.ARG_EMOTION) {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        },
+                    ),
+                ) { entry ->
+                    val preselected = entry.arguments?.getString(Routes.ARG_EMOTION)
+                        ?.let { name -> Emotion.entries.firstOrNull { it.name == name } }
                     CheckInScreen(
+                        initialEmotion = preselected,
                         onDone = { navController.popBackStack() },
                         onBack = { navController.popBackStack() },
                     )
