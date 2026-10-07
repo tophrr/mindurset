@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -34,6 +36,7 @@ import com.mindurset.app.R
 import com.mindurset.app.ui.common.AppCard
 import com.mindurset.app.ui.common.CircleIconButton
 import com.mindurset.app.ui.common.FloatingNavSpace
+import com.mindurset.app.ui.profile.MindTopBar
 import com.mindurset.app.ui.theme.AppIcons
 import com.mindurset.app.ui.theme.CanvasBlue
 import com.mindurset.app.ui.theme.MutedGray
@@ -61,7 +64,17 @@ private val Step3Accent = Color(0xFF7A4FBF)
 fun TherapyScreen(
     onOpenDrawer: () -> Unit,
 ) {
-    Scaffold(containerColor = CanvasBlue) { innerPadding ->
+    Scaffold(
+        containerColor = CanvasBlue,
+        contentWindowInsets = WindowInsets(0),
+        topBar = {
+            MindTopBar(
+                title = stringResource(R.string.therapy_title),
+                onOpenDrawer = onOpenDrawer,
+                navDescription = stringResource(R.string.therapy_open_menu),
+            )
+        },
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -69,15 +82,9 @@ fun TherapyScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
-                .padding(top = 10.dp, bottom = FloatingNavSpace),
+                .padding(top = 4.dp, bottom = FloatingNavSpace),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            ScreenTopBar(
-                title = stringResource(R.string.therapy_title),
-                menuDescription = stringResource(R.string.therapy_open_menu),
-                onOpenDrawer = onOpenDrawer,
-            )
-
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = stringResource(R.string.therapy_heading),
@@ -151,32 +158,6 @@ fun TherapyScreen(
     }
 }
 
-@Composable
-private fun ScreenTopBar(
-    title: String,
-    menuDescription: String,
-    onOpenDrawer: () -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        CircleIconButton(
-            icon = AppIcons.Menu,
-            contentDescription = menuDescription,
-            onClick = onOpenDrawer,
-        )
-        Text(
-            text = title,
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.Center,
-            color = NavyDeep,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-        )
-        Spacer(Modifier.size(42.dp))
-    }
-}
 
 @Composable
 private fun StepCard(

@@ -2,6 +2,9 @@ package com.mindurset.app.ui.companion
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,12 +28,17 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -40,11 +48,14 @@ import com.mindurset.app.R
 import com.mindurset.app.ui.common.AppCard
 import com.mindurset.app.ui.common.CircleIconButton
 import com.mindurset.app.ui.common.FloatingNavSpace
+import com.mindurset.app.ui.profile.MindTopBar
 import com.mindurset.app.ui.theme.AppIcons
 import com.mindurset.app.ui.theme.CanvasBlue
 import com.mindurset.app.ui.theme.OutlineSoft
 import com.mindurset.app.ui.theme.SurfaceWhite
 import com.mindurset.app.ui.theme.MutedGray
+import com.mindurset.app.ui.theme.NavyDeep
+import com.mindurset.app.ui.theme.NavyInk
 import com.mindurset.app.ui.theme.NavyDeep
 import com.mindurset.app.ui.theme.NavyInk
 import com.mindurset.app.ui.theme.PaleBlue
@@ -119,13 +130,30 @@ fun CompanionScreen(
     onOpenDrawer: () -> Unit,
 ) {
     var selectedMode by remember { mutableIntStateOf(0) }
+    var draft by remember { mutableStateOf("") }
+    // Messages the user types are kept in local state only: nothing is sent anywhere.
+    var typedMessages by remember { mutableStateOf(listOf<String>()) }
     val mode = CompanionModes[selectedMode]
+    val scrollState = rememberScrollState()
+
+    // Jump to the newest message so a sent line is never left off-screen.
+    LaunchedEffect(typedMessages.size) {
+        if (typedMessages.isNotEmpty()) scrollState.animateScrollTo(scrollState.maxValue)
+    }
 
     // The shell already applies the top inset; taking the system insets here as well pushed
     // the input row far above the pill navigation. WindowInsets(0) keeps the geometry exact.
     Scaffold(
         containerColor = CanvasBlue,
         contentWindowInsets = WindowInsets(0),
+        // The top bar lives in the Scaffold slot so it never scrolls away.
+        topBar = {
+            MindTopBar(
+                title = stringResource(R.string.companion_title),
+                onOpenDrawer = onOpenDrawer,
+                navDescription = stringResource(R.string.companion_open_menu),
+            )
+        },
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -139,15 +167,9 @@ fun CompanionScreen(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
+                    .verticalScroll(scrollState),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                ScreenTopBar(
-                    title = stringResource(R.string.companion_title),
-                    menuDescription = stringResource(R.string.companion_open_menu),
-                    onOpenDrawer = onOpenDrawer,
-                )
-
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -180,6 +202,11 @@ fun CompanionScreen(
                     }
                 }
 
+                typedMessages.forEach { message ->
+                    ChatBubble(text = message, fromUser = true)
+                    Spacer(Modifier.height(12.dp))
+                }
+
                 Text(
                     text = stringResource(R.string.companion_note),
                     color = MutedGray,
@@ -193,6 +220,14 @@ fun CompanionScreen(
             Spacer(Modifier.height(12.dp))
 
             MessageInputBar(
+                value = draft,
+                onValueChange = { draft = it },
+                onSend = {
+                    if (draft.isNotBlank()) {
+                        typedMessages = typedMessages + draft.trim()
+                        draft = ""
+                    }
+                },
                 placeholder = stringResource(R.string.companion_input_placeholder),
                 sendDescription = stringResource(R.string.companion_send),
             )
@@ -200,32 +235,6 @@ fun CompanionScreen(
     }
 }
 
-@Composable
-private fun ScreenTopBar(
-    title: String,
-    menuDescription: String,
-    onOpenDrawer: () -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        CircleIconButton(
-            icon = AppIcons.Menu,
-            contentDescription = menuDescription,
-            onClick = onOpenDrawer,
-        )
-        Text(
-            text = title,
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.Center,
-            color = NavyDeep,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-        )
-        Spacer(Modifier.size(42.dp))
-    }
-}
 
 @Composable
 private fun ModeChip(
@@ -300,6 +309,9 @@ private fun ChatBubble(
 /** Floating white input capsule that stays pinned above the navigation pill. */
 @Composable
 private fun MessageInputBar(
+    value: String,
+    onValueChange: (String) -> Unit,
+    onSend: () -> Unit,
     placeholder: String,
     sendDescription: String,
 ) {
@@ -314,32 +326,45 @@ private fun MessageInputBar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text(
-                text = placeholder,
-                modifier = Modifier.weight(1f),
-                color = MutedGray,
-                fontSize = 15.sp,
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = Modifier.weight(1f).padding(vertical = 12.dp),
+                singleLine = true,
+                textStyle = TextStyle(color = NavyInk, fontSize = 15.sp),
+                cursorBrush = SolidColor(NavyDeep),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                keyboardActions = KeyboardActions(onSend = { onSend() }),
+                decorationBox = { innerTextField ->
+                    if (value.isEmpty()) {
+                        Text(text = placeholder, color = MutedGray, fontSize = 15.sp)
+                    }
+                    innerTextField()
+                },
             )
-            DisabledSendButton(contentDescription = sendDescription)
+            SendButton(enabled = value.isNotBlank(), onClick = onSend, contentDescription = sendDescription)
         }
     }
 }
 
 @Composable
-private fun DisabledSendButton(contentDescription: String) {
+private fun SendButton(enabled: Boolean, onClick: () -> Unit, contentDescription: String) {
     val shape = CircleShape
-    Box(
-        modifier = Modifier
-            .size(46.dp)
-            .clip(shape)
-            .background(PaleBlue),
-        contentAlignment = Alignment.Center,
+    Surface(
+        shape = shape,
+        color = if (enabled) NavyDeep else PaleBlue,
+        onClick = onClick,
+        modifier = Modifier.size(46.dp),
+        enabled = enabled,
     ) {
-        Icon(
-            imageVector = AppIcons.Companion,
-            contentDescription = contentDescription,
-            modifier = Modifier.size(22.dp),
-            tint = MutedGray,
-        )
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = AppIcons.Companion,
+                contentDescription = contentDescription,
+                modifier = Modifier.size(20.dp),
+                tint = if (enabled) SurfaceWhite else MutedGray,
+            )
+        }
     }
 }
+

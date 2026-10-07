@@ -92,6 +92,14 @@ fun MindUrSetNavigation(
 
     val openDrawer: () -> Unit = { scope.launch { drawerState.open() } }
     val closeDrawer: () -> Unit = { scope.launch { drawerState.close() } }
+    // A top-level destination that is already on the back stack is reached by popping to it,
+    // which keeps its state and always returns the user to Home from a pushed screen.
+    val goToDestination: (String) -> Unit = { route ->
+        val popped = navController.popBackStack(route, inclusive = false)
+        if (!popped) {
+            navController.navigate(route) { launchSingleTop = true }
+        }
+    }
     val navigate: (String) -> Unit = { route ->
         closeDrawer()
         if (route == "logout") {
@@ -99,11 +107,7 @@ fun MindUrSetNavigation(
                 popUpTo(0) { inclusive = true }
             }
         } else if (route != currentRoute) {
-            navController.navigate(route) {
-                popUpTo(Routes.DASHBOARD) { saveState = true }
-                launchSingleTop = true
-                restoreState = true
-            }
+            goToDestination(route)
         }
     }
 
