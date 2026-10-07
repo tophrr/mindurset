@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mindurset.app.R
@@ -387,7 +388,11 @@ private fun MoodOption(
             )
             Text(
                 text = emotionHint(emotion),
-                style = MaterialTheme.typography.labelSmall,
+                // The longest hint ("Overwhelmed") has to fit a fifth of the card width:
+                // 8 sp fits on one line, and maxLines 2 is only a safety net so a longer
+                // translation wraps instead of being clipped.
+                fontSize = 8.sp,
+                lineHeight = 11.sp,
                 color = if (selected) accent else MutedGray,
                 textAlign = TextAlign.Center,
                 maxLines = 2,

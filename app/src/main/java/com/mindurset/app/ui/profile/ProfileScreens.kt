@@ -47,6 +47,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mindurset.app.R
 import com.mindurset.app.di.LocalAppContainer
 import com.mindurset.app.ui.common.AppCard
+import com.mindurset.app.ui.common.LogoutConfirmDialog
 import com.mindurset.app.ui.common.FloatingNavSpace
 import com.mindurset.app.ui.common.LoadingState
 import com.mindurset.app.ui.common.SegmentedTabs
@@ -246,30 +247,18 @@ private fun LogoutDialog(
     onKeepData: () -> Unit,
     onDeleteData: () -> Unit,
 ) {
-    AlertDialog(
-        onDismissRequest = onCancel,
-        title = { Text(stringResource(R.string.profile_logout_title)) },
-        text = { Text(stringResource(R.string.profile_logout_message)) },
-        confirmButton = {
-            Button(onClick = onKeepData) {
-                Text(stringResource(R.string.profile_logout_keep))
-            }
-        },
-        dismissButton = {
-            Column(horizontalAlignment = Alignment.End) {
-                TextButton(onClick = onDeleteData) {
-                    Text(
-                        text = stringResource(R.string.profile_logout_delete),
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
-                TextButton(onClick = onCancel) {
-                    Text(stringResource(R.string.profile_logout_cancel))
-                }
-            }
-        },
+    LogoutConfirmDialog(
+        title = stringResource(R.string.profile_logout_title),
+        message = stringResource(R.string.profile_logout_message),
+        keepLabel = stringResource(R.string.profile_logout_keep),
+        cancelLabel = stringResource(R.string.profile_logout_cancel),
+        deleteLabel = stringResource(R.string.profile_logout_delete),
+        onKeepData = onKeepData,
+        onCancel = onCancel,
+        onDeleteData = onDeleteData,
     )
 }
+
 
 // ---------------------------------------------------------------------------
 // Profile edit — display name only

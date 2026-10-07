@@ -55,7 +55,7 @@
     <string name="checkin_hint_happy">Feeling good</string>
     <string name="checkin_hint_calm">At ease</string>
     <string name="checkin_hint_low">Flat, tired</string>
-    <string name="checkin_hint_anxious">Worried, uneasy</string>
+    <string name="checkin_hint_anxious">Uneasy</string>
     <string name="checkin_hint_stressed">Overwhelmed</string>
     <string name="checkin_intensity_label">How strong is this feeling?</string>
     <string name="checkin_intensity_value">%1$d / 10</string>

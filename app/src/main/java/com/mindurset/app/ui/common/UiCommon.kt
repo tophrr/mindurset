@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,6 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -19,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -193,6 +198,61 @@ fun Emotion.tint(): Color = when (this) {
     Emotion.LOW -> MoodLow
     Emotion.ANXIOUS -> MoodAnxious
     Emotion.STRESSED -> MoodStressed
+}
+
+/** Confirmation used by every log-out entry point: three stacked full-width actions. */
+@Composable
+fun LogoutConfirmDialog(
+    title: String,
+    message: String,
+    keepLabel: String,
+    cancelLabel: String,
+    deleteLabel: String,
+    onKeepData: () -> Unit,
+    onCancel: () -> Unit,
+    onDeleteData: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = { Text(title) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(6.dp))
+                Button(
+                    onClick = onKeepData,
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    shape = RoundedCornerShape(24.dp),
+                ) {
+                    Text(keepLabel, maxLines = 1, softWrap = false)
+                }
+                OutlinedButton(
+                    onClick = onCancel,
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    shape = RoundedCornerShape(24.dp),
+                ) {
+                    Text(cancelLabel, maxLines = 1, softWrap = false)
+                }
+                TextButton(
+                    onClick = onDeleteData,
+                    modifier = Modifier.fillMaxWidth().height(44.dp),
+                ) {
+                    Text(
+                        text = deleteLabel,
+                        color = MaterialTheme.colorScheme.error,
+                        maxLines = 1,
+                        softWrap = false,
+                    )
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {},
+    )
 }
 
 /** Two-option segmented control: Weekly/Monthly, Recent/Calendar. */

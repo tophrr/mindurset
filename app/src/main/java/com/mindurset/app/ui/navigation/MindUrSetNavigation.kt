@@ -54,6 +54,7 @@ import com.mindurset.app.ui.home.checkin.CheckInScreen
 import com.mindurset.app.ui.info.AboutScreen
 import com.mindurset.app.ui.info.DataConsentScreen
 import com.mindurset.app.domain.model.UserProfile
+import com.mindurset.app.ui.common.LogoutConfirmDialog
 import com.mindurset.app.ui.menu.AppDrawer
 import com.mindurset.app.ui.profile.ProfileEditScreen
 import com.mindurset.app.ui.profile.ProfileScreen
@@ -234,27 +235,15 @@ fun MindUrSetNavigation(
             }
 
             if (logoutDialogVisible) {
-                AlertDialog(
-                    onDismissRequest = { logoutDialogVisible = false },
-                    title = { Text(stringResource(R.string.profile_logout_title)) },
-                    text = {
-                        Column {
-                            Text(stringResource(R.string.profile_logout_message))
-                            TextButton(onClick = { performLogout(true) }) {
-                                Text(stringResource(R.string.profile_logout_delete))
-                            }
-                        }
-                    },
-                    confirmButton = {
-                        TextButton(onClick = { performLogout(false) }) {
-                            Text(stringResource(R.string.profile_logout_keep))
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { logoutDialogVisible = false }) {
-                            Text(stringResource(R.string.profile_logout_cancel))
-                        }
-                    },
+                LogoutConfirmDialog(
+                    title = stringResource(R.string.profile_logout_title),
+                    message = stringResource(R.string.profile_logout_message),
+                    keepLabel = stringResource(R.string.profile_logout_keep),
+                    cancelLabel = stringResource(R.string.profile_logout_cancel),
+                    deleteLabel = stringResource(R.string.profile_logout_delete),
+                    onKeepData = { performLogout(false) },
+                    onCancel = { logoutDialogVisible = false },
+                    onDeleteData = { performLogout(true) },
                 )
             }
         }
@@ -301,14 +290,18 @@ private fun FloatingPillNav(currentRoute: String?, onNavigate: (String) -> Unit)
             ) {
                 items.forEach { (label, route, icon) ->
                     val selected = currentRoute == route
-                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier.weight(1f).padding(horizontal = 3.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
                         Surface(
                             shape = RoundedCornerShape(22.dp),
                             color = if (selected) MaterialTheme.colorScheme.primary else SurfaceWhite,
                             onClick = { onNavigate(route) },
+                            modifier = Modifier.fillMaxWidth(),
                         ) {
                             Column(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(3.dp),
                             ) {

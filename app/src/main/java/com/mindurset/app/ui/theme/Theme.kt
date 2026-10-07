@@ -1,6 +1,5 @@
 package com.mindurset.app.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -38,9 +37,13 @@ private val DarkColors = darkColorScheme(
     outline = MutedGray,
 )
 
+/**
+ * The app ships light only: the calm palette is part of the product, so a device-wide
+ * dark mode must not repaint it. [darkTheme] stays for a future opt-in theme setting.
+ */
 @Composable
 fun MindUrSetTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     MaterialTheme(

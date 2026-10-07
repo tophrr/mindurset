@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -120,14 +121,19 @@ fun CompanionScreen(
     var selectedMode by remember { mutableIntStateOf(0) }
     val mode = CompanionModes[selectedMode]
 
-    Scaffold(containerColor = CanvasBlue) { innerPadding ->
+    // The shell already applies the top inset; taking the system insets here as well pushed
+    // the input row far above the pill navigation. WindowInsets(0) keeps the geometry exact.
+    Scaffold(
+        containerColor = CanvasBlue,
+        contentWindowInsets = WindowInsets(0),
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(CanvasBlue)
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp)
-                .padding(top = 10.dp, bottom = FloatingNavSpace + 8.dp),
+                .padding(top = 10.dp, bottom = FloatingNavSpace + 26.dp),
         ) {
             Column(
                 modifier = Modifier
@@ -300,7 +306,7 @@ private fun MessageInputBar(
     Surface(
         shape = RoundedCornerShape(26.dp),
         color = SurfaceWhite,
-        shadowElevation = 6.dp,
+        shadowElevation = 0.dp,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
