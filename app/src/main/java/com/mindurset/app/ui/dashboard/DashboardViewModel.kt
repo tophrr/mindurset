@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mindurset.app.domain.model.CheckIn
 import com.mindurset.app.domain.model.JournalEntry
+import com.mindurset.app.domain.model.SessionInfo
 import com.mindurset.app.domain.model.UserProfile
 import com.mindurset.app.domain.repository.CheckInRepository
 import com.mindurset.app.domain.repository.JournalRepository
@@ -47,13 +48,12 @@ class DashboardViewModel(
 ) : ViewModel() {
 
     val uiState: StateFlow<DashboardUiState> = sessionStore.session
-        .map { it?.userId }
         .distinctUntilChanged()
-        .flatMapLatest { userId ->
-            if (userId == null) {
-                flowOf<DashboardUiState>(DashboardUiState.Empty)
+        .flatMapLatest { session ->
+            if (session == null) {
+                flowOf<DashboardUiState>(DashboardUiState.Content(DashboardSummary.EMPTY))
             } else {
-                dashboardStream(userId)
+                dashboardStream(session)
             }
         }
         .catch { emit(DashboardUiState.Error(it.message)) }
@@ -63,7 +63,9 @@ class DashboardViewModel(
             initialValue = DashboardUiState.Loading,
         )
 
-    private fun dashboardStream(userId: String): Flow<DashboardUiState> {
+    private fun dashboardStream(session: SessionInfo): Flow<DashboardUiState> {
+        val userId = session.userId
+        val fallbackName = session.email.substringBefore('@').ifBlank { "there" }
         val sinceStartOfDay = summariseDashboard.startOfToday(now())
         return combine(
             profileRepository.observe(userId),
@@ -77,16 +79,24 @@ class DashboardViewModel(
             entries: List<JournalEntry>,
             recentCheckIns: List<CheckIn> ->
             summariseDashboard.summarise(
-                profile = profile,
+                // A profile row can be missing or unnamed right after signing in; the greeting
+                // then falls back to the local part of the session email instead of hiding it.
+                profile = profile?.takeIf { it.displayName.isNotBlank() }
+                    ?: (profile ?: UserProfile(
+                        userId = userId,
+                        displayName = fallbackName,
+                        joinedAt = now(),
+                        reminderEnabled = false,
+                        reminderHour = 19,
+                        language = "en",
+                    )).copy(displayName = fallbackName),
                 journalCount = journalCount,
                 checkInCount = checkInCount,
                 journalEntries = entries,
                 recentCheckIns = recentCheckIns,
                 nowEpochMillis = now(),
             )
-        }.map { summary ->
-            if (summary.hasAnyData) DashboardUiState.Content(summary) else DashboardUiState.Empty
-        }
+        }.map { summary -> DashboardUiState.Content(summary) }
     }
 
     private companion object {

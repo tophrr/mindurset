@@ -47,9 +47,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mindurset.app.R
 import com.mindurset.app.di.LocalAppContainer
 import com.mindurset.app.domain.model.CheckIn
+import com.mindurset.app.domain.usecase.DashboardSummary
 import com.mindurset.app.domain.model.Emotion
 import com.mindurset.app.domain.model.JournalEntry
-import com.mindurset.app.domain.usecase.DashboardSummary
 import com.mindurset.app.ui.common.AppCard
 import com.mindurset.app.ui.common.CircleIconButton
 import com.mindurset.app.ui.common.EmptyState
@@ -108,15 +108,17 @@ fun DashboardScreen(
                         ?: stringResource(R.string.dashboard_error_body),
                 )
 
-            is DashboardUiState.Empty -> {
-                DashboardHeader(displayName = "", onOpenDrawer = onOpenDrawer)
-                EmptyState(
-                    title = stringResource(R.string.dashboard_empty_title),
-                    body = stringResource(R.string.dashboard_empty_body),
-                    actionLabel = stringResource(R.string.dashboard_empty_action),
-                    onAction = onOpenCheckIn,
+            // Nothing recorded yet: show the whole dashboard with zero counts rather than
+            // replacing it with a placeholder page.
+            is DashboardUiState.Empty ->
+                DashboardBody(
+                    summary = DashboardSummary.EMPTY,
+                    onOpenCheckIn = onOpenCheckIn,
+                    onOpenReflection = onOpenReflection,
+                    onOpenCompanion = onOpenCompanion,
+                    onOpenTherapy = onOpenTherapy,
+                    onOpenDrawer = onOpenDrawer,
                 )
-            }
 
             is DashboardUiState.Content ->
                 DashboardBody(

@@ -19,6 +19,21 @@ data class DashboardSummary(
 ) {
     /** No check-ins and no reflections recorded for this user yet. */
     val hasAnyData: Boolean get() = journalCount > 0 || checkInCount > 0
+
+    companion object {
+        /**
+         * The dashboard for an account with nothing recorded yet. The screen still renders
+         * every card, only with zero counts and empty sections — a first-run user must see
+         * the same product, not a blank page.
+         */
+        val EMPTY = DashboardSummary(
+            displayName = "",
+            journalCount = 0,
+            checkInCount = 0,
+            latestReflections = emptyList(),
+            todayCheckIn = null,
+        )
+    }
 }
 
 /**
