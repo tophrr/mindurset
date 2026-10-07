@@ -10,7 +10,7 @@ val PaleBlue = Color(0xFFE3ECFB)        // soft surface inside cards
 val Lavender = Color(0xFFE0D8E8)
 val SurfaceSoft = CanvasBlue
 val SurfaceWhite = Color(0xFFFFFFFF)
-val MutedGray = Color(0xFF8A93A6)       // secondary text, contrast-checked on white
+val MutedGray = Color(0xFF565E70)       // secondary text: >=4.69:1 on white, canvas, pale blue and lavender
 val OutlineSoft = Color(0xFFD3DDF0)
 val DangerRed = Color(0xFFB3261E)
 val SuccessGreen = Color(0xFF2E7D32)

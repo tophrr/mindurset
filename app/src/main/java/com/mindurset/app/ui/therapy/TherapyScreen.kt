@@ -46,9 +46,9 @@ import com.mindurset.app.ui.theme.SurfaceWhite
  * box), the accent drives titles, labels, chip text and the action button.
  */
 private val Step1Tint = Color(0xFFE2F2E4)
-private val Step1Accent = Color(0xFF2F7D4F)
+private val Step1Accent = Color(0xFF2A7047)   // 5.15:1 on its tint, 5.99:1 white-on-accent
 private val Step2Tint = Color(0xFFE3EDFB)
-private val Step2Accent = Color(0xFF2F6FBF)
+private val Step2Accent = Color(0xFF2A63AC)   // 5.11:1 on its tint, 6.04:1 white-on-accent
 private val Step3Tint = Color(0xFFF1EAFB)
 private val Step3Accent = Color(0xFF7A4FBF)
 
