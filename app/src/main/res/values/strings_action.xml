@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="action_title">Today’s Action</string>
+    <string name="action_nav_label">Actions</string>
+    <string name="action_back_cd">Back</string>
+    <string name="action_empty_body">Choose one small step that feels possible today.</string>
+    <string name="action_add">Add an action</string>
+    <string name="action_today_group">For today</string>
+    <string name="action_done_group">Done today</string>
+    <string name="action_tomorrow_group">Tomorrow</string>
+    <string name="action_minutes">%1$d min</string>
+    <string name="action_complete_cd">Mark %1$s done</string>
+    <string name="action_edit_cd">Edit %1$s</string>
+    <string name="action_snooze_cd">Move %1$s to tomorrow</string>
+    <string name="action_loading">Loading your actions…</string>
+    <string name="action_error">Your actions could not be loaded.</string>
+    <string name="action_retry">Try again</string>
+    <string name="action_dialog_add_title">Add an action</string>
+    <string name="action_dialog_edit_title">Edit action</string>
+    <string name="action_title_label">Action</string>
+    <string name="action_minutes_label">Minutes</string>
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_invalid">Enter a title and a duration from 1 to 180 minutes.</string>
+    <string name="action_sample_walk">Take a short walk</string>
+    <string name="action_sample_water">Drink a glass of water</string>
+    <string name="action_sample_breathe">Take three slow breaths</string>
+    <string name="action_duration_walk">10 minutes</string>
+    <string name="action_duration_water">2 minutes</string>
+    <string name="action_duration_breathe">1 minute</string>
+    <string name="dashboard_action_title">Today’s Action</string>
+    <string name="dashboard_action_body">A few small steps, at your pace.</string>
+    <string name="dashboard_action_open">View actions</string>
+</resources>

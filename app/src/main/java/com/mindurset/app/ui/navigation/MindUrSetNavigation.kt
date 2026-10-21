@@ -48,6 +48,7 @@ import com.mindurset.app.di.AppContainer
 import com.mindurset.app.di.LocalAppContainer
 import com.mindurset.app.domain.model.Emotion
 import com.mindurset.app.domain.model.UserProfile
+import com.mindurset.app.ui.action.ActionScreen
 import com.mindurset.app.ui.auth.LoginScreen
 import com.mindurset.app.ui.auth.RegisterScreen
 import com.mindurset.app.ui.common.LogoutConfirmDialog
@@ -173,8 +174,12 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
                         onOpenReflection = { navController.navigate(Routes.REFLECTION_LIST) },
                         onOpenCompanion = { navController.navigate(Routes.COMPANION) },
                         onOpenTherapy = { navController.navigate(Routes.THERAPY) },
+                        onOpenActions = { navController.navigate(Routes.ACTION) },
                         onOpenDrawer = openDrawer,
                     )
+                }
+                composable(Routes.ACTION) {
+                    ActionScreen(onBack = { goToDestination(Routes.DASHBOARD) })
                 }
                 composable(
                     route = Routes.CHECK_IN_ROUTE,
@@ -281,6 +286,7 @@ private fun NavHostController.toDashboard() {
 private fun FloatingPillNav(currentRoute: String?, onNavigate: (String) -> Unit) {
     val items = listOf(
         Triple("Home", Routes.DASHBOARD, AppIcons.Home),
+        Triple(stringResource(R.string.action_nav_label), Routes.ACTION, AppIcons.Check),
         Triple("Therapy", Routes.THERAPY, AppIcons.Therapy),
         Triple("Companion", Routes.COMPANION, AppIcons.Companion),
         Triple("Profile", Routes.PROFILE, AppIcons.Profile),
