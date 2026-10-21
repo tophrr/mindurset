@@ -6,6 +6,17 @@ traced back to a row in the project traceability matrix.
 
 Agents read `AGENTS.md`. This file is the human version of the same contract.
 
+## 0. First day
+
+1. Accept the GitHub invitation. Until you do, you cannot push and you cannot open a pull request.
+2. Clone, create `local.properties` with your SDK path, and turn on commit signing (section 1).
+3. Run the build and test command in section 1. It must end in `BUILD SUCCESSFUL` with 7 unit tests.
+4. Install the debug APK on your own phone and open it once.
+5. Read `AGENTS.md` down to the section called Pitfalls, then come back to section 3.
+
+If any of those five steps fails, say it in the team chat before you write any code. A person who
+cannot build the project cannot review it, and reviewing is half of this project.
+
 ## 1. Before you start
 
 | Requirement | How |
@@ -85,8 +96,9 @@ rotate first and clean history second.
 - Decisions: `docs/decisions/NNNN-<slug>.md`, one file per decision, never edited after it is
   accepted; supersede it with a new file instead.
 - Test plans and device evidence: `docs/testing/`.
-- Course documents (proposal, use case model, activity diagrams, iteration notes) stay outside this
-  repository, in the `mindurset-docs` folder. Do not copy them in.
+- Course documents (proposal, use case model, activity diagrams, iteration notes) are not in this
+  repository. The project manager keeps them, and they must never be copied in. If you need the
+  traceability matrix, ask for the current PDF; do not link to a path only one machine has.
 
 ## 8. When something is blocked
 

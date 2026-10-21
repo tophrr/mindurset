@@ -111,9 +111,10 @@ traceability row. Commits are signed (`commit.gpgsign=true`). Agent commits add 
 ## Where documents live
 
 - Architecture and scope decisions: `docs/decisions/NNNN-<slug>.md`, one file per decision.
-- Test plans and device evidence: `docs/testing/`.
-- Course documents (proposal, use case model, activity diagrams, iteration notes) live outside this
-  repository in `~/Hermes/mindurset-docs` and must never be copied in.
+- Test plans, usability notes and device evidence: `docs/testing/`.
+- Course documents (proposal, use case model, activity diagrams, iteration notes) are not in this
+  repository. The project manager keeps them, and they must never be copied in. When a task needs
+  the traceability matrix, ask for the current PDF rather than pointing at a local path.
 
 ## Working alongside other agents
 
