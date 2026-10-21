@@ -6,13 +6,21 @@ import com.mindurset.app.data.local.MindUrSetDatabase
 import com.mindurset.app.data.prefs.DataStorePreferences
 import com.mindurset.app.data.repository.AuthRepositoryImpl
 import com.mindurset.app.data.repository.CheckInRepositoryImpl
+import com.mindurset.app.data.repository.ConsentRepositoryImpl
 import com.mindurset.app.data.repository.JournalRepositoryImpl
+import com.mindurset.app.data.repository.MicroActionRepositoryImpl
 import com.mindurset.app.data.repository.ProfileRepositoryImpl
+import com.mindurset.app.data.repository.SafetyRepositoryImpl
+import com.mindurset.app.data.repository.SessionRepositoryImpl
 import com.mindurset.app.domain.repository.AuthRepository
 import com.mindurset.app.domain.repository.CheckInRepository
+import com.mindurset.app.domain.repository.ConsentRepository
 import com.mindurset.app.domain.repository.JournalRepository
+import com.mindurset.app.domain.repository.MicroActionRepository
 import com.mindurset.app.domain.repository.PreferencesStore
 import com.mindurset.app.domain.repository.ProfileRepository
+import com.mindurset.app.domain.repository.SafetyRepository
+import com.mindurset.app.domain.repository.SessionRepository
 import com.mindurset.app.domain.repository.SessionStore
 
 /**
@@ -41,6 +49,18 @@ class AppContainer(context: Context) {
     val checkInRepository: CheckInRepository = CheckInRepositoryImpl(database.checkInDao())
 
     val profileRepository: ProfileRepository = ProfileRepositoryImpl(database.profileDao())
+
+    val sessionRepository: SessionRepository =
+        SessionRepositoryImpl(
+            sessionDao = database.reframeSessionDao(),
+            messageDao = database.sessionMessageDao(),
+        )
+
+    val microActionRepository: MicroActionRepository = MicroActionRepositoryImpl(database.microActionDao())
+
+    val safetyRepository: SafetyRepository = SafetyRepositoryImpl(database.safetyEventDao())
+
+    val consentRepository: ConsentRepository = ConsentRepositoryImpl(database.consentRecordDao())
 }
 
 val LocalAppContainer =

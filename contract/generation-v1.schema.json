@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mindurset.app/contract/generation-v1.schema.json",
+  "title": "Generation response v1",
+  "description": "Frozen contract for a reframe or chat response. The Android client and the Cloudflare Worker both read this file; changing it is a v2.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "message",
+    "distortion",
+    "perspectives",
+    "micro_action",
+    "source_ids",
+    "risk_level",
+    "prompt_version",
+    "model_version"
+  ],
+  "properties": {
+    "message": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 600
+    },
+    "distortion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "perspectives": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 3,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+      }
+    },
+    "micro_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "minutes"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "minutes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 15
+        }
+      }
+    },
+    "source_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9-]+#[a-z0-9-]+$"
+      }
+    },
+    "risk_level": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "confidence"],
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["L0", "L1", "L2", "L3"]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "prompt_version": {
+      "type": "string",
+      "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "model_version": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

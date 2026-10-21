@@ -11,9 +11,16 @@ import androidx.room.RoomDatabase
         UserProfileEntity::class,
         CheckInLogEntity::class,
         JournalEntryEntity::class,
+        ReframeSessionEntity::class,
+        SessionMessageEntity::class,
+        SessionSummaryEntity::class,
+        MicroActionEntity::class,
+        SafetyEventEntity::class,
+        TrustedContactEntity::class,
+        ConsentRecordEntity::class,
     ],
-    version = 1,
-    exportSchema = false,
+    version = 2,
+    exportSchema = true,
 )
 abstract class MindUrSetDatabase : RoomDatabase() {
     abstract fun accountDao(): AccountDao
@@ -24,10 +31,26 @@ abstract class MindUrSetDatabase : RoomDatabase() {
 
     abstract fun journalDao(): JournalDao
 
+    abstract fun reframeSessionDao(): ReframeSessionDao
+
+    abstract fun sessionMessageDao(): SessionMessageDao
+
+    abstract fun sessionSummaryDao(): SessionSummaryDao
+
+    abstract fun microActionDao(): MicroActionDao
+
+    abstract fun safetyEventDao(): SafetyEventDao
+
+    abstract fun trustedContactDao(): TrustedContactDao
+
+    abstract fun consentRecordDao(): ConsentRecordDao
+
     companion object {
         const val NAME = "mindurset.db"
 
         fun build(context: Context): MindUrSetDatabase =
-            Room.databaseBuilder(context.applicationContext, MindUrSetDatabase::class.java, NAME).build()
+            Room.databaseBuilder(context.applicationContext, MindUrSetDatabase::class.java, NAME)
+                .addMigrations(MIGRATION_1_2)
+                .build()
     }
 }

@@ -1,0 +1,19 @@
+{
+  "message": "You wrote that you will fail no matter what. That reads like all-or-nothing thinking: one exam is being treated as the whole degree.",
+  "distortion": "all-or-nothing thinking",
+  "perspectives": [
+    "You passed other exams after bad weeks, so this week is evidence about this week, not about you.",
+    "A result you are unhappy with is information about one paper, and the next attempt stays open."
+  ],
+  "micro_action": {
+    "title": "Open the exam outline for ten minutes",
+    "minutes": 10
+  },
+  "source_ids": ["who-stress-01#p3", "cbt-thought-record#s2"],
+  "risk_level": {
+    "level": "L0",
+    "confidence": 0.92
+  },
+  "prompt_version": "v1.0.0",
+  "model_version": "stub-v1"
+}
