@@ -3,9 +3,9 @@
 Instructions for AI coding agents working in this repository. A human version of the same rules
 lives in `CONTRIBUTING.md`. Where the two disagree, this file wins.
 
-This file is scoped to this repository. The `AGENTS.md` in the parent workspace
-(`~/Hermes/AGENTS.md`) governs where files may be created on that machine, not how this code is
-built or committed. For anything inside `mindurset-app`, this file wins.
+This file is scoped to this repository. A workspace-level `AGENTS.md` on someone's machine governs
+where files may be created there, not how this code is built or committed. For anything inside this
+repository, this file wins.
 
 ## What this repository is
 
@@ -28,7 +28,7 @@ no AI call, no network permission in the app; everything is on the device.
 ## Commands
 
 ```bash
-cd ~/Hermes/mindurset-app
+# Run from the repository root.
 
 # build + unit tests (always take the build lock)
 flock /tmp/mindurset-gradle.lock ./gradlew :app:assembleDebug :app:testDebugUnitTest --console=plain
@@ -105,14 +105,15 @@ test(domain): cover the triage threshold
 ```
 
 Optional body explains why, not what. Last line carries `Refs: F-03, UC-03` when it closes a
-traceability row. Commits are signed (`commit.gpgsign=true`). Agent commits add a trailer
-`Assisted-by: <tool name>`. One commit per logical change; no work-in-progress commits on `main`.
+traceability row. Commits are signed (`commit.gpgsign=true`). The member who commits a change owns
+it, whatever tool helped write it. One commit per logical change; no work-in-progress commits on
+`main`.
 
 ## Where documents live
 
 - Architecture and scope decisions: `docs/decisions/NNNN-<slug>.md`, one file per decision.
 - Test plans, usability notes and device evidence: `docs/testing/`.
-- Course documents (proposal, use case model, activity diagrams, iteration notes) are not in this
+- Project documents (proposal, use case model, activity diagrams, iteration notes) are not in this
   repository. The project manager keeps them, and they must never be copied in. When a task needs
   the traceability matrix, ask for the current PDF rather than pointing at a local path.
 
