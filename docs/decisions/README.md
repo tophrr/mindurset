@@ -24,3 +24,4 @@ Deciders:
 | # | Decision | Status |
 | --- | --- | --- |
 | 0001 | Repository conventions, access model and quality gates | accepted |
+| 0002 | Review gate rollout, staged | accepted |
