@@ -1,8 +1,13 @@
 package com.mindurset.app.domain.repository
 
 import com.mindurset.app.domain.model.CheckIn
+import com.mindurset.app.domain.model.ConsentRecord
 import com.mindurset.app.domain.model.JournalEntry
+import com.mindurset.app.domain.model.MicroAction
+import com.mindurset.app.domain.model.ReframeSession
+import com.mindurset.app.domain.model.SafetyEvent
 import com.mindurset.app.domain.model.SessionInfo
+import com.mindurset.app.domain.model.SessionMessage
 import com.mindurset.app.domain.model.UserAccount
 import com.mindurset.app.domain.model.UserProfile
 import kotlinx.coroutines.flow.Flow
@@ -72,4 +77,46 @@ interface PreferencesStore {
     suspend fun setLanguage(language: String)
 
     suspend fun setTheme(theme: String)
+}
+
+/** A reframe session and its messages. Steps run 0..2, step 3 means completed. */
+interface SessionRepository {
+    suspend fun start(userId: String, checkInId: String?, now: Long): ReframeSession
+
+    suspend fun findActive(userId: String): ReframeSession?
+
+    suspend fun findById(id: String): ReframeSession?
+
+    suspend fun save(session: ReframeSession)
+
+    suspend fun appendMessage(message: SessionMessage)
+
+    suspend fun messages(sessionId: String): List<SessionMessage>
+}
+
+interface MicroActionRepository {
+    fun observeOpen(userId: String): Flow<List<MicroAction>>
+
+    suspend fun add(action: MicroAction)
+
+    suspend fun markDone(id: String, at: Long)
+
+    suspend fun snooze(id: String, until: Long)
+}
+
+/** Safety events never carry the text that triggered them. */
+interface SafetyRepository {
+    suspend fun record(event: SafetyEvent)
+
+    suspend fun countSince(userId: String, since: Long): Int
+}
+
+interface ConsentRepository {
+    fun observeAll(userId: String): Flow<List<ConsentRecord>>
+
+    suspend fun find(userId: String, kind: String): ConsentRecord?
+
+    suspend fun grant(record: ConsentRecord)
+
+    suspend fun revoke(id: String, at: Long)
 }
