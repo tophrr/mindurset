@@ -1,0 +1,95 @@
+# Contributing to Mind-Ur-Set
+
+This repository is worked on by four people and several AI agents. The rules below exist so that we
+can all commit on the same day without stepping on each other, and so that every change can be
+traced back to a row in the project traceability matrix.
+
+Agents read `AGENTS.md`. This file is the human version of the same contract.
+
+## 1. Before you start
+
+| Requirement | How |
+| --- | --- |
+| JDK 21 or newer | Android Studio's bundled JBR is used by Gradle through `~/.gradle/gradle.properties` |
+| Android SDK with platform 37 | `~/Android/Sdk`, set in `local.properties` (never committed) |
+| Git signing | `git config --global commit.gpgsign true` with your own key, so your commits show as verified |
+| Build lock | Every Gradle call: `flock /tmp/mindurset-gradle.lock ./gradlew ...` |
+
+```bash
+git clone https://github.com/tophrr/mindurset.git
+cd mindurset
+./gradlew :app:assembleDebug :app:testDebugUnitTest
+```
+
+## 2. Branch model
+
+`main` is append-only and protected. Nobody pushes to it directly, including the project manager.
+
+| Branch | Use |
+| --- | --- |
+| `main` | Only receives merges from pull requests |
+| `feat/<scope>-<slug>` | A feature, for example `feat/triage-offer-card` |
+| `fix/<scope>-<slug>` | A bug fix |
+| `test/<scope>-<slug>` | Tests only |
+| `docs/<scope>-<slug>` | Documents and templates only |
+| `agent/<tool>/<slug>` | Work produced by an AI agent, one worktree per agent |
+
+Rebase your branch on `main` before requesting review. Never merge `main` into a feature branch.
+
+## 3. Commits
+
+Format: `type(scope): subject`
+
+- Types: `feat`, `fix`, `test`, `docs`, `chore`, `ci`, `refactor`, `perf`.
+- Scope: the package or area, for example `checkin`, `nav`, `db`, `domain`, `ci`.
+- Subject in the imperative, no full stop, at most 72 characters.
+- Body only when the reason is not obvious from the diff.
+- Last line: `Refs: F-03, UC-03` when the change closes traceability rows.
+- One logical change per commit. Formatting commits are separate from behaviour commits.
+- Agent commits add `Assisted-by: <tool name>`. This is disclosure, not decoration: the report and
+  the pull request history have to show which parts were machine-written.
+
+## 4. Pull requests
+
+1. Open the pull request against `main` with the template filled in.
+2. Title follows the commit format.
+3. CI must be green: build, unit tests, formatting, lint, secret scan.
+4. One reviewer, at least a second reader who is not the author. The author never merges their own
+   pull request, not even the project manager.
+5. Merge with **squash**. The squash subject becomes the commit on `main`, so it must follow the
+   commit format.
+6. Delete the branch after merge.
+
+A pull request that does not state which traceability rows it closes is sent back, however good the
+code is.
+
+## 5. Code rules
+
+- Kotlin style is enforced by ktlint through Spotless: run `./gradlew spotlessApply` before pushing.
+- Business rules live in `domain/` and `safety/` and must not import Android; they are tested on the
+  JVM with JUnit.
+- No hardcoded user-facing strings; add them to `app/src/main/res/values/strings*.xml`.
+- The app is light-only for now. Do not add a dark theme, a theme switch or a colour that is not in
+  the palette without design sign-off.
+- Copy is non-punitive: no streaks, no missed-day counts, no red badges, no shaming.
+
+## 6. Secrets and local files
+
+Never commit any of these: `local.properties`, `*.jks`, `*.keystore`, `keystore.properties`,
+`google-services.json`, `.env`, or a token of any kind. CI runs a secret scan on every pull request
+and a hit blocks the merge. If you think a key leaked, tell the project manager the same day; we
+rotate first and clean history second.
+
+## 7. Documents
+
+- Decisions: `docs/decisions/NNNN-<slug>.md`, one file per decision, never edited after it is
+  accepted; supersede it with a new file instead.
+- Test plans and device evidence: `docs/testing/`.
+- Course documents (proposal, use case model, activity diagrams, iteration notes) stay outside this
+  repository, in the `mindurset-docs` folder. Do not copy them in.
+
+## 8. When something is blocked
+
+Write it in the weekly status in one line: what is blocked, why, who can unblock it. Do not start a
+second best-effort version of the same work in parallel; that is how we end up with two databases,
+two navigation graphs and a merge nobody can review.
