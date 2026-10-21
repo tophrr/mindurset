@@ -25,7 +25,6 @@ class CheckInViewModel(
     private val clock: () -> Long = System::currentTimeMillis,
     private val newId: () -> String = { UUID.randomUUID().toString() },
 ) : ViewModel() {
-
     private val _emotion = MutableStateFlow(initialEmotion)
     val emotion: StateFlow<Emotion?> = _emotion.asStateFlow()
 

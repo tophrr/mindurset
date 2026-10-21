@@ -13,11 +13,10 @@ import androidx.compose.ui.unit.dp
  * Draw them with [androidx.compose.material3.Icon] so the tint follows the theme.
  */
 object AppIcons {
-
     private const val STROKE = 1.75f
 
-    private fun icon(name: String, vararg paths: String): ImageVector =
-        ImageVector.Builder(
+    private fun icon(name: String, vararg paths: String): ImageVector = ImageVector
+        .Builder(
             name = name,
             defaultWidth = 24.dp,
             defaultHeight = 24.dp,
@@ -60,7 +59,10 @@ object AppIcons {
     val Settings: ImageVector by lazy {
         icon(
             "Settings",
-            "M4 8 h8", "M17 8 h3", "M4 16 h3", "M12 16 h8",
+            "M4 8 h8",
+            "M17 8 h3",
+            "M4 16 h3",
+            "M12 16 h8",
             "M14.5 6 a2 2 0 1 0 0 4 a2 2 0 1 0 0 -4",
             "M9.5 14 a2 2 0 1 0 0 4 a2 2 0 1 0 0 -4",
         )

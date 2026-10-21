@@ -44,43 +44,44 @@ class ProfileViewModel(
     private val preferencesStore: PreferencesStore,
     private val checkInRepository: CheckInRepository,
 ) : ViewModel() {
-
     /** Flips to true once sign-out has actually completed, so the screen can navigate. */
     private val _loggedOut = MutableStateFlow(false)
     val loggedOut: StateFlow<Boolean> = _loggedOut.asStateFlow()
 
     /** The month the calendar renders: the current local month, fixed for the VM's lifetime. */
     private val month: YearMonth = YearMonth.now()
-    private val monthStartMillis: Long = month
-        .atDay(1)
-        .atStartOfDay(ZoneId.systemDefault())
-        .toInstant()
-        .toEpochMilli()
+    private val monthStartMillis: Long =
+        month
+            .atDay(1)
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
 
-    val uiState: StateFlow<ProfileUiState> = sessionStore.session
-        .flatMapLatest { session ->
-            if (session == null) {
-                flowOf(ProfileUiState(loading = false, signedOut = true))
-            } else {
-                combine(
-                    profileRepository.observe(session.userId),
-                    checkInRepository.observeRecent(session.userId, monthStartMillis),
-                ) { profile, checkIns ->
-                    ProfileUiState(
-                        loading = false,
-                        signedOut = false,
-                        displayName = profile?.displayName?.takeIf { it.isNotBlank() }
-                            ?: session.email.substringBefore('@'),
-                        email = session.email,
-                        joinedAt = profile?.joinedAt,
-                        year = month.year,
-                        monthValue = month.monthValue,
-                        dayEmotions = dominantPerDay(checkIns, month),
-                    )
+    val uiState: StateFlow<ProfileUiState> =
+        sessionStore.session
+            .flatMapLatest { session ->
+                if (session == null) {
+                    flowOf(ProfileUiState(loading = false, signedOut = true))
+                } else {
+                    combine(
+                        profileRepository.observe(session.userId),
+                        checkInRepository.observeRecent(session.userId, monthStartMillis),
+                    ) { profile, checkIns ->
+                        ProfileUiState(
+                            loading = false,
+                            signedOut = false,
+                            displayName =
+                            profile?.displayName?.takeIf { it.isNotBlank() }
+                                ?: session.email.substringBefore('@'),
+                            email = session.email,
+                            joinedAt = profile?.joinedAt,
+                            year = month.year,
+                            monthValue = month.monthValue,
+                            dayEmotions = dominantPerDay(checkIns, month),
+                        )
+                    }
                 }
-            }
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProfileUiState(loading = true))
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProfileUiState(loading = true))
 
     init {
         // Guarantees a Room profile row for the signed-in account (e.g. after "skip"),
@@ -116,10 +117,13 @@ class ProfileViewModel(
             .mapNotNull { checkIn ->
                 val date = Instant.ofEpochMilli(checkIn.createdAt).atZone(zone).toLocalDate()
                 if (YearMonth.from(date) == month) date.dayOfMonth to checkIn.emotion else null
-            }
-            .groupBy({ it.first }, { it.second })
+            }.groupBy({ it.first }, { it.second })
             .mapValues { (_, emotions) ->
-                emotions.groupingBy { it }.eachCount().maxByOrNull { it.value }!!.key
+                emotions
+                    .groupingBy { it }
+                    .eachCount()
+                    .maxByOrNull { it.value }!!
+                    .key
             }
     }
 }

@@ -16,8 +16,7 @@ internal fun localDateOf(epochMillis: Long): LocalDate =
     Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()).toLocalDate()
 
 /** True when the timestamp falls on the current local day. */
-internal fun isToday(epochMillis: Long): Boolean =
-    localDateOf(epochMillis) == LocalDate.now(ZoneId.systemDefault())
+internal fun isToday(epochMillis: Long): Boolean = localDateOf(epochMillis) == LocalDate.now(ZoneId.systemDefault())
 
 /** Relative day label ("Today" / "Yesterday" / "N days ago") from string resources. */
 @Composable
@@ -33,14 +32,14 @@ internal fun relativeDayLabel(epochMillis: Long): String {
 }
 
 /** Short day-month, e.g. "24 Sep". */
-internal fun shortDate(epochMillis: Long): String =
-    DateTimeFormatter.ofPattern("d MMM", Locale.getDefault())
-        .format(Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()))
+internal fun shortDate(epochMillis: Long): String = DateTimeFormatter
+    .ofPattern("d MMM", Locale.getDefault())
+    .format(Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()))
 
 /** Full timestamp for the entry detail footer, e.g. "24 Sep 2026, 20:15". */
-internal fun fullDate(epochMillis: Long): String =
-    DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm", Locale.getDefault())
-        .format(Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()))
+internal fun fullDate(epochMillis: Long): String = DateTimeFormatter
+    .ofPattern("d MMM yyyy, HH:mm", Locale.getDefault())
+    .format(Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()))
 
 /** Month heading for the calendar, e.g. "September 2026". */
 internal fun monthTitle(date: LocalDate): String =

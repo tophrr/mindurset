@@ -21,24 +21,22 @@ data class SettingsUiState(
  * Settings are read and written straight through the DataStore-backed
  * [PreferencesStore]; there are no local-only switches here.
  */
-class SettingsViewModel(
-    private val preferencesStore: PreferencesStore,
-) : ViewModel() {
-
-    val uiState: StateFlow<SettingsUiState> = combine(
-        preferencesStore.reminderEnabled,
-        preferencesStore.reminderHour,
-        preferencesStore.language,
-        preferencesStore.theme,
-    ) { enabled, hour, language, theme ->
-        SettingsUiState(
-            loading = false,
-            reminderEnabled = enabled,
-            reminderHour = hour,
-            language = language,
-            theme = theme,
-        )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState(loading = true))
+class SettingsViewModel(private val preferencesStore: PreferencesStore) : ViewModel() {
+    val uiState: StateFlow<SettingsUiState> =
+        combine(
+            preferencesStore.reminderEnabled,
+            preferencesStore.reminderHour,
+            preferencesStore.language,
+            preferencesStore.theme,
+        ) { enabled, hour, language, theme ->
+            SettingsUiState(
+                loading = false,
+                reminderEnabled = enabled,
+                reminderHour = hour,
+                language = language,
+                theme = theme,
+            )
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState(loading = true))
 
     fun setReminderEnabled(enabled: Boolean) {
         viewModelScope.launch { preferencesStore.setReminderEnabled(enabled) }

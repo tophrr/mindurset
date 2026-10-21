@@ -26,14 +26,12 @@ data class LoginUiState(
 /** One-shot navigation signals for the login screen; never stored in UI state. */
 sealed interface LoginEffect {
     data object SignedIn : LoginEffect
+
     data object Skipped : LoginEffect
 }
 
-class LoginViewModel(
-    private val authRepository: AuthRepository,
-    private val sessionStore: SessionStore,
-) : ViewModel() {
-
+class LoginViewModel(private val authRepository: AuthRepository, private val sessionStore: SessionStore) :
+    ViewModel() {
     var uiState by mutableStateOf(LoginUiState())
         private set
 
@@ -52,23 +50,25 @@ class LoginViewModel(
         if (uiState.isLoading) return
         val validation = ValidateCredentials.forLogin(uiState.email, uiState.password)
         if (!validation.isValid) {
-            uiState = uiState.copy(
-                emailErrorKey = validation.errors[ValidateCredentials.Field.EMAIL],
-                passwordErrorKey = validation.errors[ValidateCredentials.Field.PASSWORD],
-                formErrorKey = null,
-            )
+            uiState =
+                uiState.copy(
+                    emailErrorKey = validation.errors[ValidateCredentials.Field.EMAIL],
+                    passwordErrorKey = validation.errors[ValidateCredentials.Field.PASSWORD],
+                    formErrorKey = null,
+                )
             return
         }
 
         uiState = uiState.copy(isLoading = true, formErrorKey = null)
         viewModelScope.launch {
             // PBKDF2 verification happens inside signIn; isLoading stays true until it returns.
-            val account = try {
-                authRepository.signIn(uiState.email.trim(), uiState.password)
-            } catch (e: Exception) {
-                uiState = uiState.copy(isLoading = false, formErrorKey = AuthErrors.GENERIC)
-                return@launch
-            }
+            val account =
+                try {
+                    authRepository.signIn(uiState.email.trim(), uiState.password)
+                } catch (e: Exception) {
+                    uiState = uiState.copy(isLoading = false, formErrorKey = AuthErrors.GENERIC)
+                    return@launch
+                }
 
             if (account == null) {
                 // Deliberately generic: never disclose whether the email address exists.
@@ -90,14 +90,15 @@ class LoginViewModel(
         if (uiState.isLoading) return
         uiState = uiState.copy(isLoading = true, formErrorKey = null)
         viewModelScope.launch {
-            val account = try {
-                authRepository.findAccount(GUEST_EMAIL) ?: authRepository.register(GUEST_EMAIL, GUEST_PASSWORD)
-            } catch (e: IllegalArgumentException) {
-                // Rare race: the guest account appeared between find and register.
-                runCatching { authRepository.signIn(GUEST_EMAIL, GUEST_PASSWORD) }.getOrNull()
-            } catch (e: Exception) {
-                null
-            }
+            val account =
+                try {
+                    authRepository.findAccount(GUEST_EMAIL) ?: authRepository.register(GUEST_EMAIL, GUEST_PASSWORD)
+                } catch (e: IllegalArgumentException) {
+                    // Rare race: the guest account appeared between find and register.
+                    runCatching { authRepository.signIn(GUEST_EMAIL, GUEST_PASSWORD) }.getOrNull()
+                } catch (e: Exception) {
+                    null
+                }
 
             if (account == null) {
                 uiState = uiState.copy(isLoading = false, formErrorKey = AuthErrors.GENERIC)

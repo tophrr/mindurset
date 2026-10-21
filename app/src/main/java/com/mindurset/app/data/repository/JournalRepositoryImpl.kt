@@ -8,12 +8,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class JournalRepositoryImpl(private val dao: JournalDao) : JournalRepository {
-
     override fun observeAll(userId: String): Flow<List<JournalEntry>> =
         dao.observeAll(userId).map { list -> list.map { it.toDomain() } }
 
-    override fun observeById(id: String): Flow<JournalEntry?> =
-        dao.observeById(id).map { it?.toDomain() }
+    override fun observeById(id: String): Flow<JournalEntry?> = dao.observeById(id).map { it?.toDomain() }
 
     override fun count(userId: String): Flow<Int> = dao.count(userId)
 

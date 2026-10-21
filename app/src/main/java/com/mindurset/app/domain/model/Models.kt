@@ -19,11 +19,7 @@ data class JournalEntry(
     val updatedAt: Long,
 )
 
-data class UserAccount(
-    val id: String,
-    val email: String,
-    val createdAt: Long,
-)
+data class UserAccount(val id: String, val email: String, val createdAt: Long)
 
 data class UserProfile(
     val userId: String,
@@ -34,7 +30,4 @@ data class UserProfile(
     val language: String,
 )
 
-data class SessionInfo(
-    val userId: String,
-    val email: String,
-)
+data class SessionInfo(val userId: String, val email: String)

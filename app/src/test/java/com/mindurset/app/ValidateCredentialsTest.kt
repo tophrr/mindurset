@@ -8,7 +8,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ValidateCredentialsTest {
-
     @Test
     fun `empty login form reports both fields`() {
         val result = ValidateCredentials.forLogin("", "")

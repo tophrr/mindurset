@@ -7,13 +7,9 @@ import com.mindurset.app.domain.repository.ProfileRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class ProfileRepositoryImpl(
-    private val dao: ProfileDao,
-    private val now: () -> Long = System::currentTimeMillis,
-) : ProfileRepository {
-
-    override fun observe(userId: String): Flow<UserProfile?> =
-        dao.observe(userId).map { it?.toDomain() }
+class ProfileRepositoryImpl(private val dao: ProfileDao, private val now: () -> Long = System::currentTimeMillis) :
+    ProfileRepository {
+    override fun observe(userId: String): Flow<UserProfile?> = dao.observe(userId).map { it?.toDomain() }
 
     override suspend fun upsert(profile: UserProfile) {
         dao.upsert(

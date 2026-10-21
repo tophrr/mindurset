@@ -7,7 +7,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PasswordHasherTest {
-
     @Test
     fun `hash is verifiable and never stores plaintext`() {
         val password = "rahasia-kuat-123"

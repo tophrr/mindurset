@@ -26,13 +26,14 @@ data class DashboardSummary(
          * every card, only with zero counts and empty sections — a first-run user must see
          * the same product, not a blank page.
          */
-        val EMPTY = DashboardSummary(
-            displayName = "",
-            journalCount = 0,
-            checkInCount = 0,
-            latestReflections = emptyList(),
-            todayCheckIn = null,
-        )
+        val EMPTY =
+            DashboardSummary(
+                displayName = "",
+                journalCount = 0,
+                checkInCount = 0,
+                latestReflections = emptyList(),
+                todayCheckIn = null,
+            )
     }
 }
 
@@ -42,7 +43,6 @@ data class DashboardSummary(
  * pure, unit-testable mapping that can run off the main thread.
  */
 class SummariseDashboard {
-
     fun summarise(
         profile: UserProfile?,
         journalCount: Int,
@@ -53,15 +53,17 @@ class SummariseDashboard {
         zoneId: ZoneId = ZoneId.systemDefault(),
     ): DashboardSummary {
         val startOfDay = startOfToday(nowEpochMillis, zoneId)
-        val todayCheckIn = recentCheckIns
-            .filter { it.createdAt in startOfDay..nowEpochMillis }
-            .maxByOrNull { it.createdAt }
+        val todayCheckIn =
+            recentCheckIns
+                .filter { it.createdAt in startOfDay..nowEpochMillis }
+                .maxByOrNull { it.createdAt }
 
         return DashboardSummary(
             displayName = profile?.displayName.orEmpty(),
             journalCount = journalCount,
             checkInCount = checkInCount,
-            latestReflections = journalEntries
+            latestReflections =
+            journalEntries
                 .sortedByDescending { it.createdAt }
                 .take(MAX_REFLECTIONS),
             todayCheckIn = todayCheckIn,
@@ -69,13 +71,13 @@ class SummariseDashboard {
     }
 
     /** First millisecond of the local day that contains [nowEpochMillis]. */
-    fun startOfToday(nowEpochMillis: Long, zoneId: ZoneId = ZoneId.systemDefault()): Long =
-        Instant.ofEpochMilli(nowEpochMillis)
-            .atZone(zoneId)
-            .toLocalDate()
-            .atStartOfDay(zoneId)
-            .toInstant()
-            .toEpochMilli()
+    fun startOfToday(nowEpochMillis: Long, zoneId: ZoneId = ZoneId.systemDefault()): Long = Instant
+        .ofEpochMilli(nowEpochMillis)
+        .atZone(zoneId)
+        .toLocalDate()
+        .atStartOfDay(zoneId)
+        .toInstant()
+        .toEpochMilli()
 
     companion object {
         const val MAX_REFLECTIONS = 3

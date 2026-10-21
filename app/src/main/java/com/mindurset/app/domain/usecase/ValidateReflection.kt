@@ -6,7 +6,6 @@ package com.mindurset.app.domain.usecase
  * object stays unit-testable without Android.
  */
 object ValidateReflection {
-
     enum class Field { CHALLENGE, REFRAME, GRATITUDE }
 
     data class Result(val errors: Map<Field, String>) {

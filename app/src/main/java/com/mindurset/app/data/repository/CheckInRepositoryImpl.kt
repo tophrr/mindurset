@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class CheckInRepositoryImpl(private val dao: CheckInDao) : CheckInRepository {
-
     override fun observeAll(userId: String): Flow<List<CheckIn>> =
         dao.observeAll(userId).map { list -> list.map { it.toDomain() } }
 

@@ -6,7 +6,8 @@ enum class Emotion(val score: Int) {
     CALM(4),
     LOW(3),
     ANXIOUS(2),
-    STRESSED(1);
+    STRESSED(1),
+    ;
 
     val isNegative: Boolean get() = this == LOW || this == ANXIOUS || this == STRESSED
 

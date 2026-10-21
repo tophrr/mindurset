@@ -28,11 +28,8 @@ data class ProfileEditUiState(
  * language selector live in Settings (backed by the DataStore PreferencesStore),
  * so they are not duplicated here. On save we preserve whatever those already stored.
  */
-class ProfileEditViewModel(
-    private val profileRepository: ProfileRepository,
-    private val sessionStore: SessionStore,
-) : ViewModel() {
-
+class ProfileEditViewModel(private val profileRepository: ProfileRepository, private val sessionStore: SessionStore) :
+    ViewModel() {
     private val _uiState = MutableStateFlow(ProfileEditUiState())
     val uiState: StateFlow<ProfileEditUiState> = _uiState.asStateFlow()
 
@@ -62,11 +59,12 @@ class ProfileEditViewModel(
     fun save() {
         val current = _uiState.value
         val name = current.displayName.trim()
-        val error = when {
-            name.isEmpty() -> NameError.REQUIRED
-            name.length > MAX_NAME_LENGTH -> NameError.LENGTH
-            else -> null
-        }
+        val error =
+            when {
+                name.isEmpty() -> NameError.REQUIRED
+                name.length > MAX_NAME_LENGTH -> NameError.LENGTH
+                else -> null
+            }
         if (error != null) {
             _uiState.update { it.copy(nameError = error) }
             return

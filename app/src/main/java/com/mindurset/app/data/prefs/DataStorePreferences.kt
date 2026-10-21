@@ -21,8 +21,9 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
  * Session and preference storage. The session is a local pointer to the signed-in
  * account row; no password or long-lived token is kept here.
  */
-class DataStorePreferences(context: Context) : SessionStore, PreferencesStore {
-
+class DataStorePreferences(context: Context) :
+    SessionStore,
+    PreferencesStore {
     private val store = context.applicationContext.dataStore
 
     private object Keys {
@@ -34,11 +35,12 @@ class DataStorePreferences(context: Context) : SessionStore, PreferencesStore {
         val theme = stringPreferencesKey("theme")
     }
 
-    override val session: Flow<SessionInfo?> = store.data.map { prefs ->
-        val userId = prefs[Keys.sessionUserId]
-        val email = prefs[Keys.sessionEmail]
-        if (userId.isNullOrBlank()) null else SessionInfo(userId = userId, email = email.orEmpty())
-    }
+    override val session: Flow<SessionInfo?> =
+        store.data.map { prefs ->
+            val userId = prefs[Keys.sessionUserId]
+            val email = prefs[Keys.sessionEmail]
+            if (userId.isNullOrBlank()) null else SessionInfo(userId = userId, email = email.orEmpty())
+        }
 
     override suspend fun current(): SessionInfo? = session.first()
 

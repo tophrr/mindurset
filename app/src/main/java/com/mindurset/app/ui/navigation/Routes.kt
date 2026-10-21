@@ -25,8 +25,7 @@ object Routes {
     const val REFLECTION_DETAIL_ROUTE = "$REFLECTION_DETAIL/{$ARG_ENTRY_ID}"
 
     /** Carries the emotion picked on the home card so the check-in opens already selected. */
-    fun checkIn(emotion: String? = null): String =
-        if (emotion == null) CHECK_IN else "$CHECK_IN?$ARG_EMOTION=$emotion"
+    fun checkIn(emotion: String? = null): String = if (emotion == null) CHECK_IN else "$CHECK_IN?$ARG_EMOTION=$emotion"
 
     fun reflectionForm(entryId: String? = null): String =
         if (entryId == null) REFLECTION_FORM else "$REFLECTION_FORM?$ARG_ENTRY_ID=$entryId"

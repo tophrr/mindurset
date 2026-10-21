@@ -5,7 +5,6 @@ package com.mindurset.app.domain.auth
  * keys, never user-visible text, so the UI layer stays localisable.
  */
 object ValidateCredentials {
-
     enum class Field { EMAIL, PASSWORD, CONFIRM }
 
     data class Result(val errors: Map<Field, String>) {

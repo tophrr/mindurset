@@ -11,8 +11,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -60,8 +60,8 @@ import com.mindurset.app.ui.common.EmptyState
 import com.mindurset.app.ui.common.ErrorState
 import com.mindurset.app.ui.common.FloatingNavSpace
 import com.mindurset.app.ui.common.LoadingState
-import com.mindurset.app.ui.common.SegmentedTabs
 import com.mindurset.app.ui.common.SectionTitle
+import com.mindurset.app.ui.common.SegmentedTabs
 import com.mindurset.app.ui.theme.AppIcons
 import com.mindurset.app.ui.theme.CanvasBlue
 import com.mindurset.app.ui.theme.CardShadow
@@ -90,12 +90,7 @@ private val CalendarBlank = Color(0xFFE5E7EB)
 private val CalendarPalette = listOf(NavyDeep, MoodAnxious, MoodCalm, MoodHappy, MoodLow)
 
 @Composable
-fun ReflectionListScreen(
-    onNew: () -> Unit,
-    onOpen: (String) -> Unit,
-    onBack: () -> Unit,
-    onOpenDrawer: () -> Unit,
-) {
+fun ReflectionListScreen(onNew: () -> Unit, onOpen: (String) -> Unit, onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     val container = LocalAppContainer.current
     val viewModel: ReflectionListViewModel = viewModel {
         ReflectionListViewModel(container.journalRepository, container.sessionStore)
@@ -146,11 +141,7 @@ fun ReflectionListScreen(
 }
 
 @Composable
-private fun ReflectionListContent(
-    entries: List<JournalEntry>,
-    onNew: () -> Unit,
-    onOpen: (String) -> Unit,
-) {
+private fun ReflectionListContent(entries: List<JournalEntry>, onNew: () -> Unit, onOpen: (String) -> Unit) {
     var selectedTab by remember { mutableIntStateOf(0) }
     val todayEntry = entries.firstOrNull { isToday(it.createdAt) }
 
@@ -398,11 +389,7 @@ private fun ReflectionCalendar(entries: List<JournalEntry>, onOpen: (String) -> 
 }
 
 @Composable
-fun ReflectionFormScreen(
-    entryId: String?,
-    onSaved: () -> Unit,
-    onBack: () -> Unit,
-) {
+fun ReflectionFormScreen(entryId: String?, onSaved: () -> Unit, onBack: () -> Unit) {
     val container = LocalAppContainer.current
     val viewModel: ReflectionFormViewModel = viewModel {
         ReflectionFormViewModel(entryId, container.journalRepository, container.sessionStore)
@@ -413,8 +400,11 @@ fun ReflectionFormScreen(
         topBar = {
             ReflectionTopBar(
                 title = stringResource(
-                    if (viewModel.isEdit) R.string.reflection_form_title_edit
-                    else R.string.reflection_form_title_new,
+                    if (viewModel.isEdit) {
+                        R.string.reflection_form_title_edit
+                    } else {
+                        R.string.reflection_form_title_new
+                    },
                 ),
                 left = {
                     CircleIconButton(
@@ -444,11 +434,7 @@ fun ReflectionFormScreen(
 }
 
 @Composable
-fun ReflectionDetailScreen(
-    entryId: String,
-    onEdit: () -> Unit,
-    onBack: () -> Unit,
-) {
+fun ReflectionDetailScreen(entryId: String, onEdit: () -> Unit, onBack: () -> Unit) {
     val container = LocalAppContainer.current
     val viewModel: ReflectionDetailViewModel = viewModel {
         ReflectionDetailViewModel(entryId, container.journalRepository)
@@ -673,11 +659,7 @@ private fun ReflectionFieldCard(label: String, value: String) {
 
 /** Shared top bar: a monoline circle on the left, the title centred, actions on the right. */
 @Composable
-private fun ReflectionTopBar(
-    title: String,
-    left: @Composable () -> Unit,
-    right: @Composable () -> Unit,
-) {
+private fun ReflectionTopBar(title: String, left: @Composable () -> Unit, right: @Composable () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()

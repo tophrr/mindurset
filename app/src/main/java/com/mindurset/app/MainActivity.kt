@@ -17,11 +17,11 @@ import com.mindurset.app.ui.theme.MindUrSetTheme
 
 sealed interface SessionState {
     data object Loading : SessionState
+
     data class Ready(val session: SessionInfo?) : SessionState
 }
 
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -33,11 +33,15 @@ class MainActivity : ComponentActivity() {
                         container.sessionStore.session.collect { value = SessionState.Ready(it) }
                     }
                     when (val state = sessionState) {
-                        is SessionState.Loading -> LoadingState()
+                        is SessionState.Loading -> {
+                            LoadingState()
+                        }
+
                         is SessionState.Ready -> {
-                            val start = remember {
-                                if (state.session != null) Routes.DASHBOARD else Routes.LOGIN
-                            }
+                            val start =
+                                remember {
+                                    if (state.session != null) Routes.DASHBOARD else Routes.LOGIN
+                                }
                             MindUrSetNavigation(startDestination = start, container = container)
                         }
                     }

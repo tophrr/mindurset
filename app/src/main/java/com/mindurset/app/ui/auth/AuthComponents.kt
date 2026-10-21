@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -15,16 +16,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,8 +42,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.mindurset.app.R
-import com.mindurset.app.ui.theme.AppIcons
 import com.mindurset.app.domain.auth.ValidateCredentials
+import com.mindurset.app.ui.theme.AppIcons
 
 /** Stable error keys produced by the auth ViewModels and mapped to string resources here. */
 object AuthErrors {
@@ -197,9 +197,21 @@ fun AuthField(
         isError = errorText != null,
         shape = RoundedCornerShape(16.dp),
         label = { Text(text = label) },
-        visualTransformation = if (isPassword && !visible) PasswordVisualTransformation() else VisualTransformation.None,
+        visualTransformation = if (isPassword &&
+            !visible
+        ) {
+            PasswordVisualTransformation()
+        } else {
+            VisualTransformation.None
+        },
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
-        keyboardActions = KeyboardActions(onDone = if (onDone != null) { { onDone() } } else null),
+        keyboardActions = KeyboardActions(
+            onDone = if (onDone != null) {
+                { onDone() }
+            } else {
+                null
+            },
+        ),
         trailingIcon = trailing,
         supportingText = supporting,
     )
@@ -239,11 +251,7 @@ fun AuthPrimaryButton(
 }
 
 @Composable
-fun AuthSecondaryButton(
-    label: String,
-    enabled: Boolean = true,
-    onClick: () -> Unit,
-) {
+fun AuthSecondaryButton(label: String, enabled: Boolean = true, onClick: () -> Unit) {
     OutlinedButton(
         onClick = onClick,
         enabled = enabled,

@@ -47,9 +47,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mindurset.app.R
 import com.mindurset.app.di.LocalAppContainer
 import com.mindurset.app.ui.common.AppCard
-import com.mindurset.app.ui.common.LogoutConfirmDialog
 import com.mindurset.app.ui.common.FloatingNavSpace
 import com.mindurset.app.ui.common.LoadingState
+import com.mindurset.app.ui.common.LogoutConfirmDialog
 import com.mindurset.app.ui.common.SegmentedTabs
 import com.mindurset.app.ui.theme.AppIcons
 import com.mindurset.app.ui.theme.DangerRed
@@ -64,12 +64,7 @@ import com.mindurset.app.ui.theme.SurfaceWhite
 // ---------------------------------------------------------------------------
 
 @Composable
-fun ProfileScreen(
-    onEditProfile: () -> Unit,
-    onSettings: () -> Unit,
-    onLogout: () -> Unit,
-    onOpenDrawer: () -> Unit,
-) {
+fun ProfileScreen(onEditProfile: () -> Unit, onSettings: () -> Unit, onLogout: () -> Unit, onOpenDrawer: () -> Unit) {
     val container = LocalAppContainer.current
     val vm: ProfileViewModel = viewModel {
         ProfileViewModel(
@@ -242,11 +237,7 @@ private fun ProfileIdentityCard(displayName: String, email: String, memberSince:
  * default or by a stray confirmation.
  */
 @Composable
-private fun LogoutDialog(
-    onCancel: () -> Unit,
-    onKeepData: () -> Unit,
-    onDeleteData: () -> Unit,
-) {
+private fun LogoutDialog(onCancel: () -> Unit, onKeepData: () -> Unit, onDeleteData: () -> Unit) {
     LogoutConfirmDialog(
         title = stringResource(R.string.profile_logout_title),
         message = stringResource(R.string.profile_logout_message),
@@ -259,16 +250,12 @@ private fun LogoutDialog(
     )
 }
 
-
 // ---------------------------------------------------------------------------
 // Profile edit — display name only
 // ---------------------------------------------------------------------------
 
 @Composable
-fun ProfileEditScreen(
-    onSaved: () -> Unit,
-    onBack: () -> Unit,
-) {
+fun ProfileEditScreen(onSaved: () -> Unit, onBack: () -> Unit) {
     val container = LocalAppContainer.current
     val vm: ProfileEditViewModel = viewModel {
         ProfileEditViewModel(container.profileRepository, container.sessionStore)
@@ -313,7 +300,9 @@ fun ProfileEditScreen(
                                 Text(
                                     text = when (state.nameError) {
                                         NameError.REQUIRED -> stringResource(R.string.profile_error_name_required)
+
                                         NameError.LENGTH -> stringResource(R.string.profile_error_name_length)
+
                                         null -> stringResource(
                                             R.string.profile_name_counter,
                                             state.displayName.length,
@@ -485,10 +474,7 @@ fun SettingsScreen(onBack: () -> Unit) {
 }
 
 @Composable
-private fun SettingsSection(
-    title: String,
-    content: @Composable () -> Unit,
-) {
+private fun SettingsSection(title: String, content: @Composable () -> Unit) {
     AppCard {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
@@ -503,12 +489,7 @@ private fun SettingsSection(
 }
 
 @Composable
-private fun LanguageRow(
-    code: String,
-    labelRes: Int,
-    selected: String,
-    onSelect: (String) -> Unit,
-) {
+private fun LanguageRow(code: String, labelRes: Int, selected: String, onSelect: (String) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()

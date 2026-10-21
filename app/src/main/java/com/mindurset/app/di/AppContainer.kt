@@ -20,7 +20,6 @@ import com.mindurset.app.domain.repository.SessionStore
  * processor. Screens receive what they need through their ViewModel.
  */
 class AppContainer(context: Context) {
-
     private val database = MindUrSetDatabase.build(context)
 
     val preferences: DataStorePreferences = DataStorePreferences(context)
@@ -29,12 +28,13 @@ class AppContainer(context: Context) {
 
     val preferencesStore: PreferencesStore = preferences
 
-    val authRepository: AuthRepository = AuthRepositoryImpl(
-        accountDao = database.accountDao(),
-        profileDao = database.profileDao(),
-        journalDao = database.journalDao(),
-        checkInDao = database.checkInDao(),
-    )
+    val authRepository: AuthRepository =
+        AuthRepositoryImpl(
+            accountDao = database.accountDao(),
+            profileDao = database.profileDao(),
+            journalDao = database.journalDao(),
+            checkInDao = database.checkInDao(),
+        )
 
     val journalRepository: JournalRepository = JournalRepositoryImpl(database.journalDao())
 
@@ -43,6 +43,7 @@ class AppContainer(context: Context) {
     val profileRepository: ProfileRepository = ProfileRepositoryImpl(database.profileDao())
 }
 
-val LocalAppContainer = staticCompositionLocalOf<AppContainer> {
-    error("AppContainer is not provided")
-}
+val LocalAppContainer =
+    staticCompositionLocalOf<AppContainer> {
+        error("AppContainer is not provided")
+    }

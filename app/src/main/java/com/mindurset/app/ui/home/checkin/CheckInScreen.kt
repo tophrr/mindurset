@@ -7,9 +7,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -28,14 +28,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
@@ -50,8 +50,8 @@ import com.mindurset.app.ui.common.FloatingNavSpace
 import com.mindurset.app.ui.common.emotionLabel
 import com.mindurset.app.ui.common.tint
 import com.mindurset.app.ui.theme.AppIcons
-import com.mindurset.app.ui.theme.NavyInk
 import com.mindurset.app.ui.theme.MutedGray
+import com.mindurset.app.ui.theme.NavyInk
 import kotlin.math.roundToInt
 
 /**
@@ -61,11 +61,7 @@ import kotlin.math.roundToInt
  * Selection is held in [CheckInViewModel] so it survives rotation.
  */
 @Composable
-fun CheckInScreen(
-    onDone: () -> Unit,
-    onBack: () -> Unit,
-    initialEmotion: Emotion? = null,
-) {
+fun CheckInScreen(onDone: () -> Unit, onBack: () -> Unit, initialEmotion: Emotion? = null) {
     val container = LocalAppContainer.current
     val vm: CheckInViewModel = viewModel {
         CheckInViewModel(
@@ -144,8 +140,7 @@ fun CheckInScreen(
                 Slider(
                     value = intensity.toFloat(),
                     onValueChange = { vm.setIntensity(it.roundToInt()) },
-                    valueRange = CheckInViewModel.MIN_INTENSITY.toFloat()..
-                        CheckInViewModel.MAX_INTENSITY.toFloat(),
+                    valueRange = CheckInViewModel.MIN_INTENSITY.toFloat()..CheckInViewModel.MAX_INTENSITY.toFloat(),
                     steps = CheckInViewModel.MAX_INTENSITY - CheckInViewModel.MIN_INTENSITY - 1,
                 )
             }
@@ -198,11 +193,7 @@ private fun CheckInTopBar(onBack: () -> Unit) {
 }
 
 @Composable
-private fun MoodCard(
-    emotion: Emotion,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
+private fun MoodCard(emotion: Emotion, selected: Boolean, onClick: () -> Unit) {
     val accent = emotion.tint()
     Surface(
         modifier = Modifier

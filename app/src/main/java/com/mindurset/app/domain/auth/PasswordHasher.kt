@@ -11,7 +11,6 @@ import javax.crypto.spec.PBEKeySpec
  * or logged anywhere on the device.
  */
 object PasswordHasher {
-
     const val ITERATIONS: Int = 100_000
     private const val KEY_LENGTH_BITS = 256
     private const val SALT_BYTES = 16
@@ -24,11 +23,12 @@ object PasswordHasher {
     }
 
     fun verify(password: String, expectedHash: String, salt: String, iterations: Int): Boolean {
-        val saltBytes = try {
-            Base64.getDecoder().decode(salt)
-        } catch (e: IllegalArgumentException) {
-            return false
-        }
+        val saltBytes =
+            try {
+                Base64.getDecoder().decode(salt)
+            } catch (e: IllegalArgumentException) {
+                return false
+            }
         val candidate = derive(password, saltBytes, iterations).toByteArray(Charsets.UTF_8)
         return MessageDigest.isEqual(candidate, expectedHash.toByteArray(Charsets.UTF_8))
     }
@@ -36,11 +36,12 @@ object PasswordHasher {
     private fun derive(password: String, salt: ByteArray, iterations: Int): String {
         val spec = PBEKeySpec(password.toCharArray(), salt, iterations, KEY_LENGTH_BITS)
         val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-        val key = try {
-            factory.generateSecret(spec).encoded
-        } finally {
-            spec.clearPassword()
-        }
+        val key =
+            try {
+                factory.generateSecret(spec).encoded
+            } finally {
+                spec.clearPassword()
+            }
         return encode(key)
     }
 

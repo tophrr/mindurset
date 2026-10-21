@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,8 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -49,9 +48,9 @@ import com.mindurset.app.ui.theme.SurfaceWhite
  * box), the accent drives titles, labels, chip text and the action button.
  */
 private val Step1Tint = Color(0xFFE2F2E4)
-private val Step1Accent = Color(0xFF2A7047)   // 5.15:1 on its tint, 5.99:1 white-on-accent
+private val Step1Accent = Color(0xFF2A7047) // 5.15:1 on its tint, 5.99:1 white-on-accent
 private val Step2Tint = Color(0xFFE3EDFB)
-private val Step2Accent = Color(0xFF2A63AC)   // 5.11:1 on its tint, 6.04:1 white-on-accent
+private val Step2Accent = Color(0xFF2A63AC) // 5.11:1 on its tint, 6.04:1 white-on-accent
 private val Step3Tint = Color(0xFFF1EAFB)
 private val Step3Accent = Color(0xFF7A4FBF)
 
@@ -61,9 +60,7 @@ private val Step3Accent = Color(0xFF7A4FBF)
  * feel enabled but have no behaviour yet; the header says so plainly.
  */
 @Composable
-fun TherapyScreen(
-    onOpenDrawer: () -> Unit,
-) {
+fun TherapyScreen(onOpenDrawer: () -> Unit) {
     Scaffold(
         containerColor = CanvasBlue,
         contentWindowInsets = WindowInsets(0),
@@ -157,7 +154,6 @@ fun TherapyScreen(
         }
     }
 }
-
 
 @Composable
 private fun StepCard(

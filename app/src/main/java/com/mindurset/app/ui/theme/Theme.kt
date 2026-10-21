@@ -42,10 +42,7 @@ private val DarkColors = darkColorScheme(
  * dark mode must not repaint it. [darkTheme] stays for a future opt-in theme setting.
  */
 @Composable
-fun MindUrSetTheme(
-    darkTheme: Boolean = false,
-    content: @Composable () -> Unit,
-) {
+fun MindUrSetTheme(darkTheme: Boolean = false, content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = if (darkTheme) DarkColors else LightColors,
         content = content,

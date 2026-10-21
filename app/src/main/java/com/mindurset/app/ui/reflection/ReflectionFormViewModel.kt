@@ -22,7 +22,6 @@ class ReflectionFormViewModel(
     private val journalRepository: JournalRepository,
     private val sessionStore: SessionStore,
 ) : ViewModel() {
-
     val isEdit: Boolean = entryId != null
 
     var challenge by mutableStateOf("")
@@ -109,15 +108,16 @@ class ReflectionFormViewModel(
             }
             val now = System.currentTimeMillis()
             val previous = original
-            val entry = JournalEntry(
-                id = previous?.id ?: UUID.randomUUID().toString(),
-                userId = previous?.userId ?: session.userId,
-                challenge = challenge.trim(),
-                reframe = reframe.trim(),
-                gratitude = gratitude.trim(),
-                createdAt = previous?.createdAt ?: now,
-                updatedAt = now,
-            )
+            val entry =
+                JournalEntry(
+                    id = previous?.id ?: UUID.randomUUID().toString(),
+                    userId = previous?.userId ?: session.userId,
+                    challenge = challenge.trim(),
+                    reframe = reframe.trim(),
+                    gratitude = gratitude.trim(),
+                    createdAt = previous?.createdAt ?: now,
+                    updatedAt = now,
+                )
             journalRepository.upsert(entry)
             isSaving = false
             onSaved()

@@ -21,29 +21,41 @@ interface AuthRepository {
 
 interface SessionStore {
     val session: Flow<SessionInfo?>
+
     suspend fun current(): SessionInfo?
+
     suspend fun signIn(session: SessionInfo)
+
     suspend fun signOut()
 }
 
 interface JournalRepository {
     fun observeAll(userId: String): Flow<List<JournalEntry>>
+
     fun observeById(id: String): Flow<JournalEntry?>
+
     fun count(userId: String): Flow<Int>
+
     suspend fun upsert(entry: JournalEntry)
+
     suspend fun delete(id: String)
 }
 
 interface CheckInRepository {
     fun observeAll(userId: String): Flow<List<CheckIn>>
+
     fun observeRecent(userId: String, sinceEpochMillis: Long): Flow<List<CheckIn>>
+
     fun count(userId: String): Flow<Int>
+
     suspend fun insert(checkIn: CheckIn)
 }
 
 interface ProfileRepository {
     fun observe(userId: String): Flow<UserProfile?>
+
     suspend fun upsert(profile: UserProfile)
+
     suspend fun ensureProfile(userId: String, email: String)
 }
 
@@ -52,8 +64,12 @@ interface PreferencesStore {
     val reminderHour: Flow<Int>
     val language: Flow<String>
     val theme: Flow<String>
+
     suspend fun setReminderEnabled(enabled: Boolean)
+
     suspend fun setReminderHour(hour: Int)
+
     suspend fun setLanguage(language: String)
+
     suspend fun setTheme(theme: String)
 }

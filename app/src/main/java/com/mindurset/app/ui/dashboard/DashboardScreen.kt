@@ -33,11 +33,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -48,8 +48,8 @@ import com.mindurset.app.R
 import com.mindurset.app.di.LocalAppContainer
 import com.mindurset.app.domain.model.CheckIn
 import com.mindurset.app.domain.model.Emotion
-import com.mindurset.app.domain.usecase.DashboardSummary
 import com.mindurset.app.domain.model.JournalEntry
+import com.mindurset.app.domain.usecase.DashboardSummary
 import com.mindurset.app.ui.common.AppCard
 import com.mindurset.app.ui.common.CircleIconButton
 import com.mindurset.app.ui.common.EmptyState
@@ -354,12 +354,7 @@ private fun DailyCheckInCard(today: CheckIn?, onOpenCheckIn: (Emotion) -> Unit) 
 
 /** One mood option: its own monoline face, its own colour, name and hint underneath. */
 @Composable
-private fun MoodOption(
-    emotion: Emotion,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
+private fun MoodOption(emotion: Emotion, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val accent = emotion.tint()
     Surface(
         modifier = modifier,

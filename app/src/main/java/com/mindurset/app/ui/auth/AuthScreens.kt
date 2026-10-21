@@ -21,11 +21,7 @@ import com.mindurset.app.di.LocalAppContainer
 import com.mindurset.app.domain.auth.ValidateCredentials
 
 @Composable
-fun LoginScreen(
-    onSignedIn: () -> Unit,
-    onRegister: () -> Unit,
-    onSkip: () -> Unit,
-) {
+fun LoginScreen(onSignedIn: () -> Unit, onRegister: () -> Unit, onSkip: () -> Unit) {
     val container = LocalAppContainer.current
     val loginViewModel: LoginViewModel = viewModel {
         LoginViewModel(container.authRepository, container.sessionStore)
@@ -107,10 +103,7 @@ fun LoginScreen(
 }
 
 @Composable
-fun RegisterScreen(
-    onRegistered: () -> Unit,
-    onBack: () -> Unit,
-) {
+fun RegisterScreen(onRegistered: () -> Unit, onBack: () -> Unit) {
     val container = LocalAppContainer.current
     val registerViewModel: RegisterViewModel = viewModel {
         RegisterViewModel(container.authRepository, container.sessionStore)

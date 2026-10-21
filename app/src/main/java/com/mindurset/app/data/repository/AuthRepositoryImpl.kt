@@ -18,7 +18,6 @@ class AuthRepositoryImpl(
     private val checkInDao: CheckInDao,
     private val now: () -> Long = System::currentTimeMillis,
 ) : AuthRepository {
-
     override suspend fun findAccount(email: String): UserAccount? =
         accountDao.findByEmail(email.trim().lowercase())?.let {
             UserAccount(id = it.id, email = it.email, createdAt = it.createdAt)
@@ -28,14 +27,15 @@ class AuthRepositoryImpl(
         val normalised = email.trim().lowercase()
         require(accountDao.findByEmail(normalised) == null) { "email already registered" }
         val hashed = PasswordHasher.hash(password)
-        val account = UserAccountEntity(
-            id = UUID.randomUUID().toString(),
-            email = normalised,
-            passwordHash = hashed.hash,
-            passwordSalt = hashed.salt,
-            iterations = hashed.iterations,
-            createdAt = now(),
-        )
+        val account =
+            UserAccountEntity(
+                id = UUID.randomUUID().toString(),
+                email = normalised,
+                passwordHash = hashed.hash,
+                passwordSalt = hashed.salt,
+                iterations = hashed.iterations,
+                createdAt = now(),
+            )
         accountDao.insert(account)
         ensureProfile(account.id, account.email)
         return UserAccount(id = account.id, email = account.email, createdAt = account.createdAt)

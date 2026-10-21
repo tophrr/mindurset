@@ -16,10 +16,12 @@ import androidx.room.RoomDatabase
     exportSchema = false,
 )
 abstract class MindUrSetDatabase : RoomDatabase() {
-
     abstract fun accountDao(): AccountDao
+
     abstract fun profileDao(): ProfileDao
+
     abstract fun checkInDao(): CheckInDao
+
     abstract fun journalDao(): JournalDao
 
     companion object {

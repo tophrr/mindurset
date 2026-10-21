@@ -25,33 +25,35 @@ class ReflectionListViewModel(
     private val journalRepository: JournalRepository,
     private val sessionStore: SessionStore,
 ) : ViewModel() {
-
     sealed interface UiState {
         data object Loading : UiState
+
         data object Empty : UiState
+
         data class Ready(val entries: List<JournalEntry>) : UiState
+
         data class Error(val messageKey: String) : UiState
     }
 
     private val refresh = MutableStateFlow(0)
 
-    val state = refresh
-        .flatMapLatest { load() }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState.Loading)
+    val state =
+        refresh
+            .flatMapLatest { load() }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState.Loading)
 
-    private fun load(): Flow<UiState> =
-        sessionStore.session.flatMapLatest { session ->
-            if (session == null) {
-                flowOf<UiState>(UiState.Error(ReflectionErrorKeys.NO_SESSION))
-            } else {
-                journalRepository.observeAll(session.userId)
-                    .map<List<JournalEntry>, UiState> { entries ->
-                        if (entries.isEmpty()) UiState.Empty else UiState.Ready(entries)
-                    }
-                    .onStart { emit(UiState.Loading) }
-                    .catch { emit(UiState.Error(ReflectionErrorKeys.LOAD)) }
-            }
+    private fun load(): Flow<UiState> = sessionStore.session.flatMapLatest { session ->
+        if (session == null) {
+            flowOf<UiState>(UiState.Error(ReflectionErrorKeys.NO_SESSION))
+        } else {
+            journalRepository
+                .observeAll(session.userId)
+                .map<List<JournalEntry>, UiState> { entries ->
+                    if (entries.isEmpty()) UiState.Empty else UiState.Ready(entries)
+                }.onStart { emit(UiState.Loading) }
+                .catch { emit(UiState.Error(ReflectionErrorKeys.LOAD)) }
         }
+    }
 
     fun retry() {
         refresh.value += 1

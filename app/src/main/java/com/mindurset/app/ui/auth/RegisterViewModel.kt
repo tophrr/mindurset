@@ -29,11 +29,8 @@ sealed interface RegisterEffect {
     data object Registered : RegisterEffect
 }
 
-class RegisterViewModel(
-    private val authRepository: AuthRepository,
-    private val sessionStore: SessionStore,
-) : ViewModel() {
-
+class RegisterViewModel(private val authRepository: AuthRepository, private val sessionStore: SessionStore) :
+    ViewModel() {
     var uiState by mutableStateOf(RegisterUiState())
         private set
 
@@ -56,27 +53,29 @@ class RegisterViewModel(
         if (uiState.isLoading) return
         val validation = ValidateCredentials.forRegister(uiState.email, uiState.password, uiState.confirm)
         if (!validation.isValid) {
-            uiState = uiState.copy(
-                emailErrorKey = validation.errors[ValidateCredentials.Field.EMAIL],
-                passwordErrorKey = validation.errors[ValidateCredentials.Field.PASSWORD],
-                confirmErrorKey = validation.errors[ValidateCredentials.Field.CONFIRM],
-                formErrorKey = null,
-            )
+            uiState =
+                uiState.copy(
+                    emailErrorKey = validation.errors[ValidateCredentials.Field.EMAIL],
+                    passwordErrorKey = validation.errors[ValidateCredentials.Field.PASSWORD],
+                    confirmErrorKey = validation.errors[ValidateCredentials.Field.CONFIRM],
+                    formErrorKey = null,
+                )
             return
         }
 
         uiState = uiState.copy(isLoading = true, formErrorKey = null)
         viewModelScope.launch {
             // register() hashes the password with PBKDF2; isLoading covers that window.
-            val account = try {
-                authRepository.register(uiState.email.trim(), uiState.password)
-            } catch (e: IllegalArgumentException) {
-                uiState = uiState.copy(isLoading = false, emailErrorKey = AuthErrors.EMAIL_TAKEN)
-                return@launch
-            } catch (e: Exception) {
-                uiState = uiState.copy(isLoading = false, formErrorKey = AuthErrors.GENERIC)
-                return@launch
-            }
+            val account =
+                try {
+                    authRepository.register(uiState.email.trim(), uiState.password)
+                } catch (e: IllegalArgumentException) {
+                    uiState = uiState.copy(isLoading = false, emailErrorKey = AuthErrors.EMAIL_TAKEN)
+                    return@launch
+                } catch (e: Exception) {
+                    uiState = uiState.copy(isLoading = false, formErrorKey = AuthErrors.GENERIC)
+                    return@launch
+                }
 
             sessionStore.signIn(SessionInfo(account.id, account.email))
             uiState = uiState.copy(isLoading = false)
