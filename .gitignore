@@ -11,3 +11,21 @@ app/build/
 *.apk
 *.aab
 .kotlin/
+
+# secrets and local configuration, never committed
+*.jks
+*.keystore
+keystore.properties
+google-services.json
+.env
+.env.*
+!.env.example
+
+# agent and tool scratch
+.hermes/
+.claude/
+.codex/
+.aider*
+node_modules/
+.wrangler/
+*.log

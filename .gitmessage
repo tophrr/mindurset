@@ -1,0 +1,10 @@
+
+# <type>(<scope>): <subject, imperative, max 72 characters>
+#
+# type: feat | fix | test | docs | chore | ci | refactor | perf
+# scope: checkin | nav | db | domain | safety | ui | ci | docs
+#
+# Why this change is needed (optional, wrap at 72). Explain the reason, not the diff.
+#
+# Refs: F-xx, UC-xx
+# Assisted-by: <tool name>        (agent commits only)
