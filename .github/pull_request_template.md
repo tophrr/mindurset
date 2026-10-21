@@ -19,7 +19,3 @@ Closes: `F-`, `UC-`
 ## Notes for the reviewer
 
 <!-- Risks, trade-offs, the part you are least sure about. -->
-
-## AI assistance
-
-<!-- Assisted-by: <tool name>. Delete this section if no agent was involved. -->

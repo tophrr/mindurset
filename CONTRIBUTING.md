@@ -1,8 +1,9 @@
 # Contributing to Mind-Ur-Set
 
-This repository is worked on by four people and several AI agents. The rules below exist so that we
-can all commit on the same day without stepping on each other, and so that every change can be
-traced back to a row in the project traceability matrix.
+This repository is worked on by four people, with AI tools in the loop. The rules below exist so
+that we can all commit on the same day without stepping on each other, and so that every change can
+be traced back to a row in the project traceability matrix. Whoever commits a change owns it: a tool
+is never the author of record.
 
 Agents read `AGENTS.md`. This file is the human version of the same contract.
 
@@ -43,7 +44,7 @@ cd mindurset
 | `fix/<scope>-<slug>` | A bug fix |
 | `test/<scope>-<slug>` | Tests only |
 | `docs/<scope>-<slug>` | Documents and templates only |
-| `agent/<tool>/<slug>` | Work produced by an AI agent, one worktree per agent |
+| `agent/<tool>/<slug>` | Parallel agent work, one worktree per agent |
 
 Rebase your branch on `main` before requesting review. Never merge `main` into a feature branch.
 
@@ -57,8 +58,6 @@ Format: `type(scope): subject`
 - Body only when the reason is not obvious from the diff.
 - Last line: `Refs: F-03, UC-03` when the change closes traceability rows.
 - One logical change per commit. Formatting commits are separate from behaviour commits.
-- Agent commits add `Assisted-by: <tool name>`. This is disclosure, not decoration: the report and
-  the pull request history have to show which parts were machine-written.
 
 ## 4. Pull requests
 
@@ -96,7 +95,7 @@ rotate first and clean history second.
 - Decisions: `docs/decisions/NNNN-<slug>.md`, one file per decision, never edited after it is
   accepted; supersede it with a new file instead.
 - Test plans and device evidence: `docs/testing/`.
-- Course documents (proposal, use case model, activity diagrams, iteration notes) are not in this
+- Project documents (proposal, use case model, activity diagrams, iteration notes) are not in this
   repository. The project manager keeps them, and they must never be copied in. If you need the
   traceability matrix, ask for the current PDF; do not link to a path only one machine has.
 

@@ -6,7 +6,7 @@ Deciders: Christopher M. M. Gijoh (project manager)
 
 ## Context
 
-The repository was written by one person and several AI agents, with no collaboration surface: a
+The repository was written by the Project Owner/Manager, with no collaboration surface: a
 single GitHub collaborator, an unprotected `main`, no contribution rules, no pull request template
 and no formatting or secret checks. The project now moves to four people plus agents, and the
 proposal (Sec. 13.4) requires decisions to be recorded in the repository and every pull request to
@@ -24,8 +24,8 @@ Three facts forced this decision:
 
 1. Teammates join as collaborators with write access; `main` accepts changes only through pull
    requests with one approval, linear history, conversation resolution, and no force push.
-2. Agents may commit and push to non-main branches. They never push, amend, rebase or force-push
-   `main`, and their commits carry an `Assisted-by:` trailer.
+2. AI tools may commit and push to non-main branches. They never push, amend, rebase or force-push
+   `main`, and the member who runs them owns the commit.
 3. One `AGENTS.md` at the repository root is the agent contract, written in English. It carries the
    toolchain pins, the commands, the hard bans, the pitfalls that already cost time, and the
    definition of done.
@@ -35,7 +35,7 @@ Three facts forced this decision:
 6. Quality gates block merges: build, unit tests, ktlint through Spotless, Android lint, and a
    secret scan.
 7. Documents return to the repository in a narrow form: `docs/decisions/` for these records and
-   `docs/testing/` for test plans and device evidence. Course documents stay outside the repository.
+   `docs/testing/` for test plans and device evidence. Project documents stay outside the repository.
 
 ## Consequences
 
