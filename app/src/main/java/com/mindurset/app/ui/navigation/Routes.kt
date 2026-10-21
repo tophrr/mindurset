@@ -4,6 +4,7 @@ object Routes {
     const val LOGIN = "login"
     const val REGISTER = "register"
     const val DASHBOARD = "dashboard"
+    const val ACTION = "action"
     const val CHECK_IN = "checkin"
     const val ARG_EMOTION = "emotion"
     const val REFLECTION_LIST = "reflection_list"
@@ -32,7 +33,7 @@ object Routes {
 
     fun reflectionDetail(entryId: String): String = "$REFLECTION_DETAIL/$entryId"
 
-    val topLevelDestinations: List<String> = listOf(DASHBOARD, THERAPY, COMPANION, PROFILE)
+    val topLevelDestinations: List<String> = listOf(DASHBOARD, ACTION, THERAPY, COMPANION, PROFILE)
 
     fun isTopLevel(route: String?): Boolean = route != null && route in topLevelDestinations
 }
