@@ -1,6 +1,7 @@
 name: Android CI
 
-# Runs on every push to main and on pull requests targeting main.
+# Every pull request must pass formatting, lint, unit tests and a secret scan.
+# main only receives squash merges from pull requests that passed these jobs.
 on:
   push:
     branches: [ main ]
@@ -16,9 +17,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Primary job: build the debug APK and run the JVM unit tests together.
+  format:
+    name: Formatting (ktlint)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle (with cache)
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Check Kotlin formatting
+        run: ./gradlew spotlessCheck -Dorg.gradle.java.home="$JAVA_HOME" --console=plain
+
   build:
-    name: Build + unit tests
+    name: Build, lint and unit tests
     runs-on: ubuntu-latest
     steps:
       - name: Check out
@@ -42,13 +61,11 @@ jobs:
 
       # gradle.properties pins org.gradle.java.home to a local Android Studio JBR,
       # which does not exist on the runner. The command-line -D overrides it.
-      - name: Assemble debug + run unit tests
-        run: ./gradlew :app:assembleDebug :app:testDebugUnitTest -Dorg.gradle.java.home="$JAVA_HOME" --console=plain
-
-      # Lint is reported but must not fail the build yet.
-      - name: Lint (non-blocking)
-        continue-on-error: true
+      - name: Lint
         run: ./gradlew :app:lintDebug -Dorg.gradle.java.home="$JAVA_HOME" --console=plain
+
+      - name: Assemble debug and run unit tests
+        run: ./gradlew :app:assembleDebug :app:testDebugUnitTest -Dorg.gradle.java.home="$JAVA_HOME" --console=plain
 
       - name: Upload unit-test results
         if: always()
@@ -65,37 +82,18 @@ jobs:
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
 
-  # Second job: the unit tests on their own, so a red build points straight at the tests.
-  unit-tests:
-    name: Unit tests only
+  secrets:
+    name: Secret scan
     runs-on: ubuntu-latest
     steps:
       - name: Check out
         uses: actions/checkout@v4
-
-      - name: Set up JDK 21 (Temurin)
-        uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: '21'
+          fetch-depth: 0
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          # The obsolete 'tools' package is no longer resolvable and breaks sdkmanager;
-          # platform-tools plus AGP's own auto-download covers what this build needs.
-          packages: platform-tools
-
-      - name: Set up Gradle (with cache)
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Run unit tests
-        run: ./gradlew :app:testDebugUnitTest -Dorg.gradle.java.home="$JAVA_HOME" --console=plain
-
-      - name: Upload unit-test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: unit-test-results-only
-          path: app/build/test-results/testDebugUnitTest/
-          if-no-files-found: ignore
+      # Runs the pinned CLI image rather than the marketplace action, so this job needs no
+      # licence key and behaves the same for any fork.
+      - name: Scan the history for secrets
+        run: |
+          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest \
+            detect --source=/repo --redact --verbose
