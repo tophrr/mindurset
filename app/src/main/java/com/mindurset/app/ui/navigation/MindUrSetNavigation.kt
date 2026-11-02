@@ -286,7 +286,6 @@ private fun NavHostController.toDashboard() {
 private fun FloatingPillNav(currentRoute: String?, onNavigate: (String) -> Unit) {
     val items = listOf(
         Triple("Home", Routes.DASHBOARD, AppIcons.Home),
-        Triple(stringResource(R.string.action_nav_label), Routes.ACTION, AppIcons.Check),
         Triple("Therapy", Routes.THERAPY, AppIcons.Therapy),
         Triple("Companion", Routes.COMPANION, AppIcons.Companion),
         Triple("Profile", Routes.PROFILE, AppIcons.Profile),

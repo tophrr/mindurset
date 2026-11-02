@@ -33,7 +33,7 @@ object Routes {
 
     fun reflectionDetail(entryId: String): String = "$REFLECTION_DETAIL/$entryId"
 
-    val topLevelDestinations: List<String> = listOf(DASHBOARD, ACTION, THERAPY, COMPANION, PROFILE)
+    val topLevelDestinations: List<String> = listOf(DASHBOARD, THERAPY, COMPANION, PROFILE)
 
     fun isTopLevel(route: String?): Boolean = route != null && route in topLevelDestinations
 }
