@@ -95,9 +95,9 @@ rotate first and clean history second.
 - Decisions: `docs/decisions/NNNN-<slug>.md`, one file per decision, never edited after it is
   accepted; supersede it with a new file instead.
 - Test plans and device evidence: `docs/testing/`.
-- Project documents (proposal, use case model, activity diagrams, iteration notes) are not in this
-  repository. The project manager keeps them, and they must never be copied in. If you need the
-  traceability matrix, ask for the current PDF; do not link to a path only one machine has.
+- Project documents (proposal, use case model, activity diagrams, traceability matrix, mockups) live
+  in the private repository `tophrr/mindurset-docs`. Clone it and pull before you start; never copy
+  those files into this repository, and never link a local path.
 
 ## 8. When something is blocked
 

@@ -113,9 +113,9 @@ it, whatever tool helped write it. One commit per logical change; no work-in-pro
 
 - Architecture and scope decisions: `docs/decisions/NNNN-<slug>.md`, one file per decision.
 - Test plans, usability notes and device evidence: `docs/testing/`.
-- Project documents (proposal, use case model, activity diagrams, iteration notes) are not in this
-  repository. The project manager keeps them, and they must never be copied in. When a task needs
-  the traceability matrix, ask for the current PDF rather than pointing at a local path.
+- Project documents (proposal, use case model, activity diagrams, traceability matrix, mockups) live
+  in the private repository `tophrr/mindurset-docs`, which you can clone and pull. They are never
+  copied into this repository and never linked by a local path.
 
 ## Working alongside other agents
 
