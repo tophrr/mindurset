@@ -38,6 +38,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mindurset.app.R
+import com.mindurset.app.di.LocalAppContainer
+import com.mindurset.app.domain.model.MicroAction
 import com.mindurset.app.ui.common.AppCard
 import com.mindurset.app.ui.common.FloatingNavSpace
 import com.mindurset.app.ui.common.LoadingState
@@ -46,19 +48,18 @@ import com.mindurset.app.ui.theme.AppIcons
 import com.mindurset.app.ui.theme.MutedGray
 import com.mindurset.app.ui.theme.NavyDeep
 import com.mindurset.app.ui.theme.NavyInk
-import java.time.LocalDate
 
 @Composable
 fun ActionScreen(onBack: () -> Unit) {
-    val sampleActions = listOf(
-        ActionItem("walk", stringResource(R.string.action_sample_walk), 10, LocalDate.now()),
-        ActionItem("water", stringResource(R.string.action_sample_water), 2, LocalDate.now()),
-        ActionItem("breathe", stringResource(R.string.action_sample_breathe), 1, LocalDate.now()),
-    )
+    val container = LocalAppContainer.current
     val actionViewModel: ActionViewModel = viewModel {
-        ActionViewModel(FakeActionRepository(sampleActions))
+        ActionViewModel(
+            actions = container.microActionRepository,
+            sessionStore = container.sessionStore,
+        )
     }
     val state by actionViewModel.uiState.collectAsStateWithLifecycle()
+    val editorError by actionViewModel.editorError.collectAsStateWithLifecycle()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -86,35 +87,48 @@ fun ActionScreen(onBack: () -> Unit) {
         },
     ) { innerPadding ->
         when (val current = state) {
-            ActionUiState.Loading -> LoadingState(
-                modifier = Modifier.padding(innerPadding),
-                label = stringResource(R.string.action_loading),
-            )
+            ActionUiState.Loading ->
+                LoadingState(
+                    modifier = Modifier.padding(innerPadding),
+                    label = stringResource(R.string.action_loading),
+                )
 
-            ActionUiState.Empty -> ActionEmptyContent(
-                onAdd = actionViewModel::addAction,
-                contentPadding = innerPadding,
-            )
+            ActionUiState.Empty ->
+                ActionEmptyContent(
+                    contentPadding = innerPadding,
+                    editorError = editorError,
+                    onClearError = actionViewModel::clearEditorError,
+                    onAdd = actionViewModel::add,
+                )
 
-            is ActionUiState.Populated -> ActionListContent(
-                state = current,
-                contentPadding = innerPadding,
-                onAdd = actionViewModel::addAction,
-                onEdit = actionViewModel::editAction,
-                onComplete = actionViewModel::completeAction,
-                onSnooze = actionViewModel::snoozeAction,
-            )
+            is ActionUiState.Populated ->
+                ActionListContent(
+                    state = current,
+                    contentPadding = innerPadding,
+                    editorError = editorError,
+                    onClearError = actionViewModel::clearEditorError,
+                    onAdd = actionViewModel::add,
+                    onEdit = actionViewModel::edit,
+                    onComplete = actionViewModel::complete,
+                    onSnooze = actionViewModel::snooze,
+                )
 
-            ActionUiState.Error -> ActionErrorContent(
-                modifier = Modifier.padding(innerPadding),
-                onRetry = actionViewModel::retry,
-            )
+            ActionUiState.Error ->
+                ActionErrorContent(
+                    modifier = Modifier.padding(innerPadding),
+                    onRetry = actionViewModel::retry,
+                )
         }
     }
 }
 
 @Composable
-private fun ActionEmptyContent(onAdd: (String, Int) -> Unit, contentPadding: PaddingValues) {
+private fun ActionEmptyContent(
+    contentPadding: PaddingValues,
+    editorError: ActionEditorError?,
+    onClearError: () -> Unit,
+    onAdd: (String, Int) -> Boolean,
+) {
     var showEditor by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier.fillMaxSize().padding(contentPadding).padding(horizontal = 20.dp),
@@ -137,10 +151,19 @@ private fun ActionEmptyContent(onAdd: (String, Int) -> Unit, contentPadding: Pad
         }
     }
     if (showEditor) {
-        ActionEditorDialog(onDismiss = { showEditor = false }, onSave = { title, minutes ->
-            onAdd(title, minutes)
-            showEditor = false
-        })
+        ActionEditorDialog(
+            error = editorError,
+            onClearError = onClearError,
+            onDismiss = {
+                showEditor = false
+                onClearError()
+            },
+            onSave = { title, minutes ->
+                val saved = onAdd(title, minutes)
+                if (saved) showEditor = false
+                saved
+            },
+        )
     }
 }
 
@@ -148,16 +171,19 @@ private fun ActionEmptyContent(onAdd: (String, Int) -> Unit, contentPadding: Pad
 private fun ActionListContent(
     state: ActionUiState.Populated,
     contentPadding: PaddingValues,
-    onAdd: (String, Int) -> Unit,
-    onEdit: (String, String, Int) -> Unit,
+    editorError: ActionEditorError?,
+    onClearError: () -> Unit,
+    onAdd: (String, Int) -> Boolean,
+    onEdit: (String, String, Int) -> Boolean,
     onComplete: (String) -> Unit,
     onSnooze: (String) -> Unit,
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
-    var editingAction by remember { mutableStateOf<ActionItem?>(null) }
+    var editingAction by remember { mutableStateOf<MicroAction?>(null) }
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(
+        contentPadding =
+        PaddingValues(
             start = 20.dp,
             top = contentPadding.calculateTopPadding() + 8.dp,
             end = 20.dp,
@@ -178,48 +204,72 @@ private fun ActionListContent(
         if (state.today.isNotEmpty()) {
             item { SectionTitle(stringResource(R.string.action_today_group)) }
             items(state.today, key = { it.id }) { action ->
-                ActionCard(action, done = false, onEdit = {
-                    editingAction = action
-                }, onComplete = { onComplete(action.id) }, onSnooze = { onSnooze(action.id) })
+                ActionCard(
+                    action = action,
+                    onEdit = { editingAction = action },
+                    onComplete = { onComplete(action.id) },
+                    onSnooze = { onSnooze(action.id) },
+                )
             }
         }
         if (state.doneToday.isNotEmpty()) {
             item { SectionTitle(stringResource(R.string.action_done_group)) }
             items(state.doneToday, key = { it.id }) { action ->
-                ActionCard(action, done = true, onEdit = { editingAction = action }, onComplete = {}, onSnooze = {})
+                ActionCard(
+                    action = action,
+                    onEdit = { editingAction = action },
+                    onComplete = {},
+                    onSnooze = {},
+                )
             }
         }
         if (state.tomorrow.isNotEmpty()) {
             item { SectionTitle(stringResource(R.string.action_tomorrow_group)) }
             items(state.tomorrow, key = { it.id }) { action ->
-                ActionCard(action, done = false, onEdit = {
-                    editingAction = action
-                }, onComplete = { onComplete(action.id) }, onSnooze = {})
+                ActionCard(
+                    action = action,
+                    onEdit = { editingAction = action },
+                    onComplete = { onComplete(action.id) },
+                    onSnooze = {},
+                )
             }
         }
     }
     if (showAddDialog) {
-        ActionEditorDialog(onDismiss = { showAddDialog = false }, onSave = { title, minutes ->
-            onAdd(title, minutes)
-            showAddDialog = false
-        })
+        ActionEditorDialog(
+            error = editorError,
+            onClearError = onClearError,
+            onDismiss = {
+                showAddDialog = false
+                onClearError()
+            },
+            onSave = { title, minutes ->
+                val saved = onAdd(title, minutes)
+                if (saved) showAddDialog = false
+                saved
+            },
+        )
     }
     editingAction?.let { action ->
-        ActionEditorDialog(action, onDismiss = { editingAction = null }, onSave = { title, minutes ->
-            onEdit(action.id, title, minutes)
-            editingAction = null
-        })
+        ActionEditorDialog(
+            action = action,
+            error = editorError,
+            onClearError = onClearError,
+            onDismiss = {
+                editingAction = null
+                onClearError()
+            },
+            onSave = { title, minutes ->
+                val saved = onEdit(action.id, title, minutes)
+                if (saved) editingAction = null
+                saved
+            },
+        )
     }
 }
 
 @Composable
-private fun ActionCard(
-    action: ActionItem,
-    done: Boolean,
-    onEdit: () -> Unit,
-    onComplete: () -> Unit,
-    onSnooze: () -> Unit,
-) {
+private fun ActionCard(action: MicroAction, onEdit: () -> Unit, onComplete: () -> Unit, onSnooze: () -> Unit) {
     AppCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
@@ -233,13 +283,13 @@ private fun ActionCard(
             }
             IconButton(
                 onClick = onComplete,
-                enabled = !done,
+                enabled = !action.done,
                 modifier = Modifier.size(48.dp),
             ) {
                 Icon(
                     AppIcons.Check,
                     contentDescription = stringResource(R.string.action_complete_cd, action.title),
-                    tint = NavyDeep,
+                    tint = if (action.done) MutedGray else NavyDeep,
                 )
             }
             IconButton(onClick = onEdit, modifier = Modifier.size(48.dp)) {
@@ -249,7 +299,7 @@ private fun ActionCard(
                     tint = NavyDeep,
                 )
             }
-            if (!done && action.scheduledDate == LocalDate.now()) {
+            if (!action.done && action.snoozedUntil == null) {
                 IconButton(onClick = onSnooze, modifier = Modifier.size(48.dp)) {
                     Icon(
                         AppIcons.Clock,
@@ -263,22 +313,21 @@ private fun ActionCard(
 }
 
 @Composable
-private fun ActionEditorDialog(action: ActionItem? = null, onDismiss: () -> Unit, onSave: (String, Int) -> Unit) {
+private fun ActionEditorDialog(
+    action: MicroAction? = null,
+    error: ActionEditorError?,
+    onClearError: () -> Unit,
+    onDismiss: () -> Unit,
+    onSave: (String, Int) -> Boolean,
+) {
     var title by remember(action?.id) { mutableStateOf(action?.title.orEmpty()) }
     var minutes by remember(action?.id) { mutableStateOf(action?.minutes?.toString().orEmpty()) }
-    var invalid by remember { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
                 stringResource(
-                    if (action ==
-                        null
-                    ) {
-                        R.string.action_dialog_add_title
-                    } else {
-                        R.string.action_dialog_edit_title
-                    },
+                    if (action == null) R.string.action_dialog_add_title else R.string.action_dialog_edit_title,
                 ),
             )
         },
@@ -288,7 +337,7 @@ private fun ActionEditorDialog(action: ActionItem? = null, onDismiss: () -> Unit
                     value = title,
                     onValueChange = {
                         title = it
-                        invalid = false
+                        onClearError()
                     },
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(stringResource(R.string.action_title_label)) },
@@ -298,26 +347,30 @@ private fun ActionEditorDialog(action: ActionItem? = null, onDismiss: () -> Unit
                     value = minutes,
                     onValueChange = { value ->
                         minutes = value.filter(Char::isDigit)
-                        invalid = false
+                        onClearError()
                     },
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(stringResource(R.string.action_minutes_label)) },
                     singleLine = true,
                 )
-                if (invalid) {
-                    Text(stringResource(R.string.action_invalid), color = MaterialTheme.colorScheme.error)
+                error?.let { current ->
+                    Text(
+                        text =
+                        stringResource(
+                            when (current) {
+                                ActionEditorError.TitleRequired -> R.string.action_error_title
+                                ActionEditorError.MinutesOutOfRange -> R.string.action_error_minutes
+                            },
+                        ),
+                        color = MaterialTheme.colorScheme.error,
+                    )
                 }
             }
         },
         confirmButton = {
             TextButton(
                 onClick = {
-                    val duration = minutes.toIntOrNull()
-                    if (title.isBlank() || duration == null || duration !in 1..180) {
-                        invalid = true
-                    } else {
-                        onSave(title.trim(), duration)
-                    }
+                    onSave(title, minutes.toIntOrNull() ?: 0)
                 },
                 modifier = Modifier.height(48.dp),
             ) { Text(stringResource(R.string.action_save)) }
