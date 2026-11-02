@@ -4,6 +4,7 @@ object Routes {
     const val LOGIN = "login"
     const val REGISTER = "register"
     const val DASHBOARD = "dashboard"
+    const val ACTION = "action"
     const val CHECK_IN = "checkin"
     const val ARG_EMOTION = "emotion"
     const val REFLECTION_LIST = "reflection_list"

@@ -80,6 +80,7 @@ fun DashboardScreen(
     onOpenReflection: () -> Unit,
     onOpenCompanion: () -> Unit,
     onOpenTherapy: () -> Unit,
+    onOpenActions: () -> Unit,
     onOpenDrawer: () -> Unit,
 ) {
     val container = LocalAppContainer.current
@@ -117,6 +118,7 @@ fun DashboardScreen(
                     onOpenReflection = onOpenReflection,
                     onOpenCompanion = onOpenCompanion,
                     onOpenTherapy = onOpenTherapy,
+                    onOpenActions = onOpenActions,
                     onOpenDrawer = onOpenDrawer,
                 )
 
@@ -127,6 +129,7 @@ fun DashboardScreen(
                     onOpenReflection = onOpenReflection,
                     onOpenCompanion = onOpenCompanion,
                     onOpenTherapy = onOpenTherapy,
+                    onOpenActions = onOpenActions,
                     onOpenDrawer = onOpenDrawer,
                 )
         }
@@ -140,6 +143,7 @@ private fun DashboardBody(
     onOpenReflection: () -> Unit,
     onOpenCompanion: () -> Unit,
     onOpenTherapy: () -> Unit,
+    onOpenActions: () -> Unit,
     onOpenDrawer: () -> Unit,
 ) {
     LazyColumn(
@@ -174,6 +178,7 @@ private fun DashboardBody(
             }
         }
         item { TherapyShortcut(onOpenTherapy = onOpenTherapy) }
+        item { ActionShortcut(onOpenActions = onOpenActions) }
     }
 }
 
@@ -519,6 +524,47 @@ private fun TherapyShortcut(onOpenTherapy: () -> Unit) {
             }
             Text(
                 text = stringResource(R.string.dashboard_shortcut_therapy_cta),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ActionShortcut(onOpenActions: () -> Unit) {
+    AppCard(onClick = onOpenActions) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Box(
+                modifier = Modifier.size(42.dp).clip(CircleShape).background(PaleBlue),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    AppIcons.Check,
+                    contentDescription = null,
+                    modifier = Modifier.size(22.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    stringResource(R.string.dashboard_action_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                Text(
+                    stringResource(R.string.dashboard_action_body),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MutedGray,
+                    maxLines = 2,
+                )
+            }
+            Text(
+                stringResource(R.string.dashboard_action_open),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
             )
