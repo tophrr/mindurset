@@ -63,6 +63,9 @@ class MicroActionRepositoryImpl(private val dao: MicroActionDao) : MicroActionRe
     override fun observeOpen(userId: String): Flow<List<MicroAction>> =
         dao.observeOpen(userId).map { rows -> rows.map { it.toModel() } }
 
+    override fun observeAll(userId: String): Flow<List<MicroAction>> =
+        dao.observeAll(userId).map { rows -> rows.map { it.toModel() } }
+
     override suspend fun add(action: MicroAction) {
         dao.upsert(action.toEntity())
     }
