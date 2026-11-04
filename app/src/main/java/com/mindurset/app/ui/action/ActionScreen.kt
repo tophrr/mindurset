@@ -33,7 +33,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -44,6 +43,7 @@ import com.mindurset.app.ui.common.AppCard
 import com.mindurset.app.ui.common.FloatingNavSpace
 import com.mindurset.app.ui.common.LoadingState
 import com.mindurset.app.ui.common.SectionTitle
+import com.mindurset.app.ui.profile.MindTopBar
 import com.mindurset.app.ui.theme.AppIcons
 import com.mindurset.app.ui.theme.MutedGray
 import com.mindurset.app.ui.theme.NavyDeep
@@ -65,25 +65,11 @@ fun ActionScreen(onBack: () -> Unit) {
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0),
         topBar = {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconButton(onClick = onBack, modifier = Modifier.size(48.dp)) {
-                    Icon(
-                        imageVector = AppIcons.ArrowBack,
-                        contentDescription = stringResource(R.string.action_back_cd),
-                        tint = NavyInk,
-                    )
-                }
-                Text(
-                    text = stringResource(R.string.action_title),
-                    modifier = Modifier.padding(start = 8.dp),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = NavyInk,
-                )
-            }
+            MindTopBar(
+                title = stringResource(R.string.action_title),
+                onBack = onBack,
+                navDescription = stringResource(R.string.action_back_cd),
+            )
         },
     ) { innerPadding ->
         when (val current = state) {
