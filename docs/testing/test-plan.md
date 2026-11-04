@@ -12,7 +12,7 @@ Every test case must trace back to a specific use case (`UC-xx`) or non-function
 
 | Level | Scope and Contents | Execution Environment | Gate / Tooling | Target NFRs / Traceability |
 | --- | --- | --- | --- | --- |
-| **JVM Unit** | Domain models, intensity calculation, triage threshold evaluation, reframe state machine transitions, LocalRiskFloor keyword matching, retry backoff calculation, JSON contract serialisation/deserialisation, non-punitive copy assertions. Strictly zero Android framework imports. | Local JVM / CI runner (`flock /tmp/mindurset-gradle.lock ./gradlew testDebugUnitTest`) | Blocking on PR and CI | NFR-11, NFR-13, UC-02, UC-03, UC-04, UC-13 |
+| **JVM Unit** | Domain models, intensity calculation, triage threshold evaluation, reframe state machine transitions, the twelve red-team sentences against `LocalRiskFloor`, non-punitive copy assertions, and the action screen's grouping and validation. The Worker contract is validated in `worker/test` with Vitest, outside this module. Strictly zero Android framework imports. | Local JVM / CI runner (`flock /tmp/mindurset-gradle.lock ./gradlew testDebugUnitTest`) | Blocking on PR and CI | NFR-11, NFR-13, UC-02, UC-03, UC-04, UC-13 |
 | **Instrumented** | Room DAO CRUD operations and migrations, DataStore preference persistence, EncryptedSharedPreferences operations, WorkManager task scheduling, Repository integration against mocked Worker responses, Compose UI screen state rendering (empty, loading, shimmer, offline fallback, error, safety halted). | Android Emulator or physical test device (`./gradlew connectedDebugAndroidTest`) | Release candidate verification | NFR-02, NFR-04, NFR-06, NFR-14, UC-01, UC-04, UC-22 |
 | **Manual Device** | Physical hardware interactions, edge-to-edge IME insets under keyboard popup, dynamic theme/font scaling (up to 200%), TalkBack screen reader accessibility traversals, touch target measurement (minimum 48 dp), airplane mode transitions, system process kill simulation, external intent resolution (dialer 119 ext. 8, SMS/chat chooser for trusted contact). | Physical test devices and configured emulators | Gate R4 beta / Release sign-off | NFR-01, NFR-03, NFR-05, NFR-06, NFR-10, UC-14, UC-15, UC-21 |
 
@@ -68,7 +68,7 @@ All rotation cases test orientation changes between portrait (natural) and lands
 
 | Case ID | Title / Scenario | Preconditions & Input Action | Expected Result | Reference |
 | --- | --- | --- | --- | --- |
-| **ROT-01** | Rotation during onboarding consent & inputs | Onboarding screen S-03 (consent toggles) or S-04 (nickname input). Enter text and toggle switches, then rotate 90 degrees. | Entered text, selected checkboxes, and scroll position are fully preserved. Form remains interactive with no reset. | UC-01, NFR-05, NFR-06 |
+| **ROT-01** | Rotation during onboarding consent & inputs | Onboarding screen S-03 (consent toggles) or the nickname step, which has no screen ID in Sec. 7.2. Enter text and toggle switches, then rotate 90 degrees. | Entered text, selected checkboxes, and scroll position are fully preserved. Form remains interactive with no reset. | UC-01, NFR-05, NFR-06 |
 | **ROT-02** | Rotation during daily check-in | Home screen S-11. Select mood face (e.g., Anxious), set slider to 8, type unsubmitted note. Rotate device. | Selected face, slider value (8), and entered note text remain intact. Keyboard adjusts cleanly without obscuring buttons. | UC-02, NFR-05 |
 | **ROT-03** | Rotation during active reframe session | Therapy screen S-21. Reframe step 1 active with partial thought deconstruction text typed. Rotate device. | Thought deconstruction text, current step indicator (Step 1 of 3), and session state remain identical. No state reload. | UC-04, UC-05, NFR-05 |
 | **ROT-04** | Rotation during journal drafting | Journal screen S-12. Compose long free-text entry. Rotate device back and forth between portrait and landscape. | Cursor position is maintained, all draft text is preserved, and scrolling column respects IME padding in landscape. | UC-11, NFR-05 |
@@ -128,6 +128,20 @@ Covers consent lifecycle, memory window limits, data export, and local data dele
 | **DATA-07** | Complete local data deletion | In S-92, select "Delete All Local Data" and confirm dialog. | Room database is wiped, DataStore is reset, credentials are removed from Keystore. App restarts to first-run onboarding (S-01). | UC-16, NFR-08 |
 | **DATA-08** | Server and local log sanitisation | Perform check-in and reframe session with sensitive personal text. Inspect logcat and diagnostic logs. | Zero user journal or check-in text is printed to logcat. Only structured event identifiers and stage timings appear (`NFR-12`). | NFR-08, NFR-12 |
 | **DATA-09** | Tracker and third-party SDK audit | Inspect build dependencies and outgoing network traffic via MITM proxy. | Zero third-party ad networks, behavioural trackers, or analytics SDKs present in APK. No telemetry transmissions occur. | NFR-08 |
+
+### 3.6 Coverage today
+
+Several cases below depend on features that are not in the repository yet. Per rule 3 in
+`docs/testing/README.md` they stay in the plan and are reported as `NOT AVAILABLE` with the reason,
+never deleted and never marked as passed.
+
+| Area | Cases | Blocked by |
+| --- | --- | --- |
+| Account, sign-in and token refresh | A-02 to A-07, A-09, KILL-06 | No Firebase project, no `google-services.json`, and the app declares no network permission |
+| Backup and sync | OFF-09, OFF-10, A-04, A-05 | No Worker endpoint wired into the client |
+| Insights | OFF-06, KILL-04 | No insights screen yet |
+| Memory manager and export | DATA-03 to DATA-06 | The `session_summary` table exists; the screen and export path do not |
+| Instrumented suite | Every `connectedDebugAndroidTest` row | No `androidTest` source set yet |
 
 ---
 
