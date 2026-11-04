@@ -64,6 +64,7 @@ import com.mindurset.app.ui.profile.SettingsScreen
 import com.mindurset.app.ui.reflection.ReflectionDetailScreen
 import com.mindurset.app.ui.reflection.ReflectionFormScreen
 import com.mindurset.app.ui.reflection.ReflectionListScreen
+import com.mindurset.app.ui.safety.CrisisScreen
 import com.mindurset.app.ui.theme.AppIcons
 import com.mindurset.app.ui.theme.CardShadow
 import com.mindurset.app.ui.theme.SurfaceWhite
@@ -202,7 +203,15 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
                                 popUpTo(Routes.DASHBOARD) { inclusive = false }
                             }
                         },
+                        onCrisis = {
+                            navController.navigate(Routes.CRISIS) {
+                                popUpTo(Routes.DASHBOARD) { inclusive = false }
+                            }
+                        },
                     )
+                }
+                composable(Routes.CRISIS) {
+                    CrisisScreen(onAcknowledge = { goToDestination(Routes.DASHBOARD) })
                 }
                 composable(Routes.REFLECTION_LIST) {
                     ReflectionListScreen(

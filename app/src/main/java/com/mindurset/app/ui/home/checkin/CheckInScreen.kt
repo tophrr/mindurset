@@ -67,6 +67,7 @@ fun CheckInScreen(
     onDone: () -> Unit,
     onBack: () -> Unit,
     onStartReframe: () -> Unit = onDone,
+    onCrisis: () -> Unit = onDone,
     initialEmotion: Emotion? = null,
 ) {
     val container = LocalAppContainer.current
@@ -74,6 +75,7 @@ fun CheckInScreen(
         CheckInViewModel(
             checkInRepository = container.checkInRepository,
             sessionStore = container.sessionStore,
+            safetyRepository = container.safetyRepository,
             initialEmotion = initialEmotion,
         )
     }
@@ -82,6 +84,14 @@ fun CheckInScreen(
     val note by vm.note.collectAsStateWithLifecycle()
     val saving by vm.saving.collectAsStateWithLifecycle()
     val offerReframe by vm.offerReframe.collectAsStateWithLifecycle()
+    val crisisLevel by vm.crisisLevel.collectAsStateWithLifecycle()
+
+    LaunchedEffect(crisisLevel) {
+        if (crisisLevel != null) {
+            vm.acknowledgeCrisis()
+            onCrisis()
+        }
+    }
 
     val noteFocus = remember { FocusRequester() }
     val scrollState = rememberScrollState()

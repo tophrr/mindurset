@@ -1,7 +1,9 @@
 package com.mindurset.app
 
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.CompositionLocalProvider
@@ -24,7 +26,13 @@ sealed interface SessionState {
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        // The app is light-only, so the system bars always need dark icons. The default follows the
+        // system theme, which leaves white icons over the pale background when the phone is in dark
+        // mode and makes the clock and battery unreadable.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
+        )
         val container = (application as MindUrSetApp).container
         setContent {
             MindUrSetTheme {
