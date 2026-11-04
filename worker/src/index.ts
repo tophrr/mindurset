@@ -35,7 +35,7 @@ const CANNED_CHAT_REPLY =
 const CANNED_SUMMARY =
   "This is the stub session summary. The session covered one check-in and one reframe. Nothing is generated yet.";
 
-const DEFAULT_MODE = "listen";
+const DEFAULT_MODE: Mode = "listen";
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -44,14 +44,17 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
+const MODES = ["listen", "reflect", "plan"] as const;
+type Mode = (typeof MODES)[number];
+
 // The contract has no room for a mode field (additionalProperties: false), so
-// the requested support mode is echoed inside the message text. The cap keeps
-// message inside the contract's maxLength of 600.
-function readMode(body: unknown): string {
+// the requested support mode is echoed inside the message text. Only a known
+// mode is echoed: anything else would put arbitrary client text on screen.
+function readMode(body: unknown): Mode {
   if (typeof body === "object" && body !== null && "mode" in body) {
     const mode = (body as { mode: unknown }).mode;
-    if (typeof mode === "string" && mode.length > 0) {
-      return mode.slice(0, 40);
+    if (typeof mode === "string" && (MODES as readonly string[]).includes(mode)) {
+      return mode as Mode;
     }
   }
   return DEFAULT_MODE;
