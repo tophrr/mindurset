@@ -24,11 +24,12 @@ Every test case must trace back to a specific use case (`UC-xx`) or non-function
 | --- | --- | --- | --- | --- | --- |
 | **Pixel 8 emulator (AVD)** | Emulator, Android Studio | Android 15 (API 35) | SDK 35 (x86_64), `system-images;android-35;google_apis_playstore;x86_64` | 6.2" 1080×2400, 420 dpi (2.625×), 4 vCPU, 3 GB RAM | **Primary Target:** layout, edge-to-edge and IME insets, Compose states, process-kill recovery, Room persistence. Soft keyboard enabled (`hw.keyboard=no`), otherwise the IME cases cannot be executed. Not valid for launch latency, thermals, battery or real 4G. |
 | **Pixel 8 emulator, API 36** | Emulator, Android Studio | Android 16 (API 36) | SDK 36 (x86_64), `system-images;android-36;google_apis_playstore;x86_64` | 6.2" 1080×2400, 420 dpi (2.625×), 4 vCPU, 3 GB RAM | **Target-SDK reference:** replace the API 35 image with this one before Gate R4, so the behaviour that `targetSdk 36` changes is exercised rather than assumed. |
+| **Xiaomi Redmi Note 10 Pro (physical)** | Physical hardware | Android 16 | SDK 36 (arm64-v8a) | 6.67" 1080×2400, 410 dpi physical (440 override, 2.5625×), ~397 ppi | **Secondary:** the device that produced the current evidence. Real IME behaviour, real dialer intent and real touch latency. Used when the AVD is not available on a host. |
 | **Generic Phone Emulator / Testbed** | Android Virtual Device (AVD) | Android 8.0 (Oreo) | SDK 26 (x86_64 / arm64) | 5.0" LCD, 1080×1920 (~440 ppi), 60 Hz | **Baseline Target:** Validates `minSdk 26` compatibility, legacy crypto fallback, Room backwards compatibility, and absence of unsupported API calls. |
 
-Physical hardware is not provisioned for this cycle. Cases that need it, such as real 4G latency,
-thermal behaviour, battery and wireless adb, are recorded as `NOT AVAILABLE` with the reason, following
-the policy below. They are never marked as passed.
+The physical phone is a personal device, so it is not always available. When it is not, cases that need
+it, such as real 4G latency, thermal behaviour, battery and wireless adb, are recorded as `NOT
+AVAILABLE` with the reason, following the policy below. They are never marked as passed.
 
 ### Meaning of "NOT AVAILABLE" in Test Reports
 
