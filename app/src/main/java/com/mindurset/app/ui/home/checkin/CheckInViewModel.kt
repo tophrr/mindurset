@@ -6,6 +6,8 @@ import com.mindurset.app.domain.model.CheckIn
 import com.mindurset.app.domain.model.Emotion
 import com.mindurset.app.domain.repository.CheckInRepository
 import com.mindurset.app.domain.repository.SessionStore
+import com.mindurset.app.domain.usecase.EvaluateTriage
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,7 +26,9 @@ class CheckInViewModel(
     initialEmotion: Emotion? = null,
     private val clock: () -> Long = System::currentTimeMillis,
     private val newId: () -> String = { UUID.randomUUID().toString() },
+    externalScope: CoroutineScope? = null,
 ) : ViewModel() {
+    private val scope: CoroutineScope = externalScope ?: viewModelScope
     private val _emotion = MutableStateFlow(initialEmotion)
     val emotion: StateFlow<Emotion?> = _emotion.asStateFlow()
 
@@ -36,6 +40,11 @@ class CheckInViewModel(
 
     private val _saving = MutableStateFlow(false)
     val saving: StateFlow<Boolean> = _saving.asStateFlow()
+
+    private val _offerReframe = MutableStateFlow(false)
+
+    /** True when the triage rule wants to follow this check-in with a reframe. */
+    val offerReframe: StateFlow<Boolean> = _offerReframe.asStateFlow()
 
     fun selectEmotion(emotion: Emotion) {
         _emotion.value = emotion
@@ -54,7 +63,7 @@ class CheckInViewModel(
         val selected = _emotion.value ?: return
         if (_saving.value) return
         _saving.value = true
-        viewModelScope.launch {
+        scope.launch {
             val userId = sessionStore.current()?.userId
             if (userId != null) {
                 checkInRepository.insert(
@@ -69,8 +78,17 @@ class CheckInViewModel(
                 )
             }
             _saving.value = false
-            onSaved()
+            val offer =
+                EvaluateTriage.evaluate(selected, _intensity.value) == EvaluateTriage.Offer.Reframe
+            _offerReframe.value = offer
+            if (!offer) onSaved()
         }
+    }
+
+    /** The user declined the offer, so the screen leaves as it always did. */
+    fun skipOffer(onDone: () -> Unit) {
+        _offerReframe.value = false
+        onDone()
     }
 
     companion object {

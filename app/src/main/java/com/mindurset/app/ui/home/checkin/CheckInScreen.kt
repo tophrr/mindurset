@@ -19,6 +19,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -26,6 +27,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -61,7 +63,12 @@ import kotlin.math.roundToInt
  * Selection is held in [CheckInViewModel] so it survives rotation.
  */
 @Composable
-fun CheckInScreen(onDone: () -> Unit, onBack: () -> Unit, initialEmotion: Emotion? = null) {
+fun CheckInScreen(
+    onDone: () -> Unit,
+    onBack: () -> Unit,
+    onStartReframe: () -> Unit = onDone,
+    initialEmotion: Emotion? = null,
+) {
     val container = LocalAppContainer.current
     val vm: CheckInViewModel = viewModel {
         CheckInViewModel(
@@ -74,6 +81,7 @@ fun CheckInScreen(onDone: () -> Unit, onBack: () -> Unit, initialEmotion: Emotio
     val intensity by vm.intensity.collectAsStateWithLifecycle()
     val note by vm.note.collectAsStateWithLifecycle()
     val saving by vm.saving.collectAsStateWithLifecycle()
+    val offerReframe by vm.offerReframe.collectAsStateWithLifecycle()
 
     val noteFocus = remember { FocusRequester() }
     val scrollState = rememberScrollState()
@@ -165,6 +173,31 @@ fun CheckInScreen(onDone: () -> Unit, onBack: () -> Unit, initialEmotion: Emotio
             Spacer(modifier = Modifier.size(bottomSpace))
         }
     }
+
+    if (offerReframe) {
+        ReframeOfferDialog(
+            onStart = {
+                vm.skipOffer {}
+                onStartReframe()
+            },
+            onLater = { vm.skipOffer(onDone) },
+        )
+    }
+}
+
+@Composable
+private fun ReframeOfferDialog(onStart: () -> Unit, onLater: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onLater,
+        title = { Text(stringResource(R.string.checkin_offer_title)) },
+        text = { Text(stringResource(R.string.checkin_offer_body)) },
+        confirmButton = {
+            TextButton(onClick = onStart) { Text(stringResource(R.string.checkin_offer_start)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onLater) { Text(stringResource(R.string.checkin_offer_later)) }
+        },
+    )
 }
 
 @Composable

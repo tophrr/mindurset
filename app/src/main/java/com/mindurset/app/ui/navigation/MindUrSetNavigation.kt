@@ -197,6 +197,11 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
                         initialEmotion = preselected,
                         onDone = { navController.popBackStack() },
                         onBack = { navController.popBackStack() },
+                        onStartReframe = {
+                            navController.navigate(Routes.THERAPY) {
+                                popUpTo(Routes.DASHBOARD) { inclusive = false }
+                            }
+                        },
                     )
                 }
                 composable(Routes.REFLECTION_LIST) {
