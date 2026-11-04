@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="reframe_title">Reframe</string>
+    <string name="reframe_back_cd">Back</string>
+    <string name="reframe_progress">Step %1$d of %2$d</string>
+    <string name="reframe_step1_title">What went through your mind?</string>
+    <string name="reframe_step1_hint">One sentence, in the words it arrived in. No editing yet.</string>
+    <string name="reframe_step2_title">What would you say to a friend?</string>
+    <string name="reframe_step2_hint">Someone you like says this to you. What do you notice that they cannot see right now?</string>
+    <string name="reframe_step3_title">A fairer way to say it</string>
+    <string name="reframe_step3_hint">Keep what is true, drop the absolute wording. It does not have to be positive, only accurate.</string>
+    <string name="reframe_done_title">Carry one small step</string>
+    <string name="reframe_action_prompt">Something you could do in the next hour, small enough that today still counts.</string>
+    <string name="reframe_action_label">One small step</string>
+    <string name="reframe_action_placeholder">Open the exam outline for ten minutes</string>
+    <string name="reframe_minutes">%1$d min</string>
+    <string name="reframe_continue">Continue</string>
+    <string name="reframe_finish">Save the step</string>
+    <string name="reframe_error_thought">Write the thought first, even roughly.</string>
+    <string name="reframe_error_evidence">One thing you notice is enough.</string>
+    <string name="reframe_error_alternative">Write the fairer version first.</string>
+    <string name="reframe_error_action">Name one small step before saving.</string>
+    <string name="reframe_saved_title">Saved</string>
+    <string name="reframe_saved_body">The session is stored and the step is on Today\'s Action. You can stop here.</string>
+    <string name="reframe_saved_done">Done</string>
+    <string name="therapy_start_reframe">Start a three-step reframe</string>
+</resources>

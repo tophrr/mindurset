@@ -60,7 +60,7 @@ private val Step3Accent = Color(0xFF7A4FBF)
  * feel enabled but have no behaviour yet; the header says so plainly.
  */
 @Composable
-fun TherapyScreen(onOpenDrawer: () -> Unit) {
+fun TherapyScreen(onOpenDrawer: () -> Unit, onStartReframe: () -> Unit) {
     Scaffold(
         containerColor = CanvasBlue,
         contentWindowInsets = WindowInsets(0),
@@ -100,6 +100,14 @@ fun TherapyScreen(onOpenDrawer: () -> Unit) {
                     color = MutedGray,
                     fontSize = 13.sp,
                 )
+                Spacer(Modifier.height(12.dp))
+                Button(
+                    onClick = onStartReframe,
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    shape = RoundedCornerShape(24.dp),
+                ) {
+                    Text(stringResource(R.string.therapy_start_reframe))
+                }
             }
 
             StepCard(
