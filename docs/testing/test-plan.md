@@ -158,6 +158,9 @@ Screenshots captured from devices must follow the canonical format:
 ```
 
 - `<YYYYMMDD>`: ISO calendar date of the test execution (e.g., `20261022`).
+- A screen that has no identifier in Sec. 7.2 yet uses a short slug instead, and the file says so in
+  its pull request. Today's Action is the current case: its evidence is named
+  `action-today`, and the files are renamed once the inventory gives it an `S` number.
 - `<screen_id>`: Official screen identifier from proposal §7.2:
   - `s01` (Launch / check)
   - `s02` (Scope & limits)
