@@ -2,8 +2,11 @@ package com.mindurset.app.ui.home.checkin
 
 import com.mindurset.app.domain.model.CheckIn
 import com.mindurset.app.domain.model.Emotion
+import com.mindurset.app.domain.model.RiskLevel
+import com.mindurset.app.domain.model.SafetyEvent
 import com.mindurset.app.domain.model.SessionInfo
 import com.mindurset.app.domain.repository.CheckInRepository
+import com.mindurset.app.domain.repository.SafetyRepository
 import com.mindurset.app.domain.repository.SessionStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +24,7 @@ import org.junit.Test
 
 class CheckInViewModelTest {
     private val saved = mutableListOf<CheckIn>()
+    private val safety = RecordingSafetyRepository()
     private var onDoneCalls = 0
 
     @Test
@@ -86,9 +90,42 @@ class CheckInViewModelTest {
         assertNull(viewModel.emotion.value)
     }
 
+    @Test
+    fun `a note with a red flag shows the crisis card instead of the reframe`() {
+        val viewModel = viewModel()
+        viewModel.selectEmotion(Emotion.ANXIOUS)
+        viewModel.setIntensity(8)
+        viewModel.setNote("aku ingin mati")
+
+        viewModel.save { onDoneCalls++ }
+
+        assertEquals(RiskLevel.L2, viewModel.crisisLevel.value)
+        assertFalse(viewModel.offerReframe.value)
+        assertEquals(0, onDoneCalls)
+        val event = safety.events.single()
+        assertEquals("checkin_note", event.trigger)
+        assertEquals(RiskLevel.L2, event.level)
+        assertEquals("u1", event.userId)
+    }
+
+    @Test
+    fun `a benign note records no safety event`() {
+        val viewModel = viewModel()
+        viewModel.selectEmotion(Emotion.LOW)
+        viewModel.setIntensity(4)
+        viewModel.setNote("lelah tapi masih bisa bekerja")
+
+        viewModel.save { onDoneCalls++ }
+
+        assertNull(viewModel.crisisLevel.value)
+        assertTrue(safety.events.isEmpty())
+        assertEquals(1, onDoneCalls)
+    }
+
     private fun viewModel(): CheckInViewModel = CheckInViewModel(
         checkInRepository = RecordingCheckInRepository(saved),
         sessionStore = FixedSessionStore(SessionInfo(userId = "u1", email = "guest@local")),
+        safetyRepository = safety,
         clock = { 1_700_000_000_000 },
         newId = { "checkin-1" },
         externalScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),
@@ -105,6 +142,17 @@ private class RecordingCheckInRepository(private val rows: MutableList<CheckIn>)
     override suspend fun insert(checkIn: CheckIn) {
         rows += checkIn
     }
+}
+
+private class RecordingSafetyRepository : SafetyRepository {
+    val events = mutableListOf<SafetyEvent>()
+
+    override suspend fun record(event: SafetyEvent) {
+        events += event
+    }
+
+    override suspend fun countSince(userId: String, since: Long): Int =
+        events.count { it.userId == userId && it.createdAt >= since }
 }
 
 private class FixedSessionStore(initial: SessionInfo?) : SessionStore {
