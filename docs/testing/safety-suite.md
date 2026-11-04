@@ -60,6 +60,13 @@ The safety architecture mandates that network outage or backend classifier unava
 | **Classifier Unavailable** (HTTP 504, timeout > 5000 ms, DNS failure, or airplane mode) | **L0** (No explicit keyword hit on-device) | **L1** (Escalated by one level) | **Fail-Closed Escalation:** System escalates to L1 rather than continuing normally. Employs protective stance, offers inline crisis resources, and runs deterministic offline reframe exercise. | UC-13, UC-15, F-09, NFR-04 |
 | **Classifier Unavailable** (HTTP 504, timeout > 5000 ms, DNS failure, or airplane mode) | **L2** (Keyword hit via `LocalRiskFloor`) | **L3** (Escalated by one level) | **Fail-Closed Escalation:** Local floor detected explicit risk keywords offline. Because classifier cannot assess context or nuance, system escalates directly to L3: halts session, displays un-dismissible crisis card (S-90) with 119 ext. 8. | UC-13, UC-15, F-09, NFR-04 |
 
+An offline reframe is not a contradiction of this table. At L1 the deterministic exercise still runs,
+with the crisis resources inline; what changes is the stance, not whether the exercise is available.
+OFF-03 in the test plan expects exactly that.
+
+A 5000 ms timeout is the ceiling for the Worker call, not the budget for the turn: NFR-02 asks for a
+first token under three seconds at p95, so the client falls back locally well before five seconds.
+
 ---
 
 ## 4. Proposal Sec. 12.2 Safety Suite Matrix
