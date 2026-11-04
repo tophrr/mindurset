@@ -32,6 +32,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -389,10 +390,22 @@ private fun ReflectionCalendar(entries: List<JournalEntry>, onOpen: (String) -> 
 }
 
 @Composable
-fun ReflectionFormScreen(entryId: String?, onSaved: () -> Unit, onBack: () -> Unit) {
+fun ReflectionFormScreen(entryId: String?, onSaved: () -> Unit, onBack: () -> Unit, onCrisis: () -> Unit = onSaved) {
     val container = LocalAppContainer.current
     val viewModel: ReflectionFormViewModel = viewModel {
-        ReflectionFormViewModel(entryId, container.journalRepository, container.sessionStore)
+        ReflectionFormViewModel(
+            entryId,
+            container.journalRepository,
+            container.sessionStore,
+            container.safetyRepository,
+        )
+    }
+
+    LaunchedEffect(viewModel.crisisLevel) {
+        if (viewModel.crisisLevel != null) {
+            viewModel.acknowledgeCrisis()
+            onCrisis()
+        }
     }
 
     Scaffold(

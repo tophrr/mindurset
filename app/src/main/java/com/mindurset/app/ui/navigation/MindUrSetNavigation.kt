@@ -236,6 +236,11 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
                         entryId = entry.arguments?.getString(Routes.ARG_ENTRY_ID),
                         onSaved = { navController.popBackStack() },
                         onBack = { navController.popBackStack() },
+                        onCrisis = {
+                            navController.navigate(Routes.CRISIS) {
+                                popUpTo(Routes.DASHBOARD) { inclusive = false }
+                            }
+                        },
                     )
                 }
                 composable(
@@ -261,7 +266,16 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
                         onFinished = { goToDestination(Routes.DASHBOARD) },
                     )
                 }
-                composable(Routes.COMPANION) { CompanionScreen(onOpenDrawer = openDrawer) }
+                composable(Routes.COMPANION) {
+                    CompanionScreen(
+                        onOpenDrawer = openDrawer,
+                        onCrisis = {
+                            navController.navigate(Routes.CRISIS) {
+                                popUpTo(Routes.DASHBOARD) { inclusive = false }
+                            }
+                        },
+                    )
+                }
                 composable(Routes.PROFILE) {
                     ProfileScreen(
                         onEditProfile = { navController.navigate(Routes.PROFILE_EDIT) },
