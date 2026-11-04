@@ -105,9 +105,11 @@ test(domain): cover the triage threshold
 ```
 
 Optional body explains why, not what. Last line carries `Refs: F-03, UC-03` when it closes a
-traceability row. Commits are signed (`commit.gpgsign=true`). The member who commits a change owns
-it, whatever tool helped write it. One commit per logical change; no work-in-progress commits on
-`main`.
+traceability row. Sign your commits when you have a key configured (`commit.gpgsign=true`), but note
+that `main` only receives squash merges: the commit that lands there is signed by the person who
+merges, so a missing signature on a branch commit does not block the pull request. The member who
+commits a change owns it, whatever tool helped write it. One commit per logical change; no
+work-in-progress commits on `main`.
 
 ## Where documents live
 
