@@ -14,6 +14,7 @@ object Routes {
     const val ARG_ENTRY_ID = "entryId"
 
     const val THERAPY = "therapy"
+    const val REFRAME = "reframe"
     const val CRISIS = "crisis"
     const val COMPANION = "companion"
     const val PROFILE = "profile"

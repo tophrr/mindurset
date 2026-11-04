@@ -68,6 +68,7 @@ import com.mindurset.app.ui.safety.CrisisScreen
 import com.mindurset.app.ui.theme.AppIcons
 import com.mindurset.app.ui.theme.CardShadow
 import com.mindurset.app.ui.theme.SurfaceWhite
+import com.mindurset.app.ui.therapy.ReframeScreen
 import com.mindurset.app.ui.therapy.TherapyScreen
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
@@ -248,7 +249,18 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
                         onBack = { navController.popBackStack() },
                     )
                 }
-                composable(Routes.THERAPY) { TherapyScreen(onOpenDrawer = openDrawer) }
+                composable(Routes.THERAPY) {
+                    TherapyScreen(
+                        onOpenDrawer = openDrawer,
+                        onStartReframe = { navController.navigate(Routes.REFRAME) { launchSingleTop = true } },
+                    )
+                }
+                composable(Routes.REFRAME) {
+                    ReframeScreen(
+                        onBack = { navController.popBackStack() },
+                        onFinished = { goToDestination(Routes.DASHBOARD) },
+                    )
+                }
                 composable(Routes.COMPANION) { CompanionScreen(onOpenDrawer = openDrawer) }
                 composable(Routes.PROFILE) {
                     ProfileScreen(
