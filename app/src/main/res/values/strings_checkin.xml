@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="checkin_offer_title">A short reframe?</string>
+    <string name="checkin_offer_body">That sounds heavy. Three quick steps can help you look at the thought from another angle.</string>
+    <string name="checkin_offer_start">Start</string>
+    <string name="checkin_offer_later">Not now</string>
+</resources>
