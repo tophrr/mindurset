@@ -30,10 +30,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +50,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mindurset.app.R
+import com.mindurset.app.di.LocalAppContainer
+import com.mindurset.app.domain.model.RiskLevel
+import com.mindurset.app.domain.model.SafetyEvent
+import com.mindurset.app.safety.LocalRiskFloor
 import com.mindurset.app.ui.common.AppCard
 import com.mindurset.app.ui.common.CircleIconButton
 import com.mindurset.app.ui.common.FloatingNavSpace
@@ -60,6 +66,10 @@ import com.mindurset.app.ui.theme.NavyInk
 import com.mindurset.app.ui.theme.OutlineSoft
 import com.mindurset.app.ui.theme.PaleBlue
 import com.mindurset.app.ui.theme.SurfaceWhite
+import kotlinx.coroutines.launch
+import java.util.UUID
+
+private const val SAFETY_EVENT_RETENTION_MILLIS = 30L * 24 * 60 * 60 * 1000
 
 /** A selectable companion mode: its chip label plus the canned preview conversation. */
 private data class CompanionMode(val chipRes: Int, val botRes: List<Int>, val userRes: List<Int>)
@@ -122,7 +132,10 @@ private val CompanionModes = listOf(
  * floating pill navigation bar, so it stays put while the chat scrolls underneath.
  */
 @Composable
-fun CompanionScreen(onOpenDrawer: () -> Unit) {
+fun CompanionScreen(onOpenDrawer: () -> Unit, onCrisis: () -> Unit = {}) {
+    val container = LocalAppContainer.current
+    val scope = rememberCoroutineScope()
+    val session by container.sessionStore.session.collectAsState(initial = null)
     var selectedMode by remember { mutableIntStateOf(0) }
     var draft by remember { mutableStateOf("") }
     // Messages the user types are kept in local state only: nothing is sent anywhere.
@@ -221,9 +234,32 @@ fun CompanionScreen(onOpenDrawer: () -> Unit) {
                 value = draft,
                 onValueChange = { draft = it },
                 onSend = {
-                    if (draft.isNotBlank()) {
-                        typedMessages = typedMessages + draft.trim()
-                        draft = ""
+                    val text = draft.trim()
+                    if (text.isNotBlank()) {
+                        val hit = LocalRiskFloor.match(text)
+                        if (hit != null && hit.level >= RiskLevel.L2) {
+                            val owner = session?.userId
+                            if (owner != null) {
+                                scope.launch {
+                                    val at = System.currentTimeMillis()
+                                    container.safetyRepository.record(
+                                        SafetyEvent(
+                                            id = UUID.randomUUID().toString(),
+                                            userId = owner,
+                                            level = hit.level,
+                                            trigger = "companion_message",
+                                            patternId = hit.patternId,
+                                            createdAt = at,
+                                            retentionUntil = at + SAFETY_EVENT_RETENTION_MILLIS,
+                                        ),
+                                    )
+                                }
+                            }
+                            onCrisis()
+                        } else {
+                            typedMessages = typedMessages + text
+                            draft = ""
+                        }
                     }
                 },
                 placeholder = stringResource(R.string.companion_input_placeholder),
