@@ -1,5 +1,6 @@
 package com.mindurset.app.ui.therapy
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,6 +34,7 @@ import com.mindurset.app.ui.common.AppCard
 import com.mindurset.app.ui.profile.MindTopBar
 import com.mindurset.app.ui.theme.MutedGray
 import com.mindurset.app.ui.theme.NavyInk
+import com.mindurset.app.ui.theme.PaleBlue
 
 /**
  * Three steps, each one stored as it is typed, then one small action. Back leaves the session open,
@@ -84,6 +86,21 @@ fun ReframeScreen(onBack: () -> Unit, onFinished: () -> Unit) {
                     ReframeViewModel.LAST_INPUT_STEP + 1,
                 ),
                 style = MaterialTheme.typography.labelLarge,
+                color = MutedGray,
+            )
+
+            Text(
+                text = stringResource(R.string.reframe_offline_label),
+                style = MaterialTheme.typography.labelSmall,
+                color = NavyInk,
+                modifier =
+                Modifier
+                    .background(PaleBlue, RoundedCornerShape(8.dp))
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+            )
+            Text(
+                text = stringResource(R.string.reframe_offline_note),
+                style = MaterialTheme.typography.bodySmall,
                 color = MutedGray,
             )
 
