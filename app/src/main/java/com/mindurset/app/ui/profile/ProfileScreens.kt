@@ -64,7 +64,13 @@ import com.mindurset.app.ui.theme.SurfaceWhite
 // ---------------------------------------------------------------------------
 
 @Composable
-fun ProfileScreen(onEditProfile: () -> Unit, onSettings: () -> Unit, onLogout: () -> Unit, onOpenDrawer: () -> Unit) {
+fun ProfileScreen(
+    onEditProfile: () -> Unit,
+    onSettings: () -> Unit,
+    onDataConsent: () -> Unit,
+    onLogout: () -> Unit,
+    onOpenDrawer: () -> Unit,
+) {
     val container = LocalAppContainer.current
     val vm: ProfileViewModel = viewModel {
         ProfileViewModel(
@@ -155,6 +161,14 @@ fun ProfileScreen(onEditProfile: () -> Unit, onSettings: () -> Unit, onLogout: (
                         labelColor = DangerRed,
                         iconTint = DangerRed,
                         showChevron = false,
+                    )
+                }
+
+                AppCard(contentPadding = PaddingValues(0.dp)) {
+                    ProfileMenuRow(
+                        icon = AppIcons.Settings,
+                        label = stringResource(R.string.consent_title),
+                        onClick = onDataConsent,
                     )
                 }
 
@@ -348,7 +362,7 @@ fun ProfileEditScreen(onSaved: () -> Unit, onBack: () -> Unit) {
 // ---------------------------------------------------------------------------
 
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
+fun SettingsScreen(onBack: () -> Unit, onDataConsent: () -> Unit = onBack) {
     val container = LocalAppContainer.current
     val vm: SettingsViewModel = viewModel { SettingsViewModel(container.preferencesStore) }
     val state by vm.uiState.collectAsStateWithLifecycle()

@@ -3,10 +3,12 @@ package com.mindurset.app.ui.home.checkin
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mindurset.app.domain.model.CheckIn
+import com.mindurset.app.domain.model.ConsentPolicy
 import com.mindurset.app.domain.model.Emotion
 import com.mindurset.app.domain.model.RiskLevel
 import com.mindurset.app.domain.model.SafetyEvent
 import com.mindurset.app.domain.repository.CheckInRepository
+import com.mindurset.app.domain.repository.ConsentRepository
 import com.mindurset.app.domain.repository.SafetyRepository
 import com.mindurset.app.domain.repository.SessionStore
 import com.mindurset.app.domain.usecase.EvaluateTriage
@@ -27,6 +29,7 @@ class CheckInViewModel(
     private val checkInRepository: CheckInRepository,
     private val sessionStore: SessionStore,
     private val safetyRepository: SafetyRepository,
+    private val consentRepository: ConsentRepository,
     /** Emotion already picked on the home card, so the form opens pre-filled. */
     initialEmotion: Emotion? = null,
     private val clock: () -> Long = System::currentTimeMillis,
@@ -56,6 +59,15 @@ class CheckInViewModel(
     /** Set when the offline floor found risk in the note, so the screen shows the crisis card. */
     val crisisLevel: StateFlow<RiskLevel?> = _crisisLevel.asStateFlow()
 
+    private val _needsConsent = MutableStateFlow(false)
+
+    /** Set when a save was refused because no consent row exists for this person. */
+    val needsConsent: StateFlow<Boolean> = _needsConsent.asStateFlow()
+
+    fun dismissConsentPrompt() {
+        _needsConsent.value = false
+    }
+
     fun selectEmotion(emotion: Emotion) {
         _emotion.value = emotion
     }
@@ -76,6 +88,12 @@ class CheckInViewModel(
         scope.launch {
             val userId = sessionStore.current()?.userId
             if (userId != null) {
+                val consent = consentRepository.find(userId, ConsentPolicy.KIND)
+                if (consent == null || consent.revokedAt != null) {
+                    _saving.value = false
+                    _needsConsent.value = true
+                    return@launch
+                }
                 val noteText = _note.value.trim()
                 checkInRepository.insert(
                     CheckIn(

@@ -132,7 +132,7 @@ private val CompanionModes = listOf(
  * floating pill navigation bar, so it stays put while the chat scrolls underneath.
  */
 @Composable
-fun CompanionScreen(onOpenDrawer: () -> Unit, onCrisis: () -> Unit = {}) {
+fun CompanionScreen(onOpenDrawer: () -> Unit, onCrisis: (RiskLevel) -> Unit = {}) {
     val container = LocalAppContainer.current
     val scope = rememberCoroutineScope()
     val session by container.sessionStore.session.collectAsState(initial = null)
@@ -255,7 +255,7 @@ fun CompanionScreen(onOpenDrawer: () -> Unit, onCrisis: () -> Unit = {}) {
                                     )
                                 }
                             }
-                            onCrisis()
+                            onCrisis(hit.level)
                         } else {
                             typedMessages = typedMessages + text
                             draft = ""

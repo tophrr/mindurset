@@ -46,13 +46,16 @@ import androidx.navigation.navArgument
 import com.mindurset.app.R
 import com.mindurset.app.di.AppContainer
 import com.mindurset.app.di.LocalAppContainer
+import com.mindurset.app.domain.model.ConsentPolicy
 import com.mindurset.app.domain.model.Emotion
+import com.mindurset.app.domain.model.RiskLevel
 import com.mindurset.app.domain.model.UserProfile
 import com.mindurset.app.ui.action.ActionScreen
 import com.mindurset.app.ui.auth.LoginScreen
 import com.mindurset.app.ui.auth.RegisterScreen
 import com.mindurset.app.ui.common.LogoutConfirmDialog
 import com.mindurset.app.ui.companion.CompanionScreen
+import com.mindurset.app.ui.consent.ConsentScreen
 import com.mindurset.app.ui.dashboard.DashboardScreen
 import com.mindurset.app.ui.home.checkin.CheckInScreen
 import com.mindurset.app.ui.info.AboutScreen
@@ -113,6 +116,24 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
     }
 
     var logoutDialogVisible by remember { mutableStateOf(false) }
+
+    // After sign-in or a guest start, the person lands on the consent gate until a row exists.
+    val authScope = rememberCoroutineScope()
+    val afterAuth: () -> Unit = {
+        authScope.launch {
+            val userId = container.sessionStore.current()?.userId
+            val granted =
+                userId != null &&
+                    container.consentRepository
+                        .find(userId, ConsentPolicy.KIND)
+                        ?.let { it.revokedAt == null } == true
+            if (granted) {
+                navController.toDashboard()
+            } else {
+                navController.navigate(Routes.CONSENT) { popUpTo(0) { inclusive = true } }
+            }
+        }
+    }
     val performLogout: (Boolean) -> Unit = { deleteLocalData ->
         scope.launch {
             val session = container.sessionStore.current()
@@ -157,9 +178,9 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
             ) {
                 composable(Routes.LOGIN) {
                     LoginScreen(
-                        onSignedIn = { navController.toDashboard() },
+                        onSignedIn = afterAuth,
                         onRegister = { navController.navigate(Routes.REGISTER) },
-                        onSkip = { navController.toDashboard() },
+                        onSkip = afterAuth,
                     )
                 }
                 composable(Routes.REGISTER) {
@@ -204,15 +225,34 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
                                 popUpTo(Routes.DASHBOARD) { inclusive = false }
                             }
                         },
-                        onCrisis = {
-                            navController.navigate(Routes.CRISIS) {
+                        onOpenConsent = { navController.navigate(Routes.CONSENT) { launchSingleTop = true } },
+                        onCrisis = { level ->
+                            navController.navigate(Routes.crisis(level.name)) {
                                 popUpTo(Routes.DASHBOARD) { inclusive = false }
                             }
                         },
                     )
                 }
-                composable(Routes.CRISIS) {
-                    CrisisScreen(onAcknowledge = { goToDestination(Routes.DASHBOARD) })
+                composable(Routes.CONSENT) {
+                    ConsentScreen(
+                        onAgreed = { goToDestination(Routes.DASHBOARD) },
+                        onLater = { goToDestination(Routes.DASHBOARD) },
+                    )
+                }
+                composable(
+                    route = Routes.CRISIS_ROUTE,
+                    arguments = listOf(
+                        navArgument(Routes.ARG_LEVEL) {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        },
+                    ),
+                ) { entry ->
+                    val level = entry.arguments?.getString(Routes.ARG_LEVEL)
+                        ?.let { name -> RiskLevel.entries.firstOrNull { it.name == name } }
+                        ?: RiskLevel.L3
+                    CrisisScreen(level = level, onAcknowledge = { goToDestination(Routes.DASHBOARD) })
                 }
                 composable(Routes.REFLECTION_LIST) {
                     ReflectionListScreen(
@@ -236,8 +276,8 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
                         entryId = entry.arguments?.getString(Routes.ARG_ENTRY_ID),
                         onSaved = { navController.popBackStack() },
                         onBack = { navController.popBackStack() },
-                        onCrisis = {
-                            navController.navigate(Routes.CRISIS) {
+                        onCrisis = { level ->
+                            navController.navigate(Routes.crisis(level.name)) {
                                 popUpTo(Routes.DASHBOARD) { inclusive = false }
                             }
                         },
@@ -269,8 +309,8 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
                 composable(Routes.COMPANION) {
                     CompanionScreen(
                         onOpenDrawer = openDrawer,
-                        onCrisis = {
-                            navController.navigate(Routes.CRISIS) {
+                        onCrisis = { level ->
+                            navController.navigate(Routes.crisis(level.name)) {
                                 popUpTo(Routes.DASHBOARD) { inclusive = false }
                             }
                         },
@@ -280,6 +320,7 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
                     ProfileScreen(
                         onEditProfile = { navController.navigate(Routes.PROFILE_EDIT) },
                         onSettings = { navController.navigate(Routes.SETTINGS) },
+                        onDataConsent = { navController.navigate(Routes.DATA_CONSENT) },
                         onLogout = {
                             navController.navigate(Routes.LOGIN) { popUpTo(0) { inclusive = true } }
                         },
@@ -292,8 +333,20 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
                         onBack = { navController.popBackStack() },
                     )
                 }
-                composable(Routes.SETTINGS) { SettingsScreen(onBack = { navController.popBackStack() }) }
-                composable(Routes.DATA_CONSENT) { DataConsentScreen(onBack = { navController.popBackStack() }) }
+                composable(Routes.SETTINGS) {
+                    SettingsScreen(
+                        onBack = { navController.popBackStack() },
+                        onDataConsent = { navController.navigate(Routes.DATA_CONSENT) },
+                    )
+                }
+                composable(Routes.DATA_CONSENT) {
+                    DataConsentScreen(
+                        onBack = { navController.popBackStack() },
+                        onWithdrawn = {
+                            navController.navigate(Routes.CONSENT) { popUpTo(0) { inclusive = true } }
+                        },
+                    )
+                }
                 composable(Routes.ABOUT) { AboutScreen(onBack = { navController.popBackStack() }) }
             }
 

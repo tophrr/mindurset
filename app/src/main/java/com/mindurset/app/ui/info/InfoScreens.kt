@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -14,19 +15,30 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mindurset.app.R
+import com.mindurset.app.di.LocalAppContainer
+import com.mindurset.app.ui.consent.ConsentViewModel
 import com.mindurset.app.ui.profile.MindTopBar
 
 /** Plain, honest summary of what the app stores and where. */
 @Composable
-fun DataConsentScreen(onBack: () -> Unit) {
+fun DataConsentScreen(onBack: () -> Unit, onWithdrawn: () -> Unit = onBack) {
+    val container = LocalAppContainer.current
+    val consentViewModel: ConsentViewModel = viewModel {
+        ConsentViewModel(container.consentRepository, container.sessionStore)
+    }
+    val consentSaving by consentViewModel.saving.collectAsStateWithLifecycle()
     Scaffold(
         topBar = {
             MindTopBar(
@@ -61,6 +73,13 @@ fun DataConsentScreen(onBack: () -> Unit) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            Spacer(Modifier.height(8.dp))
+            TextButton(
+                onClick = { consentViewModel.revoke(onWithdrawn) },
+                enabled = !consentSaving,
+            ) {
+                Text(stringResource(R.string.consent_withdraw))
+            }
         }
     }
 }

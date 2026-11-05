@@ -54,6 +54,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mindurset.app.R
 import com.mindurset.app.di.LocalAppContainer
 import com.mindurset.app.domain.model.JournalEntry
+import com.mindurset.app.domain.model.RiskLevel
 import com.mindurset.app.domain.usecase.ValidateReflection
 import com.mindurset.app.ui.common.AppCard
 import com.mindurset.app.ui.common.CircleIconButton
@@ -390,7 +391,12 @@ private fun ReflectionCalendar(entries: List<JournalEntry>, onOpen: (String) -> 
 }
 
 @Composable
-fun ReflectionFormScreen(entryId: String?, onSaved: () -> Unit, onBack: () -> Unit, onCrisis: () -> Unit = onSaved) {
+fun ReflectionFormScreen(
+    entryId: String?,
+    onSaved: () -> Unit,
+    onBack: () -> Unit,
+    onCrisis: (RiskLevel) -> Unit = { onSaved() },
+) {
     val container = LocalAppContainer.current
     val viewModel: ReflectionFormViewModel = viewModel {
         ReflectionFormViewModel(
@@ -402,9 +408,10 @@ fun ReflectionFormScreen(entryId: String?, onSaved: () -> Unit, onBack: () -> Un
     }
 
     LaunchedEffect(viewModel.crisisLevel) {
-        if (viewModel.crisisLevel != null) {
+        val level = viewModel.crisisLevel
+        if (level != null) {
             viewModel.acknowledgeCrisis()
-            onCrisis()
+            onCrisis(level)
         }
     }
 

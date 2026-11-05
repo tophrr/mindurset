@@ -1,11 +1,13 @@
 package com.mindurset.app.ui.home.checkin
 
 import com.mindurset.app.domain.model.CheckIn
+import com.mindurset.app.domain.model.ConsentRecord
 import com.mindurset.app.domain.model.Emotion
 import com.mindurset.app.domain.model.RiskLevel
 import com.mindurset.app.domain.model.SafetyEvent
 import com.mindurset.app.domain.model.SessionInfo
 import com.mindurset.app.domain.repository.CheckInRepository
+import com.mindurset.app.domain.repository.ConsentRepository
 import com.mindurset.app.domain.repository.SafetyRepository
 import com.mindurset.app.domain.repository.SessionStore
 import kotlinx.coroutines.CoroutineScope
@@ -122,14 +124,28 @@ class CheckInViewModelTest {
         assertEquals(1, onDoneCalls)
     }
 
-    private fun viewModel(): CheckInViewModel = CheckInViewModel(
+    private fun viewModel(consent: Boolean = true): CheckInViewModel = CheckInViewModel(
         checkInRepository = RecordingCheckInRepository(saved),
         sessionStore = FixedSessionStore(SessionInfo(userId = "u1", email = "guest@local")),
         safetyRepository = safety,
+        consentRepository = FakeConsentRepository(granted = consent),
         clock = { 1_700_000_000_000 },
         newId = { "checkin-1" },
         externalScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),
     )
+
+    @Test
+    fun `without consent a check-in is refused and nothing is stored`() {
+        val vm = viewModel(consent = false)
+        vm.selectEmotion(Emotion.ANXIOUS)
+        vm.setIntensity(7)
+
+        var callbackRan = false
+        vm.save { callbackRan = true }
+
+        assertTrue(vm.needsConsent.value)
+        assertFalse(callbackRan)
+    }
 }
 
 private class RecordingCheckInRepository(private val rows: MutableList<CheckIn>) : CheckInRepository {
@@ -168,4 +184,25 @@ private class FixedSessionStore(initial: SessionInfo?) : SessionStore {
     override suspend fun signOut() {
         state.value = null
     }
+}
+
+private class FakeConsentRepository(private val granted: Boolean) : ConsentRepository {
+    override fun observeAll(userId: String): Flow<List<ConsentRecord>> = flowOf(emptyList())
+
+    override suspend fun find(userId: String, kind: String): ConsentRecord? = if (!granted) {
+        null
+    } else {
+        ConsentRecord(
+            id = "c1",
+            userId = userId,
+            kind = kind,
+            policyVersion = "1.0",
+            grantedAt = 1_700_000_000_000,
+            revokedAt = null,
+        )
+    }
+
+    override suspend fun grant(record: ConsentRecord) = Unit
+
+    override suspend fun revoke(id: String, at: Long) = Unit
 }

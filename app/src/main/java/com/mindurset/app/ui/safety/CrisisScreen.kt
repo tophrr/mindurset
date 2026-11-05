@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.mindurset.app.R
+import com.mindurset.app.domain.model.RiskLevel
 import com.mindurset.app.safety.CrisisResources
 import com.mindurset.app.ui.common.AppCard
 import com.mindurset.app.ui.theme.MutedGray
@@ -40,9 +41,10 @@ import com.mindurset.app.ui.theme.NavyInk
  * what "cannot be dismissed" means in practice.
  */
 @Composable
-fun CrisisScreen(onAcknowledge: () -> Unit) {
+fun CrisisScreen(level: RiskLevel = RiskLevel.L3, onAcknowledge: () -> Unit) {
     BackHandler(enabled = true) { /* acknowledgement, not the back gesture, leaves this screen */ }
 
+    val direct = level >= RiskLevel.L3
     val context = LocalContext.current
     val dial = {
         val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${CrisisResources.PHONE}"))
@@ -59,7 +61,7 @@ fun CrisisScreen(onAcknowledge: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = stringResource(R.string.crisis_title),
+            text = stringResource(if (direct) R.string.crisis_title else R.string.crisis_title_l2),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.SemiBold,
             color = NavyInk,
@@ -67,7 +69,7 @@ fun CrisisScreen(onAcknowledge: () -> Unit) {
         )
         Spacer(Modifier.height(12.dp))
         Text(
-            text = stringResource(R.string.crisis_body),
+            text = stringResource(if (direct) R.string.crisis_body else R.string.crisis_body_l2),
             style = MaterialTheme.typography.bodyLarge,
             color = MutedGray,
             textAlign = TextAlign.Center,
@@ -103,7 +105,7 @@ fun CrisisScreen(onAcknowledge: () -> Unit) {
         )
         Spacer(Modifier.height(24.dp))
         TextButton(onClick = onAcknowledge, modifier = Modifier.height(48.dp)) {
-            Text(stringResource(R.string.crisis_acknowledge))
+            Text(stringResource(if (direct) R.string.crisis_acknowledge else R.string.crisis_acknowledge_l2))
         }
     }
 }

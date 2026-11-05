@@ -16,6 +16,8 @@ object Routes {
     const val THERAPY = "therapy"
     const val REFRAME = "reframe"
     const val CRISIS = "crisis"
+    const val ARG_LEVEL = "level"
+    const val CONSENT = "consent"
     const val COMPANION = "companion"
     const val PROFILE = "profile"
     const val PROFILE_EDIT = "profile_edit"
@@ -24,11 +26,15 @@ object Routes {
     const val ABOUT = "about"
 
     const val CHECK_IN_ROUTE = "$CHECK_IN?$ARG_EMOTION={$ARG_EMOTION}"
+    const val CRISIS_ROUTE = "$CRISIS?$ARG_LEVEL={$ARG_LEVEL}"
     const val REFLECTION_FORM_ROUTE = "$REFLECTION_FORM?$ARG_ENTRY_ID={$ARG_ENTRY_ID}"
     const val REFLECTION_DETAIL_ROUTE = "$REFLECTION_DETAIL/{$ARG_ENTRY_ID}"
 
     /** Carries the emotion picked on the home card so the check-in opens already selected. */
     fun checkIn(emotion: String? = null): String = if (emotion == null) CHECK_IN else "$CHECK_IN?$ARG_EMOTION=$emotion"
+
+    /** The crisis card renders differently for an ambiguous signal than for direct intent. */
+    fun crisis(level: String? = null): String = if (level == null) CRISIS else "$CRISIS?$ARG_LEVEL=$level"
 
     fun reflectionForm(entryId: String? = null): String =
         if (entryId == null) REFLECTION_FORM else "$REFLECTION_FORM?$ARG_ENTRY_ID=$entryId"

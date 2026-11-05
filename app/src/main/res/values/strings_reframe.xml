@@ -22,6 +22,8 @@
     <string name="reframe_error_action">Name one small step before saving.</string>
     <string name="reframe_saved_title">Saved</string>
     <string name="reframe_saved_body">The session is stored and the step is on Today\'s Action. You can stop here.</string>
+    <string name="reframe_offline_label">Offline exercise</string>
+    <string name="reframe_offline_note">A fixed exercise from the app. Not personalised, and not generated.</string>
     <string name="reframe_saved_done">Done</string>
     <string name="therapy_start_reframe">Start a three-step reframe</string>
 </resources>

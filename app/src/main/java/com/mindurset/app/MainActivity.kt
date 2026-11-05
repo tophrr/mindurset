@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import com.mindurset.app.di.LocalAppContainer
+import com.mindurset.app.domain.model.ConsentPolicy
 import com.mindurset.app.domain.model.SessionInfo
 import com.mindurset.app.ui.common.LoadingState
 import com.mindurset.app.ui.navigation.MindUrSetNavigation
@@ -46,11 +47,30 @@ class MainActivity : ComponentActivity() {
                         }
 
                         is SessionState.Ready -> {
+                            val userId = state.session?.userId
+                            val consent by produceState<Boolean?>(null, userId) {
+                                value =
+                                    if (userId == null) {
+                                        null
+                                    } else {
+                                        container.consentRepository
+                                            .find(userId, ConsentPolicy.KIND)
+                                            ?.let { it.revokedAt == null } ?: false
+                                    }
+                            }
                             val start =
-                                remember {
-                                    if (state.session != null) Routes.DASHBOARD else Routes.LOGIN
+                                remember(state.session, consent) {
+                                    when {
+                                        state.session == null -> Routes.LOGIN
+                                        consent == false -> Routes.CONSENT
+                                        else -> Routes.DASHBOARD
+                                    }
                                 }
-                            MindUrSetNavigation(startDestination = start, container = container)
+                            if (state.session != null && consent == null) {
+                                LoadingState()
+                            } else {
+                                MindUrSetNavigation(startDestination = start, container = container)
+                            }
                         }
                     }
                 }

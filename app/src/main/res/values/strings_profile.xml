@@ -122,5 +122,4 @@
     <string name="about_license_code">Application code is released under the Apache License 2.0.</string>
     <string name="about_license_corpus">Wellbeing corpus and content are released under CC BY-NC-SA 3.0 IGO.</string>
     <string name="about_license_note">You may reuse the code under Apache-2.0 and the corpus under its Creative Commons terms.</string>
-
 </resources>
