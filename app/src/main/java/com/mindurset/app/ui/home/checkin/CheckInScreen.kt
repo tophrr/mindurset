@@ -47,6 +47,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mindurset.app.R
 import com.mindurset.app.di.LocalAppContainer
 import com.mindurset.app.domain.model.Emotion
+import com.mindurset.app.domain.model.RiskLevel
+import com.mindurset.app.ui.common.AppCard
 import com.mindurset.app.ui.common.CircleIconButton
 import com.mindurset.app.ui.common.FloatingNavSpace
 import com.mindurset.app.ui.common.emotionLabel
@@ -67,7 +69,8 @@ fun CheckInScreen(
     onDone: () -> Unit,
     onBack: () -> Unit,
     onStartReframe: () -> Unit = onDone,
-    onCrisis: () -> Unit = onDone,
+    onCrisis: (RiskLevel) -> Unit = { onDone() },
+    onOpenConsent: () -> Unit = onBack,
     initialEmotion: Emotion? = null,
 ) {
     val container = LocalAppContainer.current
@@ -76,6 +79,7 @@ fun CheckInScreen(
             checkInRepository = container.checkInRepository,
             sessionStore = container.sessionStore,
             safetyRepository = container.safetyRepository,
+            consentRepository = container.consentRepository,
             initialEmotion = initialEmotion,
         )
     }
@@ -85,11 +89,13 @@ fun CheckInScreen(
     val saving by vm.saving.collectAsStateWithLifecycle()
     val offerReframe by vm.offerReframe.collectAsStateWithLifecycle()
     val crisisLevel by vm.crisisLevel.collectAsStateWithLifecycle()
+    val needsConsent by vm.needsConsent.collectAsStateWithLifecycle()
 
     LaunchedEffect(crisisLevel) {
-        if (crisisLevel != null) {
+        val level = crisisLevel
+        if (level != null) {
             vm.acknowledgeCrisis()
-            onCrisis()
+            onCrisis(level)
         }
     }
 
@@ -127,6 +133,23 @@ fun CheckInScreen(
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onBackground,
             )
+
+            if (needsConsent) {
+                AppCard {
+                    Text(
+                        text = stringResource(R.string.checkin_consent_needed),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    TextButton(
+                        onClick = {
+                            vm.dismissConsentPrompt()
+                            onOpenConsent()
+                        },
+                    ) {
+                        Text(stringResource(R.string.checkin_consent_review))
+                    }
+                }
+            }
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Emotion.entries.forEach { option ->

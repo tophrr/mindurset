@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="consent_gate_title">Before you start</string>
+    <string name="consent_gate_lead">Mind-Ur-Set asks for one thing before your first check-in: permission to keep what you write on this phone.</string>
+    <string name="consent_gate_local">Your check-ins, reflections and actions stay in this app\'s storage on this device. Nothing is uploaded.</string>
+    <string name="consent_gate_limits">You can read and delete what you wrote at any time, withdraw this permission from Data and consent, and the crisis numbers work without it.</string>
+    <string name="consent_gate_agree">I agree and continue</string>
+    <string name="consent_gate_later">Not now</string>
+    <string name="consent_gate_later_note">Without this, a check-in cannot be saved. Everything else still opens.</string>
+    <string name="consent_withdraw">Withdraw consent</string>
+    <string name="checkin_consent_needed">Agree to how your data is used before the first check-in.</string>
+    <string name="checkin_consent_review">Review consent</string>
+</resources>
