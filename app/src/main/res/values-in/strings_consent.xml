@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="consent_gate_title">Sebelum mulai</string>
+    <string name="consent_gate_lead">Mind-Ur-Set meminta satu hal sebelum check-in pertamamu: izin menyimpan tulisanmu di ponsel ini.</string>
+    <string name="consent_gate_local">Check-in, refleksi, dan aksimu tersimpan di penyimpanan aplikasi ini, di perangkat ini. Tidak ada yang diunggah.</string>
+    <string name="consent_gate_limits">Kamu bisa membaca dan menghapus tulisanmu kapan saja, menarik izin ini lewat Data &amp; persetujuan, dan nomor krisis tetap berfungsi tanpa izin ini.</string>
+    <string name="consent_gate_agree">Saya setuju dan lanjut</string>
+    <string name="consent_gate_later">Nanti saja</string>
+    <string name="consent_gate_later_note">Tanpa izin ini, check-in tidak bisa disimpan. Bagian lain tetap bisa dibuka.</string>
+    <string name="consent_withdraw">Tarik persetujuan</string>
+    <string name="checkin_consent_needed">Setujui penggunaan datamu sebelum check-in pertama.</string>
+    <string name="checkin_consent_review">Tinjau persetujuan</string>
+</resources>

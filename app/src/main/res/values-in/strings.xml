@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Mind-Ur-Set</string>
+    <string name="nav_home">Beranda</string>
+    <string name="nav_therapy">Terapi</string>
+    <string name="nav_companion">Pendamping</string>
+    <string name="nav_profile">Profil</string>
+    <string name="menu">Menu</string>
+    <string name="settings">Pengaturan</string>
+    <string name="data_and_consent">Data &amp; persetujuan</string>
+    <string name="about">Tentang</string>
+    <string name="loading">Memuat…</string>
+    <string name="retry">Coba lagi</string>
+    <string name="save">Simpan</string>
+    <string name="cancel">Batal</string>
+    <string name="back">Kembali</string>
+    <string name="delete">Hapus</string>
+    <string name="edit">Ubah</string>
+    <string name="emotion_happy">Senang</string>
+    <string name="emotion_calm">Tenang</string>
+    <string name="emotion_low">Lesu</string>
+    <string name="emotion_anxious">Cemas</string>
+    <string name="emotion_stressed">Tertekan</string>
+
+    <!-- Therapy screen additions (no "Locked" state) -->
+    <string name="therapy_release_note">Sesi terpandu akan hadir di rilis berikutnya. Lihat pratinjau tiap langkah di bawah.</string>
+    <string name="therapy_continue">Lanjut</string>
+    <string name="therapy_open">Buka</string>
+
+    <!-- Companion screen additions (mode chips + preview bubbles) -->
+    <string name="companion_chip_negative_thoughts">Pikiran negatif</string>
+    <string name="companion_chip_emotion_regulation">Regulasi emosi</string>
+    <string name="companion_personal_bot">Hai! Aku di sini untuk mendukungmu. Bagaimana perasaanmu hari ini?</string>
+    <string name="companion_personal_user">Akhir-akhir ini aku agak kewalahan dengan pekerjaan</string>
+    <string name="companion_negative_bot">Mari tangkap lingkaran itu bersama. Pikiran apa yang terus kembali?</string>
+    <string name="companion_negative_user">Aku terus berkata pada diriku aku tidak cukup baik</string>
+    <string name="companion_emotion_bot">Mari beri nama perasaannya dulu. Apa yang paling kuat sekarang?</string>
+    <string name="companion_emotion_user">Cemas, kayaknya — dadaku terasa sesak</string>
+
+    <!-- Companion preview: second and third canned exchanges per mode -->
+    <string name="companion_personal_bot_2">Kedengarannya berat. Apa yang paling membebanimu minggu ini?</string>
+    <string name="companion_personal_user_2">Kebanyakan tenggat — aku terus tertinggal sekeras apa pun aku berusaha</string>
+    <string name="companion_personal_bot_3">Tertinggal bukan berarti kamu gagal. Bisa kita pilih satu hal kecil untuk dimulai?</string>
+    <string name="companion_personal_user_3">Mungkin sekadar membalas pesan-pesan yang selama ini kuhindari</string>
+    <string name="companion_negative_bot_2">Terima kasih sudah menamainya. Sejak kapan kamu belajar bicara pada dirimu seperti itu?</string>
+    <string name="companion_negative_user_2">Kayaknya sejak sekolah — tak ada yang pernah cukup</string>
+    <string name="companion_negative_bot_3">Suara itu dipelajari, jadi bisa dilupakan. Apa yang akan kamu katakan pada sahabat yang merasa begini?</string>
+    <string name="companion_negative_user_3">Aku akan bilang mereka jauh lebih baik dari yang mereka kira</string>
+    <string name="companion_emotion_bot_2">Dada sesak itu sinyal nyata. Mari lambatkan napas: tarik empat, buang enam.</string>
+    <string name="companion_emotion_user_2">Oke… sedang kulakukan. Rasanya sedikit lebih ringan</string>
+    <string name="companion_emotion_bot_3">Bagus. Dari satu sampai sepuluh, sekarang kecemasannya di angka berapa?</string>
+    <string name="companion_emotion_user_3">Mungkin enam, turun dari delapan</string>
+    <string name="companion_personal_bot_4">Kita mulai dari yang paling kecil: balas satu pesan saja, tidak lebih.</string>
+    <string name="companion_personal_user_4">Baik, malam ini saya bisa balas satu pesan</string>
+    <string name="companion_negative_bot_4">Ucapkan kalimat itu ke dirimu sendiri, seperti kamu bicara ke teman.</string>
+    <string name="companion_negative_user_4">Kamu sudah lebih baik dari yang kamu kira</string>
+    <string name="companion_emotion_bot_4">Lanjutkan tarikan napas enam hitungan satu menit lagi, lalu cek lagi ke saya.</string>
+    <string name="companion_emotion_user_4">Sudah terasa lebih tenang, terima kasih</string>
+</resources>

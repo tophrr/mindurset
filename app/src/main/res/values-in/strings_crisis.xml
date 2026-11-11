@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="crisis_title">Kamu tidak harus menanggung ini sendirian</string>
+    <string name="crisis_body">Yang kamu tulis terdengar lebih berat dari hari yang biasa. Kalau kamu sedang berpikir untuk menyakiti diri, berbicara dengan seseorang sekarang lebih penting daripada apa pun di aplikasi ini.</string>
+    <string name="crisis_number_label">Bicara dengan seseorang sekarang</string>
+    <string name="crisis_call">Telepon 119 ext. 8</string>
+    <string name="crisis_contact_note">Kalau kamu dalam bahaya langsung, telepon 112. Satu orang yang kamu percaya sudah cukup; kamu tidak perlu menjelaskan semuanya.</string>
+    <string name="crisis_acknowledge">Saya aman untuk sekarang</string>
+    <string name="crisis_title_l2">Kedengarannya berat sekali</string>
+    <string name="crisis_body_l2">Yang kamu tulis terdengar lebih berat dari hari yang biasa. Berbicara dengan seseorang sekarang bisa membantu, dan tidak ada yang di aplikasi ini bisa menggantikan manusia.</string>
+    <string name="crisis_acknowledge_l2">Saya baik-baik saja untuk sekarang</string>
+</resources>

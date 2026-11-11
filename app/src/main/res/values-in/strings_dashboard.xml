@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Beranda / Dasbor -->
+    <string name="dashboard_greeting_morning">Selamat pagi, %1$s</string>
+    <string name="dashboard_greeting_afternoon">Selamat siang, %1$s</string>
+    <string name="dashboard_greeting_evening">Selamat malam, %1$s</string>
+    <string name="dashboard_greeting_generic">Halo</string>
+    <string name="dashboard_subtitle">Luangkan waktu untuk dirimu</string>
+    <string name="dashboard_avatar_cd">Foto profil</string>
+    <string name="dashboard_notifications_cd">Notifikasi</string>
+
+    <string name="dashboard_checkin_title">Check-in Harian</string>
+    <string name="dashboard_checkin_prompt">Bagaimana perasaanmu saat ini?</string>
+    <string name="dashboard_checkin_cta">Lanjutkan</string>
+    <string name="dashboard_checkin_update">Perbarui check-in</string>
+    <string name="dashboard_checkin_logged">Hari ini kamu merasa %1$s</string>
+    <string name="dashboard_checkin_intensity">Intensitas %1$d / 10</string>
+
+    <string name="dashboard_stats_journal">Entri jurnal</string>
+    <string name="dashboard_stats_checkins">Check-in</string>
+    <string name="dashboard_stat_chip">%1$d %2$s</string>
+
+    <string name="dashboard_recommend_title">Rekomendasi untukmu</string>
+    <string name="dashboard_recommend_1">Memasak resep baru</string>
+    <string name="dashboard_recommend_2">Berkumpul dan bicara dengan seseorang</string>
+    <string name="dashboard_recommend_3">Meditasi dan rasa syukur</string>
+    <string name="dashboard_recommend_4">Mempelajari hal baru</string>
+    <string name="dashboard_recommend_5">Baca satu bab</string>
+
+    <string name="dashboard_reflections_title">Refleksi terbaru</string>
+    <string name="dashboard_reflections_seeall">Lihat semua</string>
+    <string name="dashboard_reflections_empty">Belum ada refleksi. Mulai entri pertamamu.</string>
+    <string name="dashboard_reflection_untitled">Refleksi tanpa judul</string>
+
+    <string name="dashboard_shortcut_companion_title">Pendamping AI</string>
+    <string name="dashboard_shortcut_companion_body">Siap mendengarkan, kapan saja</string>
+    <string name="dashboard_shortcut_companion_cta">Ngobrol</string>
+    <string name="dashboard_shortcut_reflection_title">Refleksi Harian</string>
+    <string name="dashboard_shortcut_reflection_body">Buat entrimu</string>
+    <string name="dashboard_shortcut_reflection_cta">Mulai</string>
+    <string name="dashboard_shortcut_therapy_title">Terapi</string>
+    <string name="dashboard_shortcut_therapy_body">Latihan terpandu dan ruang tenang untuk memulihkan diri.</string>
+    <string name="dashboard_shortcut_therapy_cta">Buka</string>
+
+    <string name="dashboard_empty_title">Belum ada apa-apa</string>
+    <string name="dashboard_empty_body">Check-in dan refleksimu akan muncul di sini. Mulai dengan check-in harian.</string>
+    <string name="dashboard_empty_action">Mulai check-in</string>
+    <string name="dashboard_error_body">Terjadi kesalahan saat membaca datamu.</string>
+    <string name="dashboard_loading">Memuat harimu\u2026</string>
+
+    <!-- Layar check-in harian -->
+    <string name="checkin_title">Check-in Harian</string>
+    <string name="checkin_back_cd">Kembali ke beranda</string>
+    <string name="checkin_prompt">Bagaimana perasaanmu saat ini?</string>
+    <string name="checkin_hint_happy">Merasa baik</string>
+    <string name="checkin_hint_calm">Rileks</string>
+    <string name="checkin_hint_low">Datar, lelah</string>
+    <string name="checkin_hint_anxious">Gelisah</string>
+    <string name="checkin_hint_stressed">Kewalahan</string>
+    <string name="checkin_intensity_label">Seberapa kuat perasaan ini?</string>
+    <string name="checkin_intensity_value">%1$d / 10</string>
+    <string name="checkin_note_label">Tambah catatan (opsional)</string>
+    <string name="checkin_note_placeholder">Satu baris tentang harimu</string>
+    <string name="checkin_continue">Lanjutkan</string>
+</resources>
