@@ -378,10 +378,10 @@ private fun NavHostController.toDashboard() {
 @Composable
 private fun FloatingPillNav(currentRoute: String?, onNavigate: (String) -> Unit) {
     val items = listOf(
-        Triple("Home", Routes.DASHBOARD, AppIcons.Home),
-        Triple("Therapy", Routes.THERAPY, AppIcons.Therapy),
-        Triple("Companion", Routes.COMPANION, AppIcons.Companion),
-        Triple("Profile", Routes.PROFILE, AppIcons.Profile),
+        Triple(R.string.nav_home, Routes.DASHBOARD, AppIcons.Home),
+        Triple(R.string.nav_therapy, Routes.THERAPY, AppIcons.Therapy),
+        Triple(R.string.nav_companion, Routes.COMPANION, AppIcons.Companion),
+        Triple(R.string.nav_profile, Routes.PROFILE, AppIcons.Profile),
     )
     val pillShape = RoundedCornerShape(34.dp)
     Box(
@@ -404,7 +404,8 @@ private fun FloatingPillNav(currentRoute: String?, onNavigate: (String) -> Unit)
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                items.forEach { (label, route, icon) ->
+                items.forEach { (labelRes, route, icon) ->
+                    val label = stringResource(labelRes)
                     val selected = currentRoute == route
                     Box(
                         modifier = Modifier.weight(1f).padding(horizontal = 3.dp),
