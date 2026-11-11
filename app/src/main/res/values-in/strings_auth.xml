@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Login -->
+    <string name="auth_login_title">Selamat datang kembali</string>
+    <string name="auth_login_subtitle">Masuk agar catatan suasana hati dan refleksi Anda tersimpan di perangkat ini.</string>
+    <string name="auth_email_label">Email</string>
+    <string name="auth_password_label">Kata sandi</string>
+    <string name="auth_sign_in">Masuk</string>
+    <string name="auth_signing_in">Sedang masuk…</string>
+    <string name="auth_continue_without_account">Lanjut tanpa akun</string>
+    <string name="auth_no_account_prompt">Baru di Mind-Ur-Set?</string>
+    <string name="auth_create_account">Buat akun</string>
+    <string name="auth_show_password">Tampilkan</string>
+    <string name="auth_hide_password">Sembunyikan</string>
+
+    <!-- Register -->
+    <string name="auth_register_title">Buat akun Anda</string>
+    <string name="auth_register_subtitle">Akun Anda hanya tersimpan di perangkat ini. Kata sandi tidak pernah keluar dari perangkat.</string>
+    <string name="auth_confirm_password_label">Konfirmasi kata sandi</string>
+    <string name="auth_create_account_action">Buat akun</string>
+    <string name="auth_creating_account">Sedang membuat akun…</string>
+    <string name="auth_have_account_prompt">Sudah punya akun?</string>
+    <string name="auth_back_to_login">Kembali ke halaman masuk</string>
+
+    <!-- Validation + form errors -->
+    <string name="auth_error_email_empty">Masukkan alamat email Anda.</string>
+    <string name="auth_error_email_format">Masukkan alamat email yang valid, misalnya nama@contoh.com.</string>
+    <string name="auth_error_password_empty">Masukkan kata sandi Anda.</string>
+    <string name="auth_error_password_short">Gunakan minimal %1$d karakter.</string>
+    <string name="auth_error_password_mismatch">Kata sandi tidak cocok.</string>
+    <string name="auth_error_invalid_credentials">Email atau kata sandi salah.</string>
+    <string name="auth_error_email_taken">Email ini sudah terdaftar.</string>
+    <string name="auth_error_generic">Terjadi kesalahan. Silakan coba lagi.</string>
+</resources>

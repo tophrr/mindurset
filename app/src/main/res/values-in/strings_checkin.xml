@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="checkin_offer_title">Coba reframe singkat?</string>
+    <string name="checkin_offer_body">Kedengarannya berat. Tiga langkah singkat bisa membantumu melihat pikiran itu dari sudut lain.</string>
+    <string name="checkin_offer_start">Mulai</string>
+    <string name="checkin_offer_later">Nanti saja</string>
+</resources>
