@@ -36,6 +36,11 @@ android {
     buildFeatures {
         compose = true
     }
+
+    sourceSets
+        .getByName("test")
+        .resources.directories
+        .add(rootProject.file("contract").absolutePath)
 }
 
 dependencies {
@@ -58,4 +63,5 @@ dependencies {
     implementation(libs.datastore.preferences)
 
     testImplementation(libs.junit)
+    testImplementation("org.json:json:20240303")
 }

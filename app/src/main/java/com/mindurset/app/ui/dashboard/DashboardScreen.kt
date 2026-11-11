@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -90,6 +91,7 @@ fun DashboardScreen(
             container.checkInRepository,
             container.profileRepository,
             container.sessionStore,
+            container.dashboardEffortRepository,
         )
     }
     val state by vm.uiState.collectAsStateWithLifecycle()
@@ -114,6 +116,7 @@ fun DashboardScreen(
             is DashboardUiState.Empty ->
                 DashboardBody(
                     summary = DashboardSummary.EMPTY,
+                    effort = emptyList(),
                     onOpenCheckIn = onOpenCheckIn,
                     onOpenReflection = onOpenReflection,
                     onOpenCompanion = onOpenCompanion,
@@ -125,6 +128,7 @@ fun DashboardScreen(
             is DashboardUiState.Content ->
                 DashboardBody(
                     summary = current.summary,
+                    effort = current.effort,
                     onOpenCheckIn = onOpenCheckIn,
                     onOpenReflection = onOpenReflection,
                     onOpenCompanion = onOpenCompanion,
@@ -139,6 +143,7 @@ fun DashboardScreen(
 @Composable
 private fun DashboardBody(
     summary: DashboardSummary,
+    effort: List<EffortDay>,
     onOpenCheckIn: (Emotion) -> Unit,
     onOpenReflection: () -> Unit,
     onOpenCompanion: () -> Unit,
@@ -158,6 +163,7 @@ private fun DashboardBody(
     ) {
         item { DashboardHeader(displayName = summary.displayName, onOpenDrawer = onOpenDrawer) }
         item { StatChips(summary = summary) }
+        item { EffortHeatmapCard(days = effort) }
         item { DailyCheckInCard(today = summary.todayCheckIn, onOpenCheckIn = onOpenCheckIn) }
         item { ShortcutRow(onOpenCompanion = onOpenCompanion, onOpenReflection = onOpenReflection) }
         item { RecommendCard() }
@@ -281,6 +287,75 @@ private fun StatChips(summary: DashboardSummary) {
             label = stringResource(R.string.dashboard_stats_journal),
         )
     }
+}
+
+@Composable
+private fun EffortHeatmapCard(days: List<EffortDay>) {
+    AppCard {
+        SectionTitle(text = stringResource(R.string.dashboard_effort_title))
+        Text(
+            text = stringResource(R.string.dashboard_effort_subtitle),
+            style = MaterialTheme.typography.bodySmall,
+            color = MutedGray,
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            days.chunked(7).forEach { week ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    week.forEach { day -> EffortCell(day = day) }
+                }
+            }
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                stringResource(R.string.dashboard_effort_none),
+                style = MaterialTheme.typography.labelSmall,
+                color = MutedGray,
+            )
+            Text(
+                stringResource(R.string.dashboard_effort_some),
+                style = MaterialTheme.typography.labelSmall,
+                color = MutedGray,
+            )
+            Text(
+                stringResource(R.string.dashboard_effort_more),
+                style = MaterialTheme.typography.labelSmall,
+                color = MutedGray,
+            )
+            Text(
+                stringResource(R.string.dashboard_effort_full),
+                style = MaterialTheme.typography.labelSmall,
+                color = MutedGray,
+            )
+        }
+    }
+}
+
+@Composable
+private fun EffortCell(day: EffortDay) {
+    val date = remember(day.date) {
+        DateFormat.getDateInstance(DateFormat.MEDIUM)
+            .format(Date(day.date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()))
+    }
+    val description = pluralStringResource(R.plurals.dashboard_effort_day, day.count, date, day.count)
+    val alpha = when (day.count) {
+        0 -> 0.08f
+        1 -> 0.28f
+        2 -> 0.58f
+        else -> 1f
+    }
+    Box(
+        modifier = Modifier
+            .size(26.dp)
+            .clip(RoundedCornerShape(6.dp))
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = alpha))
+            .semantics { contentDescription = description },
+    )
 }
 
 @Composable

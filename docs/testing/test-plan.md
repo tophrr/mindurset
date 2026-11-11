@@ -55,7 +55,7 @@ All offline cases are executed with system Airplane Mode enabled and Wi-Fi disab
 | **OFF-03** | Emotional triage and offline reframe exercise | Check-in logged with negative mood and intensity >= 6 while offline. Triage offer appears; tap "Start Reframe". | App degrades gracefully: displays clearly labelled offline cognitive exercise instead of spinning or crashing. Three steps progress locally. | UC-03, UC-04, NFR-04 |
 | **OFF-04** | Complete today's micro-action offline | An active micro-action exists on Home screen. Tap checkbox while offline. | Action is marked completed immediately in local Room database. UI updates with checkmark without lag or error toast. | UC-10, NFR-04, NFR-13 |
 | **OFF-05** | Compose and save journal entry offline | Open Journal tab offline. Type a multi-paragraph entry and tap Save. | Entry persists to local Room database. App confirms save locally. Entry appears in journal list. | UC-11, NFR-04, NFR-05 |
-| **OFF-06** | View emotion insights offline | Multiple days of check-ins exist locally. Navigate to Insights tab offline. | Effort heatmap and summary metrics render entirely from local Room data. No empty spinner or network failure view. | UC-12, NFR-04 |
+| **OFF-06** | View effort insights offline | Check-ins, completed reframes and completed actions exist locally. Open Home offline. | The 28-day effort heatmap renders from local Room data, with each day's value capped at three. No spinner or network failure view. | UC-12, NFR-04 |
 | **OFF-07** | Local risk screening offline | While offline, enter text containing explicit self-harm keywords ("want to die") in check-in note or journal. | LocalRiskFloor detects match offline. Escalates immediately to L2/L3 protocol without attempting network calls. | UC-13, UC-15, NFR-04 |
 | **OFF-08** | Emergency crisis dialer access offline | From any screen, navigate to crisis support or trigger safety protocol offline. Tap "Call 119 ext. 8". | Crisis numbers are bundled locally. Android phone dialer opens prefilled with `119` (extension `8`). No network connection required. | UC-15, NFR-04 |
 | **OFF-09** | Account sign-in / upgrade attempt offline | Navigate to Profile -> Account & Backup while offline. Attempt email/password sign-in. | App displays clear message explaining that an active connection is required for account operations. Local session and data remain untouched. | UC-21, NFR-04, NFR-15 |
@@ -140,7 +140,7 @@ never deleted and never marked as passed.
 | --- | --- | --- |
 | Account, sign-in and token refresh | A-02 to A-07, A-09, KILL-06 | No Firebase project, no `google-services.json`, and the app declares no network permission |
 | Backup and sync | OFF-09, OFF-10, A-04, A-05 | No Worker endpoint wired into the client |
-| Insights | OFF-06, KILL-04 | No insights screen yet |
+| Insights | OFF-06, KILL-04 | The Home heatmap and local aggregation tests are implemented. The device evidence covers an empty guest state; a seeded multi-source Room scenario and process-kill restoration remain to be run. |
 | Memory manager and export | DATA-03 to DATA-06 | The `session_summary` table exists; the screen and export path do not |
 | Instrumented suite | Every `connectedDebugAndroidTest` row | No `androidTest` source set yet |
 
