@@ -1,3 +1,17 @@
 name = "mindurset-worker"
 main = "src/index.ts"
 compatibility_date = "2026-10-21"
+
+# Workers AI platform binding. The name is `AI`; no key or token is stored in
+# this repository. Local `wrangler dev` needs `wrangler login` for live
+# inference; without it the Worker serves the offline fallback.
+[ai]
+binding = "AI"
+remote = true
+
+# The corpus is markdown on disk. Wrangler bundles it as text, and
+# vitest.config.mjs gives the test runner the same behaviour.
+[[rules]]
+type = "Text"
+globs = ["**/*.md"]
+fallthrough = true

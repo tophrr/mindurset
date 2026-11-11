@@ -1,41 +1,17 @@
-// Mind-Ur-Set Worker, contract stub.
+// Mind-Ur-Set Worker.
 //
-// Returns fixed, contract-shaped JSON for the four endpoints the Android client
-// needs to test against. No AI, no model calls, no secrets, no bindings.
+// The HTTP surface is unchanged from the stub: the same four paths, the same
+// contract/generation-v1.schema.json response shape, so the Android client
+// needs no code change to start receiving real answers. The stub's fixed JSON
+// is now the offline fallback, not the normal path.
 //
-// The response shape is contract/generation-v1.schema.json, and the payload is
-// loaded straight from contract/fixtures/generation-ok.json rather than copied,
-// so this stub cannot drift away from the frozen contract. If a field is not in
-// the fixture it is not in the contract, and this file must not invent one.
+// Real generation runs through Workers AI behind the `AI` platform binding. A
+// missing binding, a model error, malformed model output, or a guardrail hit
+// all return a contract-valid 200 with model_version "offline-fallback".
 
-import fixture from "../../contract/fixtures/generation-ok.json";
+import { health, runGeneration, type Env, type GenerationKind } from "./pipeline";
 
-export interface GenerationResponse {
-  message: string;
-  distortion: string;
-  perspectives: string[];
-  micro_action: {
-    title: string;
-    minutes: number;
-  };
-  source_ids: string[];
-  risk_level: {
-    level: "L0" | "L1" | "L2" | "L3";
-    confidence: number;
-  };
-  prompt_version: string;
-  model_version: string;
-}
-
-const GENERATION = fixture as GenerationResponse;
-
-const CANNED_CHAT_REPLY =
-  "I hear you. This is the stub companion reply; nothing is generated yet.";
-
-const CANNED_SUMMARY =
-  "This is the stub session summary. The session covered one check-in and one reframe. Nothing is generated yet.";
-
-const DEFAULT_MODE: Mode = "listen";
+export type { GenerationResponse } from "./contract";
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -44,42 +20,30 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-const MODES = ["listen", "reflect", "plan"] as const;
-type Mode = (typeof MODES)[number];
-
-// The contract has no room for a mode field (additionalProperties: false), so
-// the requested support mode is echoed inside the message text. Only a known
-// mode is echoed: anything else would put arbitrary client text on screen.
-function readMode(body: unknown): Mode {
-  if (typeof body === "object" && body !== null && "mode" in body) {
-    const mode = (body as { mode: unknown }).mode;
-    if (typeof mode === "string" && (MODES as readonly string[]).includes(mode)) {
-      return mode as Mode;
-    }
-  }
-  return DEFAULT_MODE;
+function generationKind(pathname: string): GenerationKind | null {
+  if (pathname === "/v1/reframe") return "reframe";
+  if (pathname === "/v1/chat") return "chat";
+  if (pathname === "/v1/summarise") return "summarise";
+  return null;
 }
 
 export default {
-  async fetch(request: Request): Promise<Response> {
+  async fetch(request: Request, env: Env = {}): Promise<Response> {
     const { pathname } = new URL(request.url);
     const method = request.method.toUpperCase();
 
     if (pathname === "/v1/health") {
       return method === "GET"
-        ? json({ ok: true })
+        ? json(health())
         : json({ error: "method_not_allowed" }, 405);
     }
 
-    const isGenerationPath =
-      pathname === "/v1/reframe" ||
-      pathname === "/v1/chat" ||
-      pathname === "/v1/summarise";
-
-    if (isGenerationPath) {
+    const kind = generationKind(pathname);
+    if (kind !== null) {
       if (method !== "POST") {
         return json({ error: "method_not_allowed" }, 405);
       }
+
       let body: unknown;
       try {
         body = await request.json();
@@ -87,17 +51,7 @@ export default {
         return json({ error: "invalid_json" }, 400);
       }
 
-      if (pathname === "/v1/reframe") {
-        return json({ ...GENERATION });
-      }
-      if (pathname === "/v1/chat") {
-        const mode = readMode(body);
-        return json({
-          ...GENERATION,
-          message: `${CANNED_CHAT_REPLY} (mode: ${mode})`,
-        });
-      }
-      return json({ ...GENERATION, message: CANNED_SUMMARY });
+      return json(await runGeneration(kind, body, env));
     }
 
     return json({ error: "not_found" }, 404);
