@@ -2,11 +2,14 @@ package com.mindurset.app.di
 
 import android.content.Context
 import androidx.compose.runtime.staticCompositionLocalOf
+import com.mindurset.app.BuildConfig
 import com.mindurset.app.data.local.MindUrSetDatabase
 import com.mindurset.app.data.prefs.DataStorePreferences
+import com.mindurset.app.data.remote.GenerationClient
 import com.mindurset.app.data.repository.AuthRepositoryImpl
 import com.mindurset.app.data.repository.CheckInRepositoryImpl
 import com.mindurset.app.data.repository.ConsentRepositoryImpl
+import com.mindurset.app.data.repository.DashboardEffortRepository
 import com.mindurset.app.data.repository.JournalRepositoryImpl
 import com.mindurset.app.data.repository.MicroActionRepositoryImpl
 import com.mindurset.app.data.repository.ProfileRepositoryImpl
@@ -34,6 +37,8 @@ class AppContainer(context: Context) {
 
     val sessionStore: SessionStore = preferences
 
+    val generationClient: GenerationClient = GenerationClient(BuildConfig.GENERATION_BASE_URL)
+
     val preferencesStore: PreferencesStore = preferences
 
     val authRepository: AuthRepository =
@@ -57,6 +62,9 @@ class AppContainer(context: Context) {
         )
 
     val microActionRepository: MicroActionRepository = MicroActionRepositoryImpl(database.microActionDao())
+
+    val dashboardEffortRepository: DashboardEffortRepository =
+        DashboardEffortRepository(database.reframeSessionDao(), database.microActionDao())
 
     val safetyRepository: SafetyRepository = SafetyRepositoryImpl(database.safetyEventDao())
 

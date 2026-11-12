@@ -19,9 +19,24 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // The Worker endpoint the app talks to. Release builds leave it empty on purpose: there is
+        // no deployed endpoint yet, so the client takes the offline path instead of calling an
+        // address that cannot exist on a user's phone.
+        buildConfigField("String", "GENERATION_BASE_URL", "\"\"")
     }
 
     buildTypes {
+        debug {
+            // Loopback plus `adb reverse tcp:8787 tcp:8787` is the default. A phone on the same
+            // network can point at the host instead:
+            //   ./gradlew :app:assembleDebug -Pmindurset.endpoint=http://192.168.1.10:8787
+            val endpoint =
+                (project.findProperty("mindurset.endpoint") as String?)
+                    ?: "http://127.0.0.1:8787"
+            buildConfigField("String", "GENERATION_BASE_URL", "\"$endpoint\"")
+        }
+
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -35,7 +50,13 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
+
+    sourceSets
+        .getByName("test")
+        .resources.directories
+        .add(rootProject.file("contract").absolutePath)
 }
 
 dependencies {
@@ -58,4 +79,5 @@ dependencies {
     implementation(libs.datastore.preferences)
 
     testImplementation(libs.junit)
+    testImplementation(libs.json)
 }

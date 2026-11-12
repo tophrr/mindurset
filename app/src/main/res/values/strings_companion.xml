@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="companion_empty_state">You can start with what feels most present right now.</string>
+    <string name="companion_offline_reply">I’m here with you. Take one small moment to notice what you need right now.</string>
+    <string name="companion_offline_label">Offline exercise</string>
+    <string name="companion_offline_sentence">This reply came from the offline path.</string>
+    <string name="companion_sources">Sources: %1$s</string>
+    <string name="companion_sending">Finding a response…</string>
+    <string name="companion_error">Something went wrong. Your offline reply is shown.</string>
+    <string name="companion_retry">Try again</string>
+</resources>

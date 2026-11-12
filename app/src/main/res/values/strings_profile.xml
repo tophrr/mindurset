@@ -96,13 +96,8 @@
     <string name="companion_title">Companion</string>
     <string name="companion_open_menu">Open menu</string>
     <string name="companion_chip_personal">Personal</string>
-    <string name="companion_message_greeting">Hi! I\'m here to support you. How are you feeling today?</string>
-    <string name="companion_message_user">I\'ve been feeling a bit overwhelmed with work lately</string>
     <string name="companion_input_placeholder">Type your message…</string>
     <string name="companion_send">Send</string>
-    <string name="companion_time_first">10:30 AM</string>
-    <string name="companion_time_second">10:31 AM</string>
-    <string name="companion_note">This is a preview. The AI companion is not connected yet — it arrives in a later release, and nothing you type here is sent anywhere.</string>
 
     <!-- Data & consent -->
     <string name="consent_title">Data &amp; consent</string>

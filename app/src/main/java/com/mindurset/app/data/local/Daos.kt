@@ -89,6 +89,9 @@ interface ReframeSessionDao {
     @Query("SELECT * FROM reframe_session WHERE userId = :userId ORDER BY createdAt DESC LIMIT :limit")
     suspend fun recent(userId: String, limit: Int): List<ReframeSessionEntity>
 
+    @Query("SELECT * FROM reframe_session WHERE userId = :userId AND status = 'completed' AND completedAt >= :since")
+    fun observeCompletedSince(userId: String, since: Long): Flow<List<ReframeSessionEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(session: ReframeSessionEntity)
 
@@ -130,6 +133,9 @@ interface MicroActionDao {
 
     @Query("SELECT * FROM micro_action WHERE userId = :userId ORDER BY createdAt DESC")
     fun observeAll(userId: String): Flow<List<MicroActionEntity>>
+
+    @Query("SELECT * FROM micro_action WHERE userId = :userId AND done = 1 AND completedAt >= :since")
+    fun observeCompletedSince(userId: String, since: Long): Flow<List<MicroActionEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(action: MicroActionEntity)

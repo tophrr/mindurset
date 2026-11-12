@@ -96,13 +96,8 @@
     <string name="companion_title">Pendamping</string>
     <string name="companion_open_menu">Buka menu</string>
     <string name="companion_chip_personal">Pribadi</string>
-    <string name="companion_message_greeting">Hai! Aku di sini untuk mendukungmu. Bagaimana perasaanmu hari ini?</string>
-    <string name="companion_message_user">Akhir-akhir ini aku agak kewalahan dengan pekerjaan</string>
     <string name="companion_input_placeholder">Tulis pesanmu…</string>
     <string name="companion_send">Kirim</string>
-    <string name="companion_time_first">10.30</string>
-    <string name="companion_time_second">10.31</string>
-    <string name="companion_note">Ini pratinjau. Pendamping AI belum terhubung — akan hadir di rilis berikutnya, dan apa pun yang kamu tulis di sini tidak dikirim ke mana pun.</string>
 
     <!-- Data & consent -->
     <string name="consent_title">Data &amp; persetujuan</string>

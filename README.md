@@ -5,8 +5,9 @@ itself. It offers a fifteen-second emotion check-in, a short guided reframe, and
 thing to do next.
 
 This repository holds the native Android client, meaning the Kotlin and Jetpack Compose
-application, its local Room database, its unit tests, and its build configuration. The app
-works with no network connection and keeps everything on the device.
+application, its local Room database, its unit tests, and its build configuration. Check-ins,
+reflections and actions are stored on the device; the Companion can ask the Worker for a reply, and
+when that reply does not arrive the app falls back to a fixed offline exercise.
 
 ## What is in this repository
 
