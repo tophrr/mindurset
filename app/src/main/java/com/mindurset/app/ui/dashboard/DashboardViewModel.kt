@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneId
 
 /** The four visible dashboard states the project asks for. */
@@ -61,7 +60,9 @@ class DashboardViewModel(
                     flowOf(
                         DashboardUiState.Content(
                             summary = DashboardSummary.EMPTY,
-                            effort = EffortHeatmap.empty(LocalDate.now()),
+                            effort = EffortHeatmap.empty(
+                                Instant.ofEpochMilli(now()).atZone(ZoneId.systemDefault()).toLocalDate(),
+                            ),
                         ),
                     )
                 } else {

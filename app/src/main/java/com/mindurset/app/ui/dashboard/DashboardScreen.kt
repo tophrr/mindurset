@@ -65,6 +65,8 @@ import com.mindurset.app.ui.theme.MutedGray
 import com.mindurset.app.ui.theme.NavyInk
 import com.mindurset.app.ui.theme.PaleBlue
 import java.text.DateFormat
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.Date
 
 /**
@@ -339,8 +341,7 @@ private fun EffortHeatmapCard(days: List<EffortDay>) {
 @Composable
 private fun EffortCell(day: EffortDay) {
     val date = remember(day.date) {
-        DateFormat.getDateInstance(DateFormat.MEDIUM)
-            .format(Date(day.date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()))
+        DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).format(day.date)
     }
     val description = pluralStringResource(R.plurals.dashboard_effort_day, day.count, date, day.count)
     val alpha = when (day.count) {
