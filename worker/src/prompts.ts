@@ -4,7 +4,7 @@
 
 import type { Excerpt } from "./retrieval";
 
-export const PROMPT_VERSION = "v1.0.0";
+export const PROMPT_VERSION = "v1.1.0";
 
 export interface ChatMessage {
   role: "system" | "user";
@@ -39,7 +39,7 @@ Hard rules:
 - Return ONLY one JSON object. No markdown fences, no commentary before or after it.
 - The object has exactly these keys: message, distortion, perspectives, micro_action, source_ids, risk_level.
 - message: 2 to 4 sentences, at most 600 characters, warm and non-judgemental. Do not quote the user's text verbatim.
-- distortion: one short label for the thinking pattern, at most 80 characters.
+- distortion: one short label for the thinking pattern, at most 80 characters, written in the same language as the user's text. If no clear pattern is present, say so in that language instead of inventing one.
 - perspectives: exactly 2 or 3 short alternatives, each at most 300 characters. Keep what is true; do not force positivity.
 - micro_action: one concrete action the person can do in 15 minutes or less. title at most 120 characters, minutes an integer from 1 to 15. No medical instruction.
 - source_ids: 1 to 3 ids copied from the excerpts you were given. Never invent an id.
