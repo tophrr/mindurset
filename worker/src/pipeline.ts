@@ -37,6 +37,13 @@ export interface Env {
   MODEL_ID?: string;
   /** "local" enables the deterministic dev adapter; never set this in production. */
   DEV_MODEL?: string;
+  /** Platform rate limiting binding declared as [[ratelimits]] in wrangler.toml. */
+  RATE_LIMITER?: RateLimiter;
+}
+
+/** The shape of the Workers Rate Limiting binding, minus the Cloudflare types. */
+export interface RateLimiter {
+  limit(options: { key: string }): Promise<{ success: boolean }>;
 }
 
 export type GenerationKind = "reframe" | "chat" | "summarise";
@@ -44,10 +51,10 @@ export type GenerationKind = "reframe" | "chat" | "summarise";
 const FIXTURE = fixture as unknown as GenerationResponse;
 
 const CANNED_CHAT_REPLY =
-  "I hear you. This is the stub companion reply; nothing is generated yet.";
+  "I hear you. The companion cannot reach the model right now, so this is the offline reply. Nothing you wrote has left this device.";
 
 const CANNED_SUMMARY =
-  "This is the stub session summary. The session covered one check-in and one reframe. Nothing is generated yet.";
+  "This is the offline summary. The model was not reached, so the session was not summarised; everything you recorded is still on your device.";
 
 const MAX_INPUT = 2000;
 
@@ -93,15 +100,21 @@ function readUserText(kind: GenerationKind, body: unknown): string {
   return readTranscript(body) || readStringField(body, "notes");
 }
 
-function fallback(kind: GenerationKind, mode: Mode, risk: RiskAssessment): GenerationResponse {
+function fallback(kind: GenerationKind, risk: RiskAssessment): GenerationResponse {
   const response = cloneFixture();
   response.prompt_version = PROMPT_VERSION;
   response.model_version = OFFLINE_MODEL_VERSION;
   response.risk_level = { level: risk.level, confidence: risk.confidence };
 
-  // Keep the existing offline copy. The chat copy is the only place the
-  // allowlisted mode is rendered, exactly as the stub did.
-  if (kind === "chat") response.message = `${CANNED_CHAT_REPLY} (mode: ${mode})`;
+  // The fixture's citations name documents the corpus no longer carries, and a
+  // fallback has retrieved nothing, so it claims no sources at all. The schema
+  // allows an empty array, and a client that treats "no sources" as ungrounded
+  // (as the Android client does) then shows its own offline copy instead of a
+  // citation it cannot resolve.
+  response.source_ids = [];
+
+  // Keep the existing offline copy. Request text is never interpolated here.
+  if (kind === "chat") response.message = CANNED_CHAT_REPLY;
   if (kind === "summarise") response.message = CANNED_SUMMARY;
   return response;
 }
@@ -222,26 +235,26 @@ export async function runGeneration(
     floor = assessInputRisk(userText);
 
     if (floor.level === "L3") return crisisResponse(detectLanguage(userText));
-    if (userText.length === 0) return fallback(kind, mode, floor);
+    if (userText.length === 0) return fallback(kind, floor);
 
     const excerpts = retrieve(userText, 3);
-    if (excerpts.length === 0) return fallback(kind, mode, floor);
+    if (excerpts.length === 0) return fallback(kind, floor);
 
     const client = selectModelClient(env);
-    if (!client) return fallback(kind, mode, floor);
+    if (!client) return fallback(kind, floor);
 
     const draft = await client.generate({ kind, mode, userText, excerpts });
-    if (!draft) return fallback(kind, mode, floor);
+    if (!draft) return fallback(kind, floor);
 
     const normalised = normaliseDraft(draft, excerpts, floor);
-    if (!normalised) return fallback(kind, mode, floor);
+    if (!normalised) return fallback(kind, floor);
 
     if (normalised.risk_level.level === "L3") {
       return crisisResponse(detectLanguage(userText));
     }
 
     const guardrail = inspectOutput(renderedText(normalised));
-    if (!guardrail.ok) return fallback(kind, mode, floor);
+    if (!guardrail.ok) return fallback(kind, floor);
 
     return {
       ...normalised,
@@ -249,6 +262,6 @@ export async function runGeneration(
       model_version: client.version,
     };
   } catch {
-    return fallback(kind, mode, floor);
+    return fallback(kind, floor);
   }
 }
