@@ -15,3 +15,15 @@ remote = true
 type = "Text"
 globs = ["**/*.md"]
 fallthrough = true
+
+# Approval-style rate limiting for the three generation endpoints. The key is the
+# account uid when the request carries one, otherwise the edge client address.
+# The limit is loose on purpose: it exists to stop a runaway client, not to
+# police a shared campus network.
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "1001"
+
+[ratelimits.simple]
+limit = 30
+period = 60
