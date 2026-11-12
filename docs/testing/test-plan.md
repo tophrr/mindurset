@@ -26,6 +26,7 @@ Every test case must trace back to a specific use case (`UC-xx`) or non-function
 | **Pixel 8 emulator, API 36** | Emulator, Android Studio | Android 16 (API 36) | SDK 36 (x86_64), `system-images;android-36;google_apis_playstore;x86_64` | 6.2" 1080×2400, 420 dpi (2.625×), 4 vCPU, 3 GB RAM | **Target-SDK reference:** replace the API 35 image with this one before Gate R4, so the behaviour that `targetSdk 36` changes is exercised rather than assumed. |
 | **Xiaomi Redmi Note 10 Pro (physical)** | Physical hardware | Android 16 | SDK 36 (arm64-v8a) | 6.67" 1080×2400, 410 dpi physical (440 override, 2.5625×), ~397 ppi | **Secondary:** the device that produced the current evidence. Real IME behaviour, real dialer intent and real touch latency. Used when the AVD is not available on a host. |
 | **Generic Phone Emulator / Testbed** | Android Virtual Device (AVD) | Android 8.0 (Oreo) | SDK 26 (x86_64 / arm64) | 5.0" LCD, 1080×1920 (~440 ppi), 60 Hz | **Baseline Target:** Validates `minSdk 26` compatibility, legacy crypto fallback, Room backwards compatibility, and absence of unsupported API calls. |
+| **Low-RAM reference profile (Android Go)** | AVD / physical testbed | Android 8.1 / 13 (Go Edition) | SDK 27 / 33 (x86_64 / arm64) | 5.5" LCD, 720×1440 (hdpi, ~293 ppi), 60 Hz | **Low-RAM Target:** the heap ceiling the proposal promises (≤ 150 MB) and the behaviour under memory pressure (`ActivityManager.isLowRamDevice() = true`). Not provisioned yet; the cases below are `NOT AVAILABLE` until it is. |
 
 The physical phone is a personal device, so it is not always available. When it is not, cases that need
 it, such as real 4G latency, thermal behaviour, battery and wireless adb, are recorded as `NOT
@@ -130,7 +131,36 @@ Covers consent lifecycle, memory window limits, data export, and local data dele
 | **DATA-08** | Server and local log sanitisation | Perform check-in and reframe session with sensitive personal text. Inspect logcat and diagnostic logs. | Zero user journal or check-in text is printed to logcat. Only structured event identifiers and stage timings appear (`NFR-12`). | NFR-08, NFR-12 |
 | **DATA-09** | Tracker and third-party SDK audit | Inspect build dependencies and outgoing network traffic via MITM proxy. | Zero third-party ad networks, behavioural trackers, or analytics SDKs present in APK. No telemetry transmissions occur. | NFR-08 |
 
-### 3.6 Coverage today
+### 3.6 Low-RAM Cases
+
+Validates the heap ceiling the proposal promises (≤ 150 MB) and the behaviour under memory pressure.
+The reference profile does not exist yet, so both cases are `NOT AVAILABLE` until it does.
+
+| Case ID | Title / Scenario | Preconditions & Input Action | Expected Result | Reference |
+| --- | --- | --- | --- | --- |
+| **LOWRAM-01** | Cold start and memory budget under the low-RAM ceiling | Run on a profile with `ActivityManager.isLowRamDevice() = true`, or cap heap growth (`adb shell setprop dalvik.vm.heapgrowthlimit 128m`). Launch, then walk Home, Check-in, Journal and Settings. | Heap stays at or below 150 MB, no slow-frame warnings, no `OutOfMemoryError`, UI stays responsive. | NFR-06, NFR-10 |
+| **LOWRAM-02** | Trim-memory response while in the foreground | App in the foreground. Inject trims (`adb shell am send-trim-memory com.mindurset.app MODERATE`, then `CRITICAL`), then complete a check-in. | Caches and stale Compose state release cleanly; the draft survives and nothing crashes. | NFR-05, NFR-06, NFR-10 |
+
+### 3.7 ASQ Cases
+
+The four ASQ items plus the acuity probe, which the proposal raises at L2 when hopelessness is
+ambiguous. The screen does not exist yet: `LocalRiskFloor` escalates straight to the crisis card, so
+every case here is `NOT AVAILABLE`, never passed.
+
+| Case ID | Question / Scenario | Answer branch | Expected behaviour | Reference | Status |
+| --- | --- | --- | --- | --- | --- |
+| **ASQ-01** | Q1, "In the past few weeks, have you wished you were dead?" | No | Recorded, advances to Q2 without a crisis overlay. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
+| | | Yes | Escalates to L3: the crisis card (S-90) with 119 ext. 8 and the trusted contact (S-91); reflection locked out. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
+| **ASQ-02** | Q2, "… felt that you or your family would be better off if you were dead?" | No | Recorded, advances to Q3. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
+| | | Yes | Escalates to L3; navigation disabled until acknowledged. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
+| **ASQ-03** | Q3, "In the past week, have you been having thoughts about killing yourself?" | No | Recorded, advances to Q4. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
+| | | Yes | Escalates to L3 with the helpline and outreach shown. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
+| **ASQ-04** | Q4, "Have you ever tried to kill yourself?" | No to all four | Negative screen: no lockout, supportive tone, the helpline offered as an optional banner, grounding exercises still available. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
+| | | Yes | Escalates to L3, past attempt detected. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
+| **ASQ-05** | Acuity probe, "Are you having thoughts of killing yourself right now?", asked when any earlier answer is Yes | No | Non-imminent L3: resources shown, safety-plan assistance offered. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
+| | | Yes | Acute L3: navigation locks out, the dialer is pre-filled with 119 ext. 8. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
+
+### 3.8 Coverage today
 
 Several cases below depend on features that are not in the repository yet. Per rule 3 in
 `docs/testing/README.md` they stay in the plan and are reported as `NOT AVAILABLE` with the reason,
