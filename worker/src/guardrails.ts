@@ -89,18 +89,24 @@ export function assessInputRisk(text: string): RiskAssessment {
   return { level, confidence };
 }
 
+// "dan" is not a marker: it is an Indonesian word, but it is also a common name
+// in English text, and a false "id" flips the crisis copy into the wrong
+// language at the worst possible moment.
 const INDONESIAN_MARKERS =
-  /\b(?:aku|saya|kamu|anda|tidak|nggak|gak|mau|ingin|banget|sekali|sedih|cemas|takut|lelah|capek|tidur|gagal|ujian|besok|hari|yang|dan|diriku|sendiri)\b/i;
+  /\b(?:aku|saya|kamu|anda|tidak|nggak|gak|mau|ingin|banget|sekali|sedih|cemas|takut|lelah|capek|tidur|gagal|ujian|besok|hari|yang|diriku|sendiri)\b/i;
 
 export function detectLanguage(text: string): "en" | "id" {
   return INDONESIAN_MARKERS.test(text) ? "id" : "en";
 }
 
 const MEDICATION =
-  /\b(?:sertraline|fluoxetine|escitalopram|citalopram|paroxetine|venlafaxine|bupropion|mirtazapine|alprazolam|clonazepam|lorazepam|diazepam|xanax|prozac|zoloft|lexapro|celexa|paxil|effexor|wellbutrin|antidepressants?|ssris?|benzodiazepines?|antipsychotics?|mood stabilizers?|medication|medicine|obat|dosis|dosage|miligram|mg)\b/i;
+  /\b(?:sertraline|fluoxetine|escitalopram|citalopram|paroxetine|venlafaxine|bupropion|mirtazapine|alprazolam|clonazepam|lorazepam|diazepam|xanax|prozac|zoloft|lexapro|celexa|paxil|effexor|wellbutrin|antidepressants?|ssris?|benzodiazepines?|antipsychotics?|mood stabilizers?|medication|medicine|obat|dosis|dosage)\b/i;
 
+// Named conditions only. A bare "gangguan" means "an interruption" in ordinary
+// Indonesian, and a bare "disorder" appears in harmless copy, so both are gone:
+// they rejected supportive replies that were doing nothing wrong.
 const DIAGNOSIS =
-  /\b(?:diagnos(?:e|ed|es|ing|is|tic)|disorders?|syndromes?|ptsd|ocd|adhd|bipolar|schizophreni(?:a|c)|major depressive|generalized anxiety|clinical depression|depression|panic disorder|eating disorder|substance use disorder|gangguan|depresi|skizofrenia)\b/i;
+  /\b(?:diagnos(?:e|ed|es|ing|is|tic)|disorders?|syndromes?|ptsd|ocd|adhd|bipolar|schizophreni(?:a|c)|major depressive|generalized anxiety|clinical depression|depression|panic disorder|eating disorder|substance use disorder|depresi|skizofrenia|gangguan (?:kecemasan|depresi|suasana hati|bipolar|panik|makan|tidur))\b/i;
 
 const SELF_HARM_INSTRUCTION: RegExp[] = [
   /\b(?:how to|ways? to|steps? to|instructions? (?:for|to))\b[^.]{0,60}\b(?:kill|hurt|harm|cut|hang|strangle|poison|overdose)\b/i,
