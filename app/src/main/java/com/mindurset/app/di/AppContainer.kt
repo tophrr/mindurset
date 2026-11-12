@@ -2,6 +2,7 @@ package com.mindurset.app.di
 
 import android.content.Context
 import androidx.compose.runtime.staticCompositionLocalOf
+import com.mindurset.app.BuildConfig
 import com.mindurset.app.data.local.MindUrSetDatabase
 import com.mindurset.app.data.prefs.DataStorePreferences
 import com.mindurset.app.data.remote.GenerationClient
@@ -36,7 +37,7 @@ class AppContainer(context: Context) {
 
     val sessionStore: SessionStore = preferences
 
-    val generationClient: GenerationClient = GenerationClient("http://localhost:8787")
+    val generationClient: GenerationClient = GenerationClient(BuildConfig.GENERATION_BASE_URL)
 
     val preferencesStore: PreferencesStore = preferences
 

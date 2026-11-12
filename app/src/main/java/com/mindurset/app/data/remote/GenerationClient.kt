@@ -13,6 +13,9 @@ interface GenerationTransport {
     suspend fun post(path: String, body: String): String
 }
 
+/** The Worker's own label for a response it produced without reaching the model. */
+const val OFFLINE_MODEL_VERSION = "offline-fallback"
+
 class GenerationClient(
     private val baseUrl: String,
     private val transport: GenerationTransport = HttpGenerationTransport(baseUrl),
@@ -20,9 +23,15 @@ class GenerationClient(
     suspend fun reply(message: String, mode: String): GenerationResponse {
         require(message.isNotBlank()) { "message must not be blank" }
         require(mode in MODES) { "mode is outside the chat contract" }
+        // A build without an endpoint never sends the line: the screen shows the offline exercise
+        // instead. This is what keeps a debug-only address out of a shipped APK.
+        if (baseUrl.isBlank()) throw IOException("no generation endpoint is configured in this build")
         val request = JSONObject().put("message", message).put("mode", mode).toString()
         val response = GenerationResponseParser.parse(transport.post("/v1/chat", request))
-        if (response.sourceIds.isEmpty()) throw UngroundedGenerationException()
+        // An answer that cites nothing, or that the Worker says it produced offline, is not grounded.
+        if (response.sourceIds.isEmpty() || response.modelVersion == OFFLINE_MODEL_VERSION) {
+            throw UngroundedGenerationException()
+        }
         return response
     }
 
