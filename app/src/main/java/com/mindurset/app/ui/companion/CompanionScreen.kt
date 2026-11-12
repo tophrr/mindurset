@@ -52,8 +52,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mindurset.app.R
 import com.mindurset.app.di.LocalAppContainer
 import com.mindurset.app.domain.model.RiskLevel
-import com.mindurset.app.domain.model.SafetyEvent
-import com.mindurset.app.safety.LocalRiskFloor
 import com.mindurset.app.ui.common.AppCard
 import com.mindurset.app.ui.common.CircleIconButton
 import com.mindurset.app.ui.common.FloatingNavSpace
@@ -66,21 +64,28 @@ import com.mindurset.app.ui.theme.NavyInk
 import com.mindurset.app.ui.theme.OutlineSoft
 import com.mindurset.app.ui.theme.PaleBlue
 import com.mindurset.app.ui.theme.SurfaceWhite
-import kotlinx.coroutines.launch
-import java.util.UUID
-
-private const val SAFETY_EVENT_RETENTION_MILLIS = 30L * 24 * 60 * 60 * 1000
-
 @Composable
 fun CompanionScreen(onOpenDrawer: () -> Unit, onCrisis: (RiskLevel) -> Unit = {}) {
     val container = LocalAppContainer.current
-    val vm: CompanionViewModel = viewModel { CompanionViewModel(container.generationClient) }
+    val vm: CompanionViewModel = viewModel {
+        CompanionViewModel(
+            generationClient = container.generationClient,
+            safetyRepository = container.safetyRepository,
+            sessionStore = container.sessionStore,
+        )
+    }
     val state by vm.uiState.collectAsStateWithLifecycle()
-    val scope = androidx.compose.runtime.rememberCoroutineScope()
-    val session by container.sessionStore.session.collectAsStateWithLifecycle(initialValue = null)
+    val crisis by vm.crisisLevel.collectAsStateWithLifecycle()
     var draft by remember { mutableStateOf("") }
     val scrollState = rememberScrollState()
     val keyboardUp = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+
+    // Clear the flag before navigating: coming back must not push the crisis card a second time.
+    LaunchedEffect(crisis) {
+        val level = crisis ?: return@LaunchedEffect
+        vm.crisisAcknowledged()
+        onCrisis(level)
+    }
 
     LaunchedEffect(state.lines.size, state.replyState) {
         if (state.lines.isNotEmpty() || state.replyState == CompanionReplyState.Sending) {
@@ -91,31 +96,9 @@ fun CompanionScreen(onOpenDrawer: () -> Unit, onCrisis: (RiskLevel) -> Unit = {}
     fun sendDraft() {
         val text = draft.trim()
         if (text.isBlank() || state.replyState == CompanionReplyState.Sending) return
-        // Keep the local floor first: L2 and L3 messages never enter the chat or leave the device.
-        val hit = LocalRiskFloor.match(text)
-        if (hit != null && hit.level >= RiskLevel.L2) {
-            val owner = session?.userId
-            if (owner != null) {
-                scope.launch {
-                    val at = System.currentTimeMillis()
-                    container.safetyRepository.record(
-                        SafetyEvent(
-                            id = UUID.randomUUID().toString(),
-                            userId = owner,
-                            level = hit.level,
-                            trigger = "companion_message",
-                            patternId = hit.patternId,
-                            createdAt = at,
-                            retentionUntil = at + SAFETY_EVENT_RETENTION_MILLIS,
-                        ),
-                    )
-                }
-            }
-            onCrisis(hit.level)
-        } else {
-            vm.send(text)
-            draft = ""
-        }
+        // The ViewModel runs the local floor first, so this only forwards a line that passed it.
+        vm.send(text)
+        draft = ""
     }
 
     Scaffold(
