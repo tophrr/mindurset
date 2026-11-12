@@ -138,7 +138,7 @@ never deleted and never marked as passed.
 
 | Area | Cases | Blocked by |
 | --- | --- | --- |
-| Account, sign-in and token refresh | A-02 to A-07, A-09, KILL-06 | No Firebase project, no `google-services.json`, and the app declares no network permission |
+| Account, sign-in and token refresh | A-02 to A-07, A-09, KILL-06 | No Firebase project and no `google-services.json`. The app now requests the INTERNET permission for the Companion, but the only endpoint a build can reach is the debug `http://localhost:8787`, so no account call exists to test |
 | Backup and sync | OFF-09, OFF-10, A-04, A-05 | No Worker endpoint wired into the client |
 | Insights | OFF-06, KILL-04 | The Home heatmap and local aggregation tests are implemented. The device evidence covers an empty guest state; a seeded multi-source Room scenario and process-kill restoration remain to be run. |
 | Memory manager and export | DATA-03 to DATA-06 | The `session_summary` table exists; the screen and export path do not |
