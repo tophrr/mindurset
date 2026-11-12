@@ -1,7 +1,7 @@
 name: Worker CI
 
 # The contract fixture and the schema are the agreement between the app and the Worker.
-# This job is the only thing that proves the stub still honours it.
+# This job is the only thing that proves the pipeline still honours it.
 
 on:
   push:
