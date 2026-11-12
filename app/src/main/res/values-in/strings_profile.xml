@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Profile screen -->
+    <string name="profile_title">Profil</string>
+    <string name="profile_avatar_description">Foto profil</string>
+    <string name="profile_name_fallback">Profil Anda</string>
+    <string name="profile_member_since">Anggota sejak %1$s</string>
+    <string name="profile_email_label">Email</string>
+    <string name="profile_edit_label">Ubah Profil</string>
+    <string name="profile_settings_label">Pengaturan</string>
+    <string name="profile_logout">Keluar</string>
+    <string name="profile_open_menu">Buka menu</string>
+    <string name="profile_section_account">Akun</string>
+
+    <!-- Mood card -->
+    <string name="profile_mood_weekly">Mingguan</string>
+    <string name="profile_mood_monthly">Bulanan</string>
+    <string name="profile_mood_week_empty">Tren suasana hati mingguanmu akan muncul di sini setelah kamu punya beberapa check-in.</string>
+    <string name="profile_avatar_initial_note">Avatar menampilkan huruf pertama dari nama tampilanmu.</string>
+    <string-array name="profile_weekday_short">
+        <item>M</item>
+        <item>S</item>
+        <item>S</item>
+        <item>R</item>
+        <item>K</item>
+        <item>J</item>
+        <item>S</item>
+    </string-array>
+
+    <!-- Log out dialog -->
+    <string name="profile_logout_title">Keluar?</string>
+    <string name="profile_logout_message">Pilih apa yang terjadi pada data yang tersimpan di ponsel ini. Tidak ada yang dihapus kecuali Anda memintanya.</string>
+    <string name="profile_logout_keep">Keluar dan simpan data</string>
+    <string name="profile_logout_delete">Keluar dan hapus data lokal</string>
+    <string name="profile_logout_cancel">Batal</string>
+
+    <!-- Profile edit screen -->
+    <string name="profile_edit_title">Ubah profil</string>
+    <string name="profile_field_display_name">Nama tampilan</string>
+    <string name="profile_name_counter">%1$d/40</string>
+    <string name="profile_error_name_required">Masukkan nama tampilan.</string>
+    <string name="profile_error_name_length">Gunakan 1 sampai 40 karakter.</string>
+    <string name="profile_section_reminder">Pengingat harian</string>
+    <string name="profile_reminder_enabled">Ingatkan saya untuk check-in</string>
+    <string name="profile_reminder_time">Waktu pengingat</string>
+    <string name="profile_language_label">Bahasa</string>
+    <string name="profile_language_en">Inggris</string>
+    <string name="profile_language_id">Indonesia</string>
+    <string name="profile_save_button">Simpan perubahan</string>
+    <string name="profile_saving">Menyimpan…</string>
+    <string name="profile_back">Kembali</string>
+
+    <!-- Settings screen -->
+    <string name="profile_settings_title">Pengaturan</string>
+    <string name="profile_section_general">Umum</string>
+    <string name="profile_reminder_note">Nonaktif secara bawaan. Aktifkan untuk pengingat lembut harian.</string>
+    <string name="profile_theme_label">Tema</string>
+    <string name="profile_theme_value_system">Bawaan sistem</string>
+    <string name="profile_theme_value_light">Terang</string>
+    <string name="profile_theme_value_dark">Gelap</string>
+    <string name="profile_theme_coming_soon">Opsi tema lain akan hadir di rilis berikutnya.</string>
+
+    <!-- Hour picker -->
+    <string name="profile_hour_picker_title">Waktu pengingat</string>
+    <string name="profile_hour_picker_confirm">Selesai</string>
+    <string name="profile_hour_picker_cancel">Batal</string>
+    <string name="profile_time_value">%1$02d:00</string>
+
+    <!-- Therapy (CBT skills) -->
+    <string name="therapy_title">Terapi</string>
+    <string name="therapy_open_menu">Buka menu</string>
+    <string name="therapy_heading">Keterampilan CBT</string>
+    <string name="therapy_subheading">Keterampilan Perilaku Kognitif - Jalani secara berurutan</string>
+    <string name="therapy_step1_title">Langkah 1: Check-In &amp; Bernapas</string>
+    <string name="therapy_step1_label">Kesadaran</string>
+    <string name="therapy_step1_body">Sadari kondisi fisik dan emosimu. Tangkap overthinking sebelum berputar liar.</string>
+    <string name="therapy_step2_title">Langkah 2: Reframe &amp; Reset</string>
+    <string name="therapy_step2_label">Restrukturisasi Kognitif</string>
+    <string name="therapy_step2_body">Putus lingkaran pikiran negatif dan tantang keyakinan yang terdistorsi dengan alat yang terbukti.</string>
+    <string name="therapy_step3_title">Langkah 3: Latih &amp; Integrasikan</string>
+    <string name="therapy_step3_label">Konsolidasi Keterampilan</string>
+    <string name="therapy_step3_body">Putus lingkaran pikiran negatif dan tantang keyakinan yang terdistorsi dengan alat yang terbukti.</string>
+    <string name="therapy_chip_emotion_log">Catatan Emosi</string>
+    <string name="therapy_chip_finger_breathing">Pernapasan Jari</string>
+    <string name="therapy_chip_body_scan">Pemindaian Tubuh</string>
+    <string name="therapy_chip_thought_triangle">Segitiga Pikiran</string>
+    <string name="therapy_chip_anxiety_box">Kotak Kecemasan</string>
+    <string name="therapy_chip_dopamine_menu">Menu Dopamin</string>
+    <string name="therapy_chip_art_journal">Jurnal Seni</string>
+    <string name="therapy_chip_support_network">Jaringan Dukungan</string>
+    <string name="therapy_begin">Mulai</string>
+    <string name="therapy_locked">Terkunci</string>
+
+    <!-- Companion (static preview) -->
+    <string name="companion_title">Pendamping</string>
+    <string name="companion_open_menu">Buka menu</string>
+    <string name="companion_chip_personal">Pribadi</string>
+    <string name="companion_input_placeholder">Tulis pesanmu…</string>
+    <string name="companion_send">Kirim</string>
+
+    <!-- Data & consent -->
+    <string name="consent_title">Data &amp; persetujuan</string>
+    <string name="consent_heading">Data Anda, aturan Anda</string>
+    <string name="consent_intro">Mind-Ur-Set menyimpan check-in dan refleksimu hanya di perangkat ini. Tidak ada server akun dan tidak ada sinkronisasi cloud di versi ini.</string>
+    <string name="consent_bullet_local">Semua yang kamu catat tersimpan secara lokal di ponsel ini.</string>
+    <string name="consent_bullet_no_server">Tidak ada yang diunggah ke server, dan tidak ada yang dibagikan ke pihak ketiga.</string>
+    <string name="consent_bullet_delete">Kamu bisa menghapus data lokal kapan saja lewat Keluar dan hapus data lokal.</string>
+    <string name="consent_footer">Karena data hanya ada di sini, menghapus instalasi aplikasi atau membersihkan penyimpanannya juga menghapus semuanya. Simpan cadangan untuk hal yang tidak ingin kamu hilangkan.</string>
+
+    <!-- About -->
+    <string name="about_title">Tentang</string>
+    <string name="about_app_name">Mind-Ur-Set</string>
+    <string name="about_version_label">Versi %1$s</string>
+    <string name="about_tagline">Pendamping CBT pribadi untuk check-in, reframing, dan refleksi harian.</string>
+    <string name="about_license_heading">Lisensi</string>
+    <string name="about_license_code">Kode aplikasi dirilis di bawah Apache License 2.0.</string>
+    <string name="about_license_corpus">Korpus dan konten kesejahteraan dirilis di bawah CC BY-NC-SA 3.0 IGO.</string>
+    <string name="about_license_note">Anda boleh menggunakan ulang kode di bawah Apache-2.0 dan korpus di bawah ketentuan Creative Commons-nya.</string>
+
+</resources>

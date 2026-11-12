@@ -21,8 +21,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.mindurset.app.R
 import com.mindurset.app.ui.navigation.Routes
 import com.mindurset.app.ui.theme.AppIcons
 import com.mindurset.app.ui.theme.CardShadow
@@ -48,17 +50,17 @@ fun AppDrawer(
         Column(Modifier.fillMaxWidth().padding(vertical = 18.dp)) {
             DrawerHeader(name = userName, email = userEmail)
             HorizontalDivider(Modifier.padding(vertical = 12.dp))
-            drawerItem("Home", Routes.DASHBOARD, AppIcons.Home, currentRoute, onNavigate)
-            drawerItem("Therapy", Routes.THERAPY, AppIcons.Therapy, currentRoute, onNavigate)
-            drawerItem("Companion", Routes.COMPANION, AppIcons.Companion, currentRoute, onNavigate)
-            drawerItem("Profile", Routes.PROFILE, AppIcons.Profile, currentRoute, onNavigate)
-            drawerItem("Daily reflection", Routes.REFLECTION_LIST, AppIcons.Book, currentRoute, onNavigate)
+            drawerItem(R.string.nav_home, Routes.DASHBOARD, AppIcons.Home, currentRoute, onNavigate)
+            drawerItem(R.string.nav_therapy, Routes.THERAPY, AppIcons.Therapy, currentRoute, onNavigate)
+            drawerItem(R.string.nav_companion, Routes.COMPANION, AppIcons.Companion, currentRoute, onNavigate)
+            drawerItem(R.string.nav_profile, Routes.PROFILE, AppIcons.Profile, currentRoute, onNavigate)
+            drawerItem(R.string.reflection_title, Routes.REFLECTION_LIST, AppIcons.Book, currentRoute, onNavigate)
             HorizontalDivider(Modifier.padding(vertical = 12.dp))
-            drawerItem("Settings", Routes.SETTINGS, AppIcons.Settings, currentRoute, onNavigate)
-            drawerItem("Data & consent", Routes.DATA_CONSENT, AppIcons.Shield, currentRoute, onNavigate)
-            drawerItem("About", Routes.ABOUT, AppIcons.Info, currentRoute, onNavigate)
+            drawerItem(R.string.settings, Routes.SETTINGS, AppIcons.Settings, currentRoute, onNavigate)
+            drawerItem(R.string.data_and_consent, Routes.DATA_CONSENT, AppIcons.Shield, currentRoute, onNavigate)
+            drawerItem(R.string.about, Routes.ABOUT, AppIcons.Info, currentRoute, onNavigate)
             HorizontalDivider(Modifier.padding(vertical = 12.dp))
-            drawerItem("Log out", "logout", AppIcons.Logout, currentRoute) { onLogout() }
+            drawerItem(R.string.profile_logout, "logout", AppIcons.Logout, currentRoute) { onLogout() }
         }
     }
 }
@@ -107,12 +109,13 @@ private fun DrawerHeader(name: String, email: String) {
 
 @Composable
 private fun drawerItem(
-    label: String,
+    labelRes: Int,
     route: String,
     icon: ImageVector,
     currentRoute: String?,
     onNavigate: (String) -> Unit,
 ) {
+    val label = stringResource(labelRes)
     val selected = currentRoute == route
     Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 3.dp)) {
         Surface(

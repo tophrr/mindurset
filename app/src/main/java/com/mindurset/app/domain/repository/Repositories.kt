@@ -97,6 +97,9 @@ interface SessionRepository {
 interface MicroActionRepository {
     fun observeOpen(userId: String): Flow<List<MicroAction>>
 
+    /** Everything for one user, done items included, so a screen can show today, done and tomorrow. */
+    fun observeAll(userId: String): Flow<List<MicroAction>>
+
     suspend fun add(action: MicroAction)
 
     suspend fun markDone(id: String, at: Long)

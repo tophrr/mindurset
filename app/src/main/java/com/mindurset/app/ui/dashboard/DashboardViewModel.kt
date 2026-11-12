@@ -2,6 +2,7 @@ package com.mindurset.app.ui.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mindurset.app.data.repository.DashboardEffortRepository
 import com.mindurset.app.domain.model.CheckIn
 import com.mindurset.app.domain.model.JournalEntry
 import com.mindurset.app.domain.model.SessionInfo
@@ -21,8 +22,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import java.time.Instant
+import java.time.ZoneId
 
 /** The four visible dashboard states the project asks for. */
 sealed interface DashboardUiState {
@@ -30,7 +32,7 @@ sealed interface DashboardUiState {
 
     data object Empty : DashboardUiState
 
-    data class Content(val summary: DashboardSummary) : DashboardUiState
+    data class Content(val summary: DashboardSummary, val effort: List<EffortDay> = emptyList()) : DashboardUiState
 
     data class Error(val message: String? = null) : DashboardUiState
 }
@@ -46,6 +48,7 @@ class DashboardViewModel(
     private val checkInRepository: CheckInRepository,
     private val profileRepository: ProfileRepository,
     private val sessionStore: SessionStore,
+    private val dashboardEffortRepository: DashboardEffortRepository,
     private val summariseDashboard: SummariseDashboard = SummariseDashboard(),
     private val now: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
@@ -54,7 +57,14 @@ class DashboardViewModel(
             .distinctUntilChanged()
             .flatMapLatest { session ->
                 if (session == null) {
-                    flowOf<DashboardUiState>(DashboardUiState.Content(DashboardSummary.EMPTY))
+                    flowOf(
+                        DashboardUiState.Content(
+                            summary = DashboardSummary.EMPTY,
+                            effort = EffortHeatmap.empty(
+                                Instant.ofEpochMilli(now()).atZone(ZoneId.systemDefault()).toLocalDate(),
+                            ),
+                        ),
+                    )
                 } else {
                     dashboardStream(session)
                 }
@@ -68,8 +78,13 @@ class DashboardViewModel(
     private fun dashboardStream(session: SessionInfo): Flow<DashboardUiState> {
         val userId = session.userId
         val fallbackName = session.email.substringBefore('@').ifBlank { "there" }
-        val sinceStartOfDay = summariseDashboard.startOfToday(now())
-        return combine(
+        val zoneId = ZoneId.systemDefault()
+        val nowEpochMillis = now()
+        val today = Instant.ofEpochMilli(nowEpochMillis).atZone(zoneId).toLocalDate()
+        val sinceStartOfDay = summariseDashboard.startOfToday(nowEpochMillis)
+        val sinceEffortWindow = today.minusDays(EffortHeatmap.DAYS - 1L)
+            .atStartOfDay(zoneId).toInstant().toEpochMilli()
+        val summary = combine(
             profileRepository.observe(userId),
             journalRepository.count(userId),
             checkInRepository.count(userId),
@@ -101,9 +116,27 @@ class DashboardViewModel(
                 checkInCount = checkInCount,
                 journalEntries = entries,
                 recentCheckIns = recentCheckIns,
-                nowEpochMillis = now(),
+                nowEpochMillis = nowEpochMillis,
             )
-        }.map { summary -> DashboardUiState.Content(summary) }
+        }
+        val effortTimestamps = combine(
+            checkInRepository.observeRecent(userId, sinceEffortWindow),
+            dashboardEffortRepository.observeCompletionTimestamps(userId, sinceEffortWindow),
+        ) { checkIns, completions ->
+            checkIns.map { it.createdAt } to completions
+        }
+        return combine(summary, effortTimestamps) { dashboardSummary, (checkIns, completions) ->
+            DashboardUiState.Content(
+                summary = dashboardSummary,
+                effort = EffortHeatmap.fromTimestamps(
+                    checkIns = checkIns,
+                    completedReframes = completions.first,
+                    completedActions = completions.second,
+                    today = today,
+                    zoneId = zoneId,
+                ),
+            )
+        }
     }
 
     private companion object {

@@ -12,7 +12,7 @@ Every test case must trace back to a specific use case (`UC-xx`) or non-function
 
 | Level | Scope and Contents | Execution Environment | Gate / Tooling | Target NFRs / Traceability |
 | --- | --- | --- | --- | --- |
-| **JVM Unit** | Domain models, intensity calculation, triage threshold evaluation, reframe state machine transitions, LocalRiskFloor keyword matching, retry backoff calculation, JSON contract serialisation/deserialisation, non-punitive copy assertions. Strictly zero Android framework imports. | Local JVM / CI runner (`flock /tmp/mindurset-gradle.lock ./gradlew testDebugUnitTest`) | Blocking on PR and CI | NFR-11, NFR-13, UC-02, UC-03, UC-04, UC-13 |
+| **JVM Unit** | Domain models, intensity calculation, triage threshold evaluation, reframe state machine transitions, the twelve red-team sentences against `LocalRiskFloor`, non-punitive copy assertions, and the action screen's grouping and validation. The Worker contract is validated in `worker/test` with Vitest, outside this module. Strictly zero Android framework imports. | Local JVM / CI runner (`flock /tmp/mindurset-gradle.lock ./gradlew testDebugUnitTest`) | Blocking on PR and CI | NFR-11, NFR-13, UC-02, UC-03, UC-04, UC-13 |
 | **Instrumented** | Room DAO CRUD operations and migrations, DataStore preference persistence, EncryptedSharedPreferences operations, WorkManager task scheduling, Repository integration against mocked Worker responses, Compose UI screen state rendering (empty, loading, shimmer, offline fallback, error, safety halted). | Android Emulator or physical test device (`./gradlew connectedDebugAndroidTest`) | Release candidate verification | NFR-02, NFR-04, NFR-06, NFR-14, UC-01, UC-04, UC-22 |
 | **Manual Device** | Physical hardware interactions, edge-to-edge IME insets under keyboard popup, dynamic theme/font scaling (up to 200%), TalkBack screen reader accessibility traversals, touch target measurement (minimum 48 dp), airplane mode transitions, system process kill simulation, external intent resolution (dialer 119 ext. 8, SMS/chat chooser for trusted contact). | Physical test devices and configured emulators | Gate R4 beta / Release sign-off | NFR-01, NFR-03, NFR-05, NFR-06, NFR-10, UC-14, UC-15, UC-21 |
 
@@ -22,15 +22,20 @@ Every test case must trace back to a specific use case (`UC-xx`) or non-function
 
 | Device Name | Device Type | OS Version | API Level / ABI | Display Spec & Density | Role / Priority |
 | --- | --- | --- | --- | --- | --- |
-| **Xiaomi Redmi Note 10 Pro** | Physical hardware | Android 16 | SDK 36 (arm64-v8a) | 6.67" AMOLED, 1080×2400 (xxhdpi, ~395 ppi), 120 Hz | **Primary Target:** Mid-range reference hardware. Validates real-world performance, cold starts, edge-to-edge layout, IME insets, and wireless adb (`192.168.67.35:47111` / USB `34d1e6a5`). |
-| **Google Pixel 8 Emulator** | Android Virtual Device (AVD) | Android 15 | SDK 35 (x86_64) | 6.2" OLED, 1080×2400 (420 dpi), 120 Hz | **Active Emulator Target:** Modern reference testbed (`sdk_gphone64_x86_64`). Validates edge-to-edge layout, IME insets, Material 3 dynamic theming, and target API behaviour. |
-| **Generic Phone Emulator / Testbed** | Android Virtual Device (AVD) or Physical | Android 8.0 (Oreo) | SDK 26 (x86_64 / arm64) | 5.0" LCD, 1080×1920 (xxhdpi, ~440 ppi), 60 Hz | **Baseline Target:** Validates `minSdk 26` compatibility, legacy crypto fallback, Room backwards compatibility, and absence of unsupported API calls. |
-| **Low-RAM Reference Profile (Android Go)** | AVD / Physical Testbed | Android 8.1 / 13 (Go Edition) | SDK 27 / 33 (x86_64 / arm64) | 5.5" LCD, 720×1440 (hdpi, ~293 ppi), 60 Hz | **Low-RAM Target:** Validates <= 150 MB heap constraint, behaviour under memory pressure (`ActivityManager.isLowRamDevice() = true`), response to `onTrimMemory`, and absence of Out-Of-Memory (OOM) crashes. |
+| **Pixel 8 emulator (AVD)** | Emulator, Android Studio | Android 15 (API 35) | SDK 35 (x86_64), `system-images;android-35;google_apis_playstore;x86_64` | 6.2" 1080×2400, 420 dpi (2.625×), 4 vCPU, 3 GB RAM | **Primary Target:** layout, edge-to-edge and IME insets, Compose states, process-kill recovery, Room persistence. Soft keyboard enabled (`hw.keyboard=no`), otherwise the IME cases cannot be executed. Not valid for launch latency, thermals, battery or real 4G. |
+| **Pixel 8 emulator, API 36** | Emulator, Android Studio | Android 16 (API 36) | SDK 36 (x86_64), `system-images;android-36;google_apis_playstore;x86_64` | 6.2" 1080×2400, 420 dpi (2.625×), 4 vCPU, 3 GB RAM | **Target-SDK reference:** replace the API 35 image with this one before Gate R4, so the behaviour that `targetSdk 36` changes is exercised rather than assumed. |
+| **Xiaomi Redmi Note 10 Pro (physical)** | Physical hardware | Android 16 | SDK 36 (arm64-v8a) | 6.67" 1080×2400, 410 dpi physical (440 override, 2.5625×), ~397 ppi | **Secondary:** the device that produced the current evidence. Real IME behaviour, real dialer intent and real touch latency. Used when the AVD is not available on a host. |
+| **Generic Phone Emulator / Testbed** | Android Virtual Device (AVD) | Android 8.0 (Oreo) | SDK 26 (x86_64 / arm64) | 5.0" LCD, 1080×1920 (~440 ppi), 60 Hz | **Baseline Target:** Validates `minSdk 26` compatibility, legacy crypto fallback, Room backwards compatibility, and absence of unsupported API calls. |
+| **Low-RAM reference profile (Android Go)** | AVD / physical testbed | Android 8.1 / 13 (Go Edition) | SDK 27 / 33 (x86_64 / arm64) | 5.5" LCD, 720×1440 (hdpi, ~293 ppi), 60 Hz | **Low-RAM Target:** the heap ceiling the proposal promises (≤ 150 MB) and the behaviour under memory pressure (`ActivityManager.isLowRamDevice() = true`). Not provisioned yet; the cases below are `NOT AVAILABLE` until it is. |
+
+The physical phone is a personal device, so it is not always available. When it is not, cases that need
+it, such as real 4G latency, thermal behaviour, battery and wireless adb, are recorded as `NOT
+AVAILABLE` with the reason, following the policy below. They are never marked as passed.
 
 ### Meaning of "NOT AVAILABLE" in Test Reports
 
 If an execution environment or target device cannot be provisioned during a release cycle:
-1. The status column in the test execution report must explicitly record **`NOT AVAILABLE`** alongside the blocking root cause (e.g., physical handset unreachable over wireless/USB adb, emulator system image missing from build agent).
+1. The status column in the test execution report must explicitly record **`NOT AVAILABLE`** alongside the blocking root cause (e.g., hardware battery defect, emulator system image missing from build agent).
 2. The case **must never be marked as passed, waived implicitly, or omitted from the report**.
 3. A `NOT AVAILABLE` entry on a primary or minimum SDK device is a release blocker. Releasing requires either:
    - Retesting on an approved substitute device matching the identical SDK level and architecture, or
@@ -51,7 +56,7 @@ All offline cases are executed with system Airplane Mode enabled and Wi-Fi disab
 | **OFF-03** | Emotional triage and offline reframe exercise | Check-in logged with negative mood and intensity >= 6 while offline. Triage offer appears; tap "Start Reframe". | App degrades gracefully: displays clearly labelled offline cognitive exercise instead of spinning or crashing. Three steps progress locally. | UC-03, UC-04, NFR-04 |
 | **OFF-04** | Complete today's micro-action offline | An active micro-action exists on Home screen. Tap checkbox while offline. | Action is marked completed immediately in local Room database. UI updates with checkmark without lag or error toast. | UC-10, NFR-04, NFR-13 |
 | **OFF-05** | Compose and save journal entry offline | Open Journal tab offline. Type a multi-paragraph entry and tap Save. | Entry persists to local Room database. App confirms save locally. Entry appears in journal list. | UC-11, NFR-04, NFR-05 |
-| **OFF-06** | View emotion insights offline | Multiple days of check-ins exist locally. Navigate to Insights tab offline. | Effort heatmap and summary metrics render entirely from local Room data. No empty spinner or network failure view. | UC-12, NFR-04 |
+| **OFF-06** | View effort insights offline | Check-ins, completed reframes and completed actions exist locally. Open Home offline. | The 28-day effort heatmap renders from local Room data, with each day's value capped at three. No spinner or network failure view. | UC-12, NFR-04 |
 | **OFF-07** | Local risk screening offline | While offline, enter text containing explicit self-harm keywords ("want to die") in check-in note or journal. | LocalRiskFloor detects match offline. Escalates immediately to L2/L3 protocol without attempting network calls. | UC-13, UC-15, NFR-04 |
 | **OFF-08** | Emergency crisis dialer access offline | From any screen, navigate to crisis support or trigger safety protocol offline. Tap "Call 119 ext. 8". | Crisis numbers are bundled locally. Android phone dialer opens prefilled with `119` (extension `8`). No network connection required. | UC-15, NFR-04 |
 | **OFF-09** | Account sign-in / upgrade attempt offline | Navigate to Profile -> Account & Backup while offline. Attempt email/password sign-in. | App displays clear message explaining that an active connection is required for account operations. Local session and data remain untouched. | UC-21, NFR-04, NFR-15 |
@@ -65,7 +70,7 @@ All rotation cases test orientation changes between portrait (natural) and lands
 
 | Case ID | Title / Scenario | Preconditions & Input Action | Expected Result | Reference |
 | --- | --- | --- | --- | --- |
-| **ROT-01** | Rotation during onboarding consent & inputs | Onboarding screen S-03 (consent toggles) or S-04 (nickname input). Enter text and toggle switches, then rotate 90 degrees. | Entered text, selected checkboxes, and scroll position are fully preserved. Form remains interactive with no reset. | UC-01, NFR-05, NFR-06 |
+| **ROT-01** | Rotation during onboarding consent & inputs | Onboarding screen S-03 (consent toggles) or the nickname step, which has no screen ID in Sec. 7.2. Enter text and toggle switches, then rotate 90 degrees. | Entered text, selected checkboxes, and scroll position are fully preserved. Form remains interactive with no reset. | UC-01, NFR-05, NFR-06 |
 | **ROT-02** | Rotation during daily check-in | Home screen S-11. Select mood face (e.g., Anxious), set slider to 8, type unsubmitted note. Rotate device. | Selected face, slider value (8), and entered note text remain intact. Keyboard adjusts cleanly without obscuring buttons. | UC-02, NFR-05 |
 | **ROT-03** | Rotation during active reframe session | Therapy screen S-21. Reframe step 1 active with partial thought deconstruction text typed. Rotate device. | Thought deconstruction text, current step indicator (Step 1 of 3), and session state remain identical. No state reload. | UC-04, UC-05, NFR-05 |
 | **ROT-04** | Rotation during journal drafting | Journal screen S-12. Compose long free-text entry. Rotate device back and forth between portrait and landscape. | Cursor position is maintained, all draft text is preserved, and scrolling column respects IME padding in landscape. | UC-11, NFR-05 |
@@ -126,37 +131,48 @@ Covers consent lifecycle, memory window limits, data export, and local data dele
 | **DATA-08** | Server and local log sanitisation | Perform check-in and reframe session with sensitive personal text. Inspect logcat and diagnostic logs. | Zero user journal or check-in text is printed to logcat. Only structured event identifiers and stage timings appear (`NFR-12`). | NFR-08, NFR-12 |
 | **DATA-09** | Tracker and third-party SDK audit | Inspect build dependencies and outgoing network traffic via MITM proxy. | Zero third-party ad networks, behavioural trackers, or analytics SDKs present in APK. No telemetry transmissions occur. | NFR-08 |
 
----
+### 3.6 Low-RAM Cases
 
-### 3.6 Low-RAM / Resource-Constrained Cases
-
-Validates behaviour on memory-constrained devices (e.g. Android Go, devices with <= 2 GB RAM, heap ceiling <= 150 MB).
+Validates the heap ceiling the proposal promises (≤ 150 MB) and the behaviour under memory pressure.
+The reference profile does not exist yet, so both cases are `NOT AVAILABLE` until it does.
 
 | Case ID | Title / Scenario | Preconditions & Input Action | Expected Result | Reference |
 | --- | --- | --- | --- | --- |
-| **LOWRAM-01** | Cold start and memory budget under low-RAM ceiling | Execute on device/profile with `ActivityManager.isLowRamDevice() = true` or heap growth capped at 150 MB (`adb shell setprop dalvik.vm.heapgrowthlimit 128m`). Launch app, navigate through Dashboard, Check-In, Journal, and Settings. | App memory footprint remains strictly <= 150 MB heap usage. No slow frame warnings or `OutOfMemoryError` exceptions thrown. UI remains responsive. | NFR-06, NFR-10 |
-| **LOWRAM-02** | Trim memory response under foreground memory pressure | App running in foreground. Inject trim memory signals via adb: `adb shell am send-trim-memory com.mindurset.app MODERATE` followed by `CRITICAL`. Perform check-in. | Application handles memory pressure cleanly. In-memory image caches and stale compose states release without crashing or losing entered draft data. | NFR-05, NFR-06, NFR-10 |
+| **LOWRAM-01** | Cold start and memory budget under the low-RAM ceiling | Run on a profile with `ActivityManager.isLowRamDevice() = true`, or cap heap growth (`adb shell setprop dalvik.vm.heapgrowthlimit 128m`). Launch, then walk Home, Check-in, Journal and Settings. | Heap stays at or below 150 MB, no slow-frame warnings, no `OutOfMemoryError`, UI stays responsive. | NFR-06, NFR-10 |
+| **LOWRAM-02** | Trim-memory response while in the foreground | App in the foreground. Inject trims (`adb shell am send-trim-memory com.mindurset.app MODERATE`, then `CRITICAL`), then complete a check-in. | Caches and stale Compose state release cleanly; the draft survives and nothing crashes. | NFR-05, NFR-06, NFR-10 |
 
----
+### 3.7 ASQ Cases
 
-### 3.7 Ask Suicide-Screening Questions (ASQ) Cases
+The four ASQ items plus the acuity probe, which the proposal raises at L2 when hopelessness is
+ambiguous. The screen does not exist yet: `LocalRiskFloor` escalates straight to the crisis card, so
+every case here is `NOT AVAILABLE`, never passed.
 
-Covers the four standardized ASQ clarifying questions (NIMH instrument) presented upon ambiguous hopelessness detection (L2), validating both answer branches ("No" and "Yes") plus acuity probe.
-
-*Note: All ASQ test cases are currently marked **PENDING** until the dedicated screening screen is implemented in the UI layer.*
-
-| Case ID | Question / Scenario | Answer Branch & User Action | Expected Behaviour | Reference | Current Status |
+| Case ID | Question / Scenario | Answer branch | Expected behaviour | Reference | Status |
 | --- | --- | --- | --- | --- | --- |
-| **ASQ-01** | **Question 1:** "In the past few weeks, have you wished you were dead?" | **Branch A ("No"):** Tap "No" / "Tidak". | Negative response recorded. App advances immediately to Question 2 without triggering premature crisis overlay or terminating session. | UC-13, UC-15, F-09, NFR-11 | **PENDING** (Blocked: ASQ screen not yet implemented) |
-| | | **Branch B ("Yes"):** Tap "Yes" / "Ya". | **Escalate to L3:** Affirmative disclosure triggers immediate acute risk halt. Un-dismissible modal crisis card (S-90) appears with one-tap call to 119 ext. 8 and trusted contact (S-91). Standard reflection locked out. | UC-13, UC-15, F-09, NFR-11 | **PENDING** (Blocked: ASQ screen not yet implemented) |
-| **ASQ-02** | **Question 2:** "In the past few weeks, have you felt that you or your family would be better off if you were dead?" | **Branch A ("No"):** Tap "No" / "Tidak". | Negative response recorded. App advances safely to Question 3. | UC-13, UC-15, F-09, NFR-11 | **PENDING** (Blocked: ASQ screen not yet implemented) |
-| | | **Branch B ("Yes"):** Tap "Yes" / "Ya". | **Escalate to L3:** Immediate session halt. Modal crisis overlay (S-90) displayed. Normal conversational navigation disabled until acknowledged. | UC-13, UC-15, F-09, NFR-11 | **PENDING** (Blocked: ASQ screen not yet implemented) |
-| **ASQ-03** | **Question 3:** "In the past week, have you been having thoughts about killing yourself?" | **Branch A ("No"):** Tap "No" / "Tidak". | Negative response recorded. App advances safely to Question 4. | UC-13, UC-15, F-09, NFR-11 | **PENDING** (Blocked: ASQ screen not yet implemented) |
-| | | **Branch B ("Yes"):** Tap "Yes" / "Ya". | **Escalate to L3:** Immediate session halt. Modal crisis overlay (S-90) with national helpline (119 ext. 8) and emergency outreach shown. | UC-13, UC-15, F-09, NFR-11 | **PENDING** (Blocked: ASQ screen not yet implemented) |
-| **ASQ-04** | **Question 4:** "Have you ever tried to kill yourself?" | **Branch A ("No"):** Tap "No" / "Tidak" (all Q1–Q4 answered "No"). | **Negative Screen Outcome:** Full ASQ screen evaluates negative. Session does NOT lock out user; tone remains supportive and gentle, displaying inline crisis helpline (119 ext. 8) as an optional safety banner, while permitting cognitive grounding/reflection exercises. | UC-13, UC-15, F-09, NFR-11 | **PENDING** (Blocked: ASQ screen not yet implemented) |
-| | | **Branch B ("Yes"):** Tap "Yes" / "Ya". | **Escalate to L3:** Past suicide attempt detected. System triggers immediate safety escalation to L3, presenting modal crisis card (S-90) with 119 ext. 8 and trusted contact support. | UC-13, UC-15, F-09, NFR-11 | **PENDING** (Blocked: ASQ screen not yet implemented) |
-| **ASQ-05** | **Acuity Probe (Q5):** "Are you having thoughts of killing yourself right now?" (Triggered if any Q1–Q4 is "Yes") | **Branch A ("No"):** Tap "No" / "Tidak". | **Non-Imminent L3 Support:** Crisis resources surfaced with non-punitive supportive framing; safety plan creation assistance offered. | UC-13, UC-15, F-09, NFR-11 | **PENDING** (Blocked: ASQ screen not yet implemented) |
-| | | **Branch B ("Yes"):** Tap "Yes" / "Ya". | **Acute / Imminent L3 Protocol:** Immediate high-acuity crisis screen locks out navigation; pre-fills Android dialer with 119 ext. 8 and urges user to reach emergency services or a trusted person immediately. | UC-13, UC-15, F-09, NFR-11 | **PENDING** (Blocked: ASQ screen not yet implemented) |
+| **ASQ-01** | Q1, "In the past few weeks, have you wished you were dead?" | No | Recorded, advances to Q2 without a crisis overlay. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
+| | | Yes | Escalates to L3: the crisis card (S-90) with 119 ext. 8 and the trusted contact (S-91); reflection locked out. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
+| **ASQ-02** | Q2, "… felt that you or your family would be better off if you were dead?" | No | Recorded, advances to Q3. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
+| | | Yes | Escalates to L3; navigation disabled until acknowledged. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
+| **ASQ-03** | Q3, "In the past week, have you been having thoughts about killing yourself?" | No | Recorded, advances to Q4. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
+| | | Yes | Escalates to L3 with the helpline and outreach shown. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
+| **ASQ-04** | Q4, "Have you ever tried to kill yourself?" | No to all four | Negative screen: no lockout, supportive tone, the helpline offered as an optional banner, grounding exercises still available. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
+| | | Yes | Escalates to L3, past attempt detected. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
+| **ASQ-05** | Acuity probe, "Are you having thoughts of killing yourself right now?", asked when any earlier answer is Yes | No | Non-imminent L3: resources shown, safety-plan assistance offered. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
+| | | Yes | Acute L3: navigation locks out, the dialer is pre-filled with 119 ext. 8. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
+
+### 3.8 Coverage today
+
+Several cases below depend on features that are not in the repository yet. Per rule 3 in
+`docs/testing/README.md` they stay in the plan and are reported as `NOT AVAILABLE` with the reason,
+never deleted and never marked as passed.
+
+| Area | Cases | Blocked by |
+| --- | --- | --- |
+| Account, sign-in and token refresh | A-02 to A-07, A-09, KILL-06 | No Firebase project and no `google-services.json`. The app now requests the INTERNET permission for the Companion, but the only endpoint a build can reach is the debug `http://localhost:8787`, so no account call exists to test |
+| Backup and sync | OFF-09, OFF-10, A-04, A-05 | No Worker endpoint wired into the client |
+| Insights | OFF-06, KILL-04 | The Home heatmap and local aggregation tests are implemented. The device evidence covers an empty guest state; a seeded multi-source Room scenario and process-kill restoration remain to be run. |
+| Memory manager and export | DATA-03 to DATA-06 | The `session_summary` table exists; the screen and export path do not |
+| Instrumented suite | Every `connectedDebugAndroidTest` row | No `androidTest` source set yet |
 
 ---
 
@@ -172,7 +188,10 @@ Screenshots captured from devices must follow the canonical format:
 <YYYYMMDD>-<screen_id>-<state_or_condition>.png
 ```
 
-- `<YYYYMMDD>`: ISO calendar date of the test execution (e.g., `20261111`).
+- `<YYYYMMDD>`: ISO calendar date of the test execution (e.g., `20261022`).
+- A screen that has no identifier in Sec. 7.2 yet uses a short slug instead, and the file says so in
+  its pull request. Today's Action is the current case: its evidence is named
+  `action-today`, and the files are renamed once the inventory gives it an `S` number.
 - `<screen_id>`: Official screen identifier from proposal §7.2:
   - `s01` (Launch / check)
   - `s02` (Scope & limits)
@@ -192,10 +211,9 @@ Screenshots captured from devices must follow the canonical format:
 - `<state_or_condition>`: Concise descriptor of test condition (e.g., `offline`, `rotated`, `shimmer`, `error`, `l3-halted`).
 
 **Examples:**
-- `docs/testing/evidence/20261111-s06-auth-login.png`
-- `docs/testing/evidence/20261111-s11-checkin-redteam-input.png`
-- `docs/testing/evidence/20261111-s11-checkin-submitted-nocard.png`
-- `docs/testing/evidence/20261111-s90-crisis-halted.png`
+- `docs/testing/evidence/20261022-s11-checkin-offline.png`
+- `docs/testing/evidence/20261022-s21-reframe-rotated.png`
+- `docs/testing/evidence/20261022-s90-crisis-halted.png`
 
 ### 4.2 Logcat Excerpt File Naming
 
@@ -206,9 +224,9 @@ Logcat recordings and diagnostic traces must follow the format:
 ```
 
 **Examples:**
-- `docs/testing/evidence/20261111-safety-redteam-unfiltered.log`
-- `docs/testing/evidence/20261111-processkill-recovery.log`
-- `docs/testing/evidence/20261111-token-refresh-silent.log`
+- `docs/testing/evidence/20261022-safety-escalation-closed.log`
+- `docs/testing/evidence/20261022-processkill-recovery.log`
+- `docs/testing/evidence/20261022-token-refresh-silent.log`
 
 ### 4.3 Evidence Privacy Rules
 - **No Personal Data:** Test screenshots and logcat excerpts must never contain actual clinical patient data, real student identifiers, or personal passwords.

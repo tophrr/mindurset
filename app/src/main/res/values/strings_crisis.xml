@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="crisis_title">You do not have to sit with this alone</string>
+    <string name="crisis_body">What you wrote sounds like more than a hard day. If you are thinking about hurting yourself, talking to someone now matters more than anything in this app.</string>
+    <string name="crisis_number_label">Talk to someone now</string>
+    <string name="crisis_call">Call 119 ext. 8</string>
+    <string name="crisis_contact_note">If you are in immediate danger, call 112. A person you trust is enough; you do not have to explain everything.</string>
+    <string name="crisis_acknowledge">I am safe for now</string>
+    <string name="crisis_title_l2">That sounds like a lot to carry</string>
+    <string name="crisis_body_l2">What you wrote sounds heavier than an ordinary hard day. Talking to someone now can help, and nothing in this app replaces a person.</string>
+    <string name="crisis_acknowledge_l2">I am okay for now</string>
+</resources>

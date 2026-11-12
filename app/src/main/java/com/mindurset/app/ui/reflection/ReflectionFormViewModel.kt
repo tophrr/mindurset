@@ -6,12 +6,18 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mindurset.app.domain.model.JournalEntry
+import com.mindurset.app.domain.model.RiskLevel
+import com.mindurset.app.domain.model.SafetyEvent
 import com.mindurset.app.domain.repository.JournalRepository
+import com.mindurset.app.domain.repository.SafetyRepository
 import com.mindurset.app.domain.repository.SessionStore
 import com.mindurset.app.domain.usecase.ValidateReflection
+import com.mindurset.app.safety.LocalRiskFloor
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.UUID
+
+private const val SAFETY_EVENT_RETENTION_MILLIS = 30L * 24 * 60 * 60 * 1000
 
 /**
  * Holds the create/edit form state. Living in a ViewModel means the text
@@ -21,8 +27,13 @@ class ReflectionFormViewModel(
     private val entryId: String?,
     private val journalRepository: JournalRepository,
     private val sessionStore: SessionStore,
+    private val safetyRepository: SafetyRepository,
+    private val clock: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
     val isEdit: Boolean = entryId != null
+
+    var crisisLevel by mutableStateOf<RiskLevel?>(null)
+        private set
 
     var challenge by mutableStateOf("")
         private set
@@ -119,8 +130,34 @@ class ReflectionFormViewModel(
                     updatedAt = now,
                 )
             journalRepository.upsert(entry)
+            val hit =
+                LocalRiskFloor.match(
+                    listOf(entry.challenge, entry.reframe, entry.gratitude).joinToString(" "),
+                )
+            if (hit != null && hit.level >= RiskLevel.L2) {
+                val at = clock()
+                safetyRepository.record(
+                    SafetyEvent(
+                        id = UUID.randomUUID().toString(),
+                        userId = entry.userId,
+                        level = hit.level,
+                        trigger = "journal_entry",
+                        patternId = hit.patternId,
+                        createdAt = at,
+                        retentionUntil = at + SAFETY_EVENT_RETENTION_MILLIS,
+                    ),
+                )
+                isSaving = false
+                crisisLevel = hit.level
+                return@launch
+            }
             isSaving = false
             onSaved()
         }
+    }
+
+    /** Clears the flag after the crisis card was shown, so it does not repeat. */
+    fun acknowledgeCrisis() {
+        crisisLevel = null
     }
 }

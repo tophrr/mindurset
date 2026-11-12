@@ -83,6 +83,22 @@ code is.
   the palette without design sign-off.
 - Copy is non-punitive: no streaks, no missed-day counts, no red badges, no shaming.
 
+### The Worker
+
+The TypeScript stub in `worker/` is part of this repository and has its own toolchain.
+
+```bash
+cd worker
+npm ci                 # install exactly what package-lock.json pins
+npm test               # vitest: the contract fixture and the schema
+npx tsc --noEmit       # type check
+```
+
+`npm test` validates `contract/fixtures/generation-ok.json` against
+`contract/generation-v1.schema.json`; if the schema changes, both sides change in the same pull
+request and the fixture moves to `v2`. CI runs this as the **Worker contract** job, so a broken
+contract fails the pull request like a broken build does.
+
 ## 6. Secrets and local files
 
 Never commit any of these: `local.properties`, `*.jks`, `*.keystore`, `keystore.properties`,

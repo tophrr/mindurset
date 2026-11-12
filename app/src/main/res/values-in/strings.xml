@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Mind-Ur-Set</string>
+    <string name="nav_home">Beranda</string>
+    <string name="nav_therapy">Terapi</string>
+    <string name="nav_companion">Pendamping</string>
+    <string name="nav_profile">Profil</string>
+    <string name="menu">Menu</string>
+    <string name="settings">Pengaturan</string>
+    <string name="data_and_consent">Data &amp; persetujuan</string>
+    <string name="about">Tentang</string>
+    <string name="loading">Memuat…</string>
+    <string name="retry">Coba lagi</string>
+    <string name="save">Simpan</string>
+    <string name="cancel">Batal</string>
+    <string name="back">Kembali</string>
+    <string name="delete">Hapus</string>
+    <string name="edit">Ubah</string>
+    <string name="emotion_happy">Senang</string>
+    <string name="emotion_calm">Tenang</string>
+    <string name="emotion_low">Lesu</string>
+    <string name="emotion_anxious">Cemas</string>
+    <string name="emotion_stressed">Tertekan</string>
+
+    <!-- Therapy screen additions (no "Locked" state) -->
+    <string name="therapy_release_note">Sesi terpandu akan hadir di rilis berikutnya. Lihat pratinjau tiap langkah di bawah.</string>
+    <string name="therapy_continue">Lanjut</string>
+    <string name="therapy_open">Buka</string>
+
+    <!-- Companion screen additions (mode chips + preview bubbles) -->
+    <string name="companion_chip_negative_thoughts">Pikiran negatif</string>
+    <string name="companion_chip_emotion_regulation">Regulasi emosi</string>
+
+    <!-- Companion preview: second and third canned exchanges per mode -->
+</resources>

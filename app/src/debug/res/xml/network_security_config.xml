@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Debug builds only. `wrangler dev` serves plain HTTP, and the address depends on how the machine is
+  reached: loopback through `adb reverse`, or the host's LAN address for a handset on the same
+  network. Release builds carry neither this file nor the attribute, so a shipped APK has no
+  cleartext permission at all.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

@@ -32,6 +32,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -53,6 +54,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mindurset.app.R
 import com.mindurset.app.di.LocalAppContainer
 import com.mindurset.app.domain.model.JournalEntry
+import com.mindurset.app.domain.model.RiskLevel
 import com.mindurset.app.domain.usecase.ValidateReflection
 import com.mindurset.app.ui.common.AppCard
 import com.mindurset.app.ui.common.CircleIconButton
@@ -389,10 +391,28 @@ private fun ReflectionCalendar(entries: List<JournalEntry>, onOpen: (String) -> 
 }
 
 @Composable
-fun ReflectionFormScreen(entryId: String?, onSaved: () -> Unit, onBack: () -> Unit) {
+fun ReflectionFormScreen(
+    entryId: String?,
+    onSaved: () -> Unit,
+    onBack: () -> Unit,
+    onCrisis: (RiskLevel) -> Unit = { onSaved() },
+) {
     val container = LocalAppContainer.current
     val viewModel: ReflectionFormViewModel = viewModel {
-        ReflectionFormViewModel(entryId, container.journalRepository, container.sessionStore)
+        ReflectionFormViewModel(
+            entryId,
+            container.journalRepository,
+            container.sessionStore,
+            container.safetyRepository,
+        )
+    }
+
+    LaunchedEffect(viewModel.crisisLevel) {
+        val level = viewModel.crisisLevel
+        if (level != null) {
+            viewModel.acknowledgeCrisis()
+            onCrisis(level)
+        }
     }
 
     Scaffold(

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="reframe_title">Reframe</string>
+    <string name="reframe_back_cd">Kembali</string>
+    <string name="reframe_progress">Langkah %1$d dari %2$d</string>
+    <string name="reframe_step1_title">Apa yang terlintas di pikiranmu?</string>
+    <string name="reframe_step1_hint">Satu kalimat, apa adanya. Belum perlu dirapikan.</string>
+    <string name="reframe_step2_title">Apa yang akan kamu katakan ke seorang teman?</string>
+    <string name="reframe_step2_hint">Seseorang yang kamu sayangi mengatakan ini kepadamu. Apa yang kamu lihat tapi belum dia lihat sekarang?</string>
+    <string name="reframe_step3_title">Cara yang lebih adil untuk mengatakannya</string>
+    <string name="reframe_step3_hint">Pertahankan yang benar, buang kata yang terlalu mutlak. Tidak harus positif, cukup akurat.</string>
+    <string name="reframe_done_title">Bawa satu langkah kecil</string>
+    <string name="reframe_action_prompt">Sesuatu yang bisa kamu lakukan dalam satu jam ke depan, cukup kecil sampai hari ini tetap berarti.</string>
+    <string name="reframe_action_label">Satu langkah kecil</string>
+    <string name="reframe_action_placeholder">Buka silabus ujian sepuluh menit</string>
+    <string name="reframe_minutes">%1$d mnt</string>
+    <string name="reframe_continue">Lanjut</string>
+    <string name="reframe_finish">Simpan langkah</string>
+    <string name="reframe_error_thought">Tulis dulu pikirannya, walaupun masih kasar.</string>
+    <string name="reframe_error_evidence">Satu hal yang kamu lihat sudah cukup.</string>
+    <string name="reframe_error_alternative">Tulis dulu versi yang lebih adil.</string>
+    <string name="reframe_error_action">Sebutkan satu langkah kecil sebelum menyimpan.</string>
+    <string name="reframe_saved_title">Tersimpan</string>
+    <string name="reframe_saved_body">Sesi tersimpan dan langkahnya ada di Aksi Hari Ini. Kamu bisa berhenti di sini.</string>
+    <string name="reframe_offline_label">Latihan offline</string>
+    <string name="reframe_offline_note">Latihan tetap dari aplikasi. Tidak dipersonalisasi, dan tidak dihasilkan model.</string>
+    <string name="reframe_saved_done">Selesai</string>
+    <string name="therapy_start_reframe">Mulai reframe tiga langkah</string>
+</resources>

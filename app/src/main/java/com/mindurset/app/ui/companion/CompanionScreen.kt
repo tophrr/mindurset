@@ -24,6 +24,8 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -31,7 +33,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -44,10 +45,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mindurset.app.R
+import com.mindurset.app.di.LocalAppContainer
+import com.mindurset.app.domain.model.RiskLevel
 import com.mindurset.app.ui.common.AppCard
 import com.mindurset.app.ui.common.CircleIconButton
 import com.mindurset.app.ui.common.FloatingNavSpace
@@ -60,90 +64,46 @@ import com.mindurset.app.ui.theme.NavyInk
 import com.mindurset.app.ui.theme.OutlineSoft
 import com.mindurset.app.ui.theme.PaleBlue
 import com.mindurset.app.ui.theme.SurfaceWhite
-
-/** A selectable companion mode: its chip label plus the canned preview conversation. */
-private data class CompanionMode(val chipRes: Int, val botRes: List<Int>, val userRes: List<Int>)
-
-private val CompanionModes = listOf(
-    CompanionMode(
-        chipRes = R.string.companion_chip_personal,
-        botRes = listOf(
-            R.string.companion_personal_bot,
-            R.string.companion_personal_bot_2,
-            R.string.companion_personal_bot_3,
-            R.string.companion_personal_bot_4,
-        ),
-        userRes = listOf(
-            R.string.companion_personal_user,
-            R.string.companion_personal_user_2,
-            R.string.companion_personal_user_3,
-            R.string.companion_personal_user_4,
-        ),
-    ),
-    CompanionMode(
-        chipRes = R.string.companion_chip_negative_thoughts,
-        botRes = listOf(
-            R.string.companion_negative_bot,
-            R.string.companion_negative_bot_2,
-            R.string.companion_negative_bot_3,
-            R.string.companion_negative_bot_4,
-        ),
-        userRes = listOf(
-            R.string.companion_negative_user,
-            R.string.companion_negative_user_2,
-            R.string.companion_negative_user_3,
-            R.string.companion_negative_user_4,
-        ),
-    ),
-    CompanionMode(
-        chipRes = R.string.companion_chip_emotion_regulation,
-        botRes = listOf(
-            R.string.companion_emotion_bot,
-            R.string.companion_emotion_bot_2,
-            R.string.companion_emotion_bot_3,
-            R.string.companion_emotion_bot_4,
-        ),
-        userRes = listOf(
-            R.string.companion_emotion_user,
-            R.string.companion_emotion_user_2,
-            R.string.companion_emotion_user_3,
-            R.string.companion_emotion_user_4,
-        ),
-    ),
-)
-
-/**
- * Static, honest preview of the companion chat matching uidesign/AI Chat.jpg. The mode
- * chips really switch selection and swap the canned bubbles; the send button is visibly
- * disabled and nothing typed is ever sent, because no model is wired to this screen.
- *
- * The header, chips, bubbles and preview note live in a scrollable column that takes the
- * remaining height; the message input sits AFTER it, pinned to the bottom just above the
- * floating pill navigation bar, so it stays put while the chat scrolls underneath.
- */
 @Composable
-fun CompanionScreen(onOpenDrawer: () -> Unit) {
-    var selectedMode by remember { mutableIntStateOf(0) }
+fun CompanionScreen(onOpenDrawer: () -> Unit, onCrisis: (RiskLevel) -> Unit = {}) {
+    val container = LocalAppContainer.current
+    val vm: CompanionViewModel = viewModel {
+        CompanionViewModel(
+            generationClient = container.generationClient,
+            safetyRepository = container.safetyRepository,
+            sessionStore = container.sessionStore,
+        )
+    }
+    val state by vm.uiState.collectAsStateWithLifecycle()
+    val crisis by vm.crisisLevel.collectAsStateWithLifecycle()
     var draft by remember { mutableStateOf("") }
-    // Messages the user types are kept in local state only: nothing is sent anywhere.
-    var typedMessages by remember { mutableStateOf(listOf<String>()) }
-    val mode = CompanionModes[selectedMode]
     val scrollState = rememberScrollState()
-    // With the keyboard up the pill navigation is hidden, so the input only needs a small
-    // gap; without it the row keeps clear of the floating pill.
     val keyboardUp = WindowInsets.ime.getBottom(LocalDensity.current) > 0
 
-    // Jump to the newest message so a sent line is never left off-screen.
-    LaunchedEffect(typedMessages.size) {
-        if (typedMessages.isNotEmpty()) scrollState.animateScrollTo(scrollState.maxValue)
+    // Clear the flag before navigating: coming back must not push the crisis card a second time.
+    LaunchedEffect(crisis) {
+        val level = crisis ?: return@LaunchedEffect
+        vm.crisisAcknowledged()
+        onCrisis(level)
     }
 
-    // The shell already applies the top inset; taking the system insets here as well pushed
-    // the input row far above the pill navigation. WindowInsets(0) keeps the geometry exact.
+    LaunchedEffect(state.lines.size, state.replyState) {
+        if (state.lines.isNotEmpty() || state.replyState == CompanionReplyState.Sending) {
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
+    }
+
+    fun sendDraft() {
+        val text = draft.trim()
+        if (text.isBlank() || state.replyState == CompanionReplyState.Sending) return
+        // The ViewModel runs the local floor first, so this only forwards a line that passed it.
+        vm.send(text)
+        draft = ""
+    }
+
     Scaffold(
         containerColor = CanvasBlue,
         contentWindowInsets = WindowInsets(0),
-        // The top bar lives in the Scaffold slot so it never scrolls away.
         topBar = {
             MindTopBar(
                 title = stringResource(R.string.companion_title),
@@ -169,63 +129,97 @@ fun CompanionScreen(onOpenDrawer: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    CompanionModes.forEachIndexed { index, item ->
+                    CompanionSupportMode.entries.forEach { mode ->
                         ModeChip(
-                            label = stringResource(item.chipRes),
-                            selected = index == selectedMode,
-                            onClick = { selectedMode = index },
+                            label = stringResource(mode.labelRes),
+                            selected = mode == state.supportMode,
+                            enabled = state.replyState != CompanionReplyState.Sending,
+                            onClick = { vm.selectMode(mode) },
                         )
                     }
                 }
 
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    mode.botRes.forEachIndexed { index, botRes ->
-                        if (index > 0) Spacer(Modifier.height(12.dp))
+                if (state.lines.isEmpty()) {
+                    AppCard {
+                        Text(
+                            text = stringResource(R.string.companion_empty_state),
+                            color = NavyInk,
+                            fontSize = 15.sp,
+                            lineHeight = 22.sp,
+                        )
+                    }
+                }
+
+                state.lines.forEach { line ->
+                    if (line.offline) {
                         ChatBubble(
-                            text = stringResource(botRes),
+                            text = stringResource(R.string.companion_offline_reply),
                             fromUser = false,
                         )
-                        Spacer(Modifier.height(12.dp))
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                text = stringResource(R.string.companion_offline_label),
+                                color = NavyDeep,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Text(
+                                text = stringResource(R.string.companion_offline_sentence),
+                                color = MutedGray,
+                                fontSize = 12.sp,
+                                lineHeight = 17.sp,
+                            )
+                        }
+                    } else {
                         ChatBubble(
-                            text = stringResource(mode.userRes[index]),
-                            fromUser = true,
+                            text = line.text.orEmpty(),
+                            fromUser = line.fromUser,
                         )
+                        if (line.sourceIds.isNotEmpty()) {
+                            Text(
+                                text = stringResource(
+                                    R.string.companion_sources,
+                                    line.sourceIds.joinToString(),
+                                ),
+                                color = MutedGray,
+                                fontSize = 11.sp,
+                                lineHeight = 15.sp,
+                            )
+                        }
                     }
                 }
 
-                typedMessages.forEach { message ->
-                    ChatBubble(text = message, fromUser = true)
-                    Spacer(Modifier.height(12.dp))
+                when (state.replyState) {
+                    CompanionReplyState.Idle, is CompanionReplyState.Reply -> Unit
+
+                    CompanionReplyState.Sending -> Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        Text(
+                            text = stringResource(R.string.companion_sending),
+                            color = MutedGray,
+                            fontSize = 13.sp,
+                        )
+                    }
+
+                    CompanionReplyState.OfflineFallback -> RetryReply(onRetry = vm::retry)
+
+                    CompanionReplyState.Error -> RetryReply(onRetry = vm::retry, showError = true)
                 }
-
-                Text(
-                    text = stringResource(R.string.companion_note),
-                    color = MutedGray,
-                    fontSize = 12.sp,
-                    lineHeight = 17.sp,
-                )
-
                 Spacer(Modifier.height(8.dp))
             }
 
             Spacer(Modifier.height(12.dp))
-
             MessageInputBar(
                 value = draft,
                 onValueChange = { draft = it },
-                onSend = {
-                    if (draft.isNotBlank()) {
-                        typedMessages = typedMessages + draft.trim()
-                        draft = ""
-                    }
-                },
+                onSend = ::sendDraft,
+                enabled = state.replyState != CompanionReplyState.Sending,
                 placeholder = stringResource(R.string.companion_input_placeholder),
                 sendDescription = stringResource(R.string.companion_send),
             )
@@ -234,7 +228,23 @@ fun CompanionScreen(onOpenDrawer: () -> Unit) {
 }
 
 @Composable
-private fun ModeChip(label: String, selected: Boolean, onClick: () -> Unit) {
+private fun RetryReply(onRetry: () -> Unit, showError: Boolean = false) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        if (showError) {
+            Text(
+                text = stringResource(R.string.companion_error),
+                color = MutedGray,
+                fontSize = 12.sp,
+            )
+        }
+        Button(onClick = onRetry) {
+            Text(stringResource(R.string.companion_retry))
+        }
+    }
+}
+
+@Composable
+private fun ModeChip(label: String, selected: Boolean, enabled: Boolean, onClick: () -> Unit) {
     val shape = RoundedCornerShape(18.dp)
     val background = if (selected) PaleBlue else SurfaceWhite
     val foreground = if (selected) NavyDeep else MutedGray
@@ -243,6 +253,7 @@ private fun ModeChip(label: String, selected: Boolean, onClick: () -> Unit) {
         color = background,
         border = if (selected) null else BorderStroke(1.dp, OutlineSoft),
         onClick = onClick,
+        enabled = enabled,
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
@@ -255,12 +266,7 @@ private fun ModeChip(label: String, selected: Boolean, onClick: () -> Unit) {
                 modifier = Modifier.size(16.dp),
                 tint = foreground,
             )
-            Text(
-                text = label,
-                color = foreground,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-            )
+            Text(text = label, color = foreground, fontSize = 13.sp, fontWeight = FontWeight.Medium)
         }
     }
 }
@@ -278,11 +284,8 @@ private fun ChatBubble(text: String, fromUser: Boolean) {
                 bottomStart = if (fromUser) 18.dp else 4.dp,
                 bottomEnd = if (fromUser) 4.dp else 18.dp,
             ),
-            // The companion's own replies are white on the pale canvas, with a hairline
-            // border so they stay readable without a filled tint.
             color = if (fromUser) NavyDeep else SurfaceWhite,
             border = if (fromUser) null else BorderStroke(1.dp, OutlineSoft),
-            shadowElevation = 0.dp,
             modifier = Modifier.widthIn(max = 280.dp),
         ) {
             Text(
@@ -296,21 +299,16 @@ private fun ChatBubble(text: String, fromUser: Boolean) {
     }
 }
 
-/** Floating white input capsule that stays pinned above the navigation pill. */
 @Composable
 private fun MessageInputBar(
     value: String,
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
+    enabled: Boolean,
     placeholder: String,
     sendDescription: String,
 ) {
-    Surface(
-        shape = RoundedCornerShape(26.dp),
-        color = SurfaceWhite,
-        shadowElevation = 0.dp,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
+    Surface(shape = RoundedCornerShape(26.dp), color = SurfaceWhite, modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(start = 20.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -321,27 +319,29 @@ private fun MessageInputBar(
                 onValueChange = onValueChange,
                 modifier = Modifier.weight(1f).padding(vertical = 12.dp),
                 singleLine = true,
+                enabled = enabled,
                 textStyle = TextStyle(color = NavyInk, fontSize = 15.sp),
                 cursorBrush = SolidColor(NavyDeep),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                 keyboardActions = KeyboardActions(onSend = { onSend() }),
                 decorationBox = { innerTextField ->
-                    if (value.isEmpty()) {
-                        Text(text = placeholder, color = MutedGray, fontSize = 15.sp)
-                    }
+                    if (value.isEmpty()) Text(text = placeholder, color = MutedGray, fontSize = 15.sp)
                     innerTextField()
                 },
             )
-            SendButton(enabled = value.isNotBlank(), onClick = onSend, contentDescription = sendDescription)
+            SendButton(
+                enabled = enabled && value.isNotBlank(),
+                onClick = onSend,
+                contentDescription = sendDescription,
+            )
         }
     }
 }
 
 @Composable
 private fun SendButton(enabled: Boolean, onClick: () -> Unit, contentDescription: String) {
-    val shape = CircleShape
     Surface(
-        shape = shape,
+        shape = CircleShape,
         color = if (enabled) NavyDeep else PaleBlue,
         onClick = onClick,
         modifier = Modifier.size(46.dp),

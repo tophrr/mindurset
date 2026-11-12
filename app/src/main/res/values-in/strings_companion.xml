@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="companion_empty_state">Kamu bisa mulai dengan menceritakan hal yang paling terasa saat ini.</string>
+    <string name="companion_offline_reply">Aku di sini untuk menemanimu. Luangkan sejenak untuk menyadari apa yang kamu butuhkan saat ini.</string>
+    <string name="companion_offline_label">Latihan offline</string>
+    <string name="companion_offline_sentence">Balasan ini berasal dari jalur offline.</string>
+    <string name="companion_sources">Sumber: %1$s</string>
+    <string name="companion_sending">Sedang mencari respons…</string>
+    <string name="companion_error">Terjadi kendala. Balasan offline kamu ditampilkan.</string>
+    <string name="companion_retry">Coba lagi</string>
+</resources>

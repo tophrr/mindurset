@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Modul Refleksi Harian (CRUD) -->
+    <string name="reflection_title">Refleksi Harian</string>
+    <string name="reflection_new_entry">Catatan baru</string>
+    <string name="reflection_row_challenge">Tantangan: %1$s</string>
+    <string name="reflection_row_reframe">Cara pandang baru: %1$s</string>
+
+    <!-- Bilah atas -->
+    <string name="reflection_menu">Buka menu</string>
+    <string name="reflection_back">Kembali</string>
+    <string name="reflection_action_edit">Ubah catatan</string>
+    <string name="reflection_action_delete">Hapus catatan</string>
+
+    <!-- Refleksi hari ini -->
+    <string name="reflection_today_entry_title">Refleksi Hari Ini</string>
+    <string name="reflection_today_entry_body">Refleksi terstruktur berisi tantangan, cara memandangnya kembali, dan hal yang kamu syukuri — semuanya di satu tempat.</string>
+    <string name="reflection_today_entry_button">Buka Refleksi Hari Ini</string>
+
+    <!-- Tampilan -->
+    <string name="reflection_tab_recent">Terbaru</string>
+    <string name="reflection_tab_calendar">Kalender</string>
+    <string name="reflection_this_week">Minggu ini: %1$s</string>
+    <string name="reflection_calendar_legend">Hari dengan catatan</string>
+
+    <string name="reflection_empty_title">Belum ada catatan</string>
+    <string name="reflection_empty_body">Mulai refleksi harianmu — tuliskan tantangan, cara memandangnya kembali, dan hal yang kamu syukuri.</string>
+
+    <string name="reflection_day_today">Hari ini</string>
+    <string name="reflection_day_yesterday">Kemarin</string>
+    <string name="reflection_days_ago">%1$d hari lalu</string>
+
+    <string name="reflection_form_title_new">Refleksi baru</string>
+    <string name="reflection_form_title_edit">Ubah refleksi</string>
+    <string name="reflection_form_intro">Refleksi harian singkat: apa yang terasa sulit, bagaimana kamu memandangnya kembali, dan hal yang kamu syukuri.</string>
+    <string name="reflection_field_challenge">Tantangan</string>
+    <string name="reflection_field_challenge_hint">Apa yang terasa sulit hari ini?</string>
+    <string name="reflection_field_reframe">Cara pandang baru</string>
+    <string name="reflection_field_reframe_hint">Cara yang lebih bijak melihatnya (opsional)</string>
+    <string name="reflection_field_gratitude">Syukur</string>
+    <string name="reflection_field_gratitude_hint">Hal yang kamu syukuri (opsional)</string>
+
+    <string name="reflection_detail_title">Refleksi</string>
+    <string name="reflection_detail_section_challenge">Tantangan</string>
+    <string name="reflection_detail_section_reframe">Cara pandang baru</string>
+    <string name="reflection_detail_section_gratitude">Syukur</string>
+    <string name="reflection_detail_created">Dibuat %1$s</string>
+    <string name="reflection_detail_updated">Diperbarui %1$s</string>
+    <string name="reflection_detail_not_found">Catatan ini sudah tidak ada</string>
+    <string name="reflection_detail_not_found_body">Mungkin catatan ini telah dihapus. Kembali untuk melihat refleksimu yang lain.</string>
+
+    <string name="reflection_delete_confirm_title">Hapus catatan ini?</string>
+    <string name="reflection_delete_confirm_body">Catatan ini akan dihapus permanen</string>
+
+    <string name="reflection_error_challenge_required">Tantangan wajib diisi</string>
+    <string name="reflection_error_challenge_short">Minimal 3 karakter</string>
+    <string name="reflection_error_challenge_long">Maksimal 500 karakter</string>
+    <string name="reflection_error_reframe_long">Maksimal 1000 karakter</string>
+    <string name="reflection_error_gratitude_long">Maksimal 1000 karakter</string>
+    <string name="reflection_error_no_session">Kamu belum masuk</string>
+    <string name="reflection_error_load">Gagal memuat refleksimu</string>
+    <string name="reflection_error_generic">Terjadi kesalahan</string>
+</resources>

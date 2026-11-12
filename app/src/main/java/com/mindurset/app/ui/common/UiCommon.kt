@@ -30,8 +30,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.mindurset.app.R
 import com.mindurset.app.domain.model.Emotion
 import com.mindurset.app.ui.theme.CardShadow
 import com.mindurset.app.ui.theme.MoodAnxious
@@ -177,19 +179,21 @@ fun ErrorState(message: String, modifier: Modifier = Modifier, onRetry: (() -> U
             textAlign = TextAlign.Center,
         )
         if (onRetry != null) {
-            OutlinedButton(onClick = onRetry) { Text("Retry") }
+            OutlinedButton(onClick = onRetry) { Text(stringResource(R.string.retry)) }
         }
     }
 }
 
 @Composable
-fun emotionLabel(emotion: Emotion): String = when (emotion) {
-    Emotion.HAPPY -> "Happy"
-    Emotion.CALM -> "Calm"
-    Emotion.LOW -> "Low"
-    Emotion.ANXIOUS -> "Anxious"
-    Emotion.STRESSED -> "Stressed"
-}
+fun emotionLabel(emotion: Emotion): String = stringResource(
+    when (emotion) {
+        Emotion.HAPPY -> R.string.emotion_happy
+        Emotion.CALM -> R.string.emotion_calm
+        Emotion.LOW -> R.string.emotion_low
+        Emotion.ANXIOUS -> R.string.emotion_anxious
+        Emotion.STRESSED -> R.string.emotion_stressed
+    },
+)
 
 fun Emotion.tint(): Color = when (this) {
     Emotion.HAPPY -> MoodHappy

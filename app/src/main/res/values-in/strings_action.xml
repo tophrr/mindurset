@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="action_title">Aksi Hari Ini</string>
+    <string name="action_back_cd">Kembali</string>
+    <string name="action_empty_body">Pilih satu langkah kecil yang terasa mungkin hari ini.</string>
+    <string name="action_add">Tambah aksi</string>
+    <string name="action_today_group">Untuk hari ini</string>
+    <string name="action_done_group">Selesai hari ini</string>
+    <string name="action_tomorrow_group">Besok</string>
+    <string name="action_minutes">%1$d mnt</string>
+    <string name="action_complete_cd">Tandai %1$s selesai</string>
+    <string name="action_edit_cd">Ubah %1$s</string>
+    <string name="action_snooze_cd">Pindahkan %1$s ke besok</string>
+    <string name="action_loading">Memuat aksimu…</string>
+    <string name="action_error">Aksimu tidak bisa dimuat.</string>
+    <string name="action_retry">Coba lagi</string>
+    <string name="action_dialog_add_title">Tambah aksi</string>
+    <string name="action_dialog_edit_title">Ubah aksi</string>
+    <string name="action_title_label">Aksi</string>
+    <string name="action_minutes_label">Menit</string>
+    <string name="action_save">Simpan</string>
+    <string name="action_cancel">Batal</string>
+    <string name="action_error_title">Beri judul aksi ini.</string>
+    <string name="action_error_minutes">Pilih antara 1 dan 15 menit.</string>
+    <string name="dashboard_action_title">Aksi Hari Ini</string>
+    <string name="dashboard_action_body">Beberapa langkah kecil, sesuai temponya.</string>
+    <string name="dashboard_action_open">Lihat aksi</string>
+</resources>
