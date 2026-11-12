@@ -10,8 +10,12 @@ repository, this file wins.
 ## What this repository is
 
 The native Android client for Mind-Ur-Set: Kotlin, Jetpack Compose, Room, DataStore, manual
-dependency injection. One Gradle module, `:app`, application id `com.mindurset.app`. No backend,
-no AI call, no network permission in the app; everything is on the device.
+dependency injection. One Gradle module, `:app`, application id `com.mindurset.app`.
+
+Check-ins, reflections, actions and journal entries are stored on the device. The Companion chat is
+the only feature that talks to the network: it asks the Cloudflare Worker in `worker/` for a reply
+behind the frozen contract, and when that reply does not arrive it shows a fixed offline exercise
+instead. There is no account server, no session on a backend and no model credential in the app.
 
 ## Toolchain pins, do not drift
 
@@ -66,6 +70,9 @@ Several agents share this machine. Every Gradle invocation goes through
 - A screen is a pair: `ui/<area>/<Name>Screen.kt` and `ui/<area>/<Name>ViewModel.kt`, with routes
   declared in `ui/navigation/Routes.kt`.
 - Copy stays non-punitive: no streak, no "you missed", no red badges, no loss framing.
+- The generation endpoint comes from `BuildConfig.GENERATION_BASE_URL`: empty in release, loopback in
+  debug (`-Pmindurset.endpoint=http://<host>:8787` for a handset on the same network). Never hardcode
+  it, and keep the cleartext permission inside `app/src/debug/` only.
 - Follow the surrounding file rather than inventing a new structure; this codebase is small on
   purpose.
 
@@ -83,6 +90,10 @@ Several agents share this machine. Every Gradle invocation goes through
   `navigate(route, saveState/restoreState)`.
 - **Mood hint ellipsis**: those labels are 8.sp and must stay one short line; lengthen the string at
   your own risk, not the layout.
+- **An app gets `ECONNREFUSED` while `adb shell curl` to the same host and port answers 200**:
+  Android's restricted networking mode (`adb shell settings get global restricted_networking_mode`)
+  is on. System apps such as the browser pass, third-party apps do not. Set it to `0` for the test
+  run and put it back afterwards.
 
 ## Definition of done for a pull request
 
