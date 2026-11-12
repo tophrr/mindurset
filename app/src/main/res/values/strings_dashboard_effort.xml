@@ -2,10 +2,10 @@
 <resources>
     <string name="dashboard_effort_title">Your recent effort</string>
     <string name="dashboard_effort_subtitle">Check-ins, completed reframes, and completed actions over the last four weeks.</string>
-    <string name="dashboard_effort_none">0</string>
-    <string name="dashboard_effort_some">1</string>
-    <string name="dashboard_effort_more">2</string>
-    <string name="dashboard_effort_full">3+</string>
+    <string name="dashboard_effort_none" translatable="false">0</string>
+    <string name="dashboard_effort_some" translatable="false">1</string>
+    <string name="dashboard_effort_more" translatable="false">2</string>
+    <string name="dashboard_effort_full" translatable="false">3+</string>
     <plurals name="dashboard_effort_day">
         <item quantity="one">%1$s: %2$d activity</item>
         <item quantity="other">%1$s: %2$d activities</item>

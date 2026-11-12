@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="dashboard_effort_title">Upayamu belakangan ini</string>
-    <string name="dashboard_effort_subtitle">Check-in, latihan reframing yang selesai, dan tindakan yang telah diselesaikan selama empat minggu terakhir.</string>
-    <string name="dashboard_effort_none">0</string>
-    <string name="dashboard_effort_some">1</string>
-    <string name="dashboard_effort_more">2</string>
-    <string name="dashboard_effort_full">3+</string>
+    <string name="dashboard_effort_subtitle">Check-in, latihan reframing yang selesai, dan aksi yang sudah selesai selama empat minggu terakhir.</string>
     <plurals name="dashboard_effort_day">
         <item quantity="other">%1$s: %2$d aktivitas</item>
     </plurals>
