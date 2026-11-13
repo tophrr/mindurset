@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="asq_progress">Question %1$d of %2$d</string>
+    <string name="asq_q1">In the past few weeks, have you wished you were dead?</string>
+    <string name="asq_q2">In the past few weeks, have you felt that you or your family would be better off if you were dead?</string>
+    <string name="asq_q3">In the past week, have you been having thoughts about killing yourself?</string>
+    <string name="asq_q4">Have you ever tried to kill yourself?</string>
+    <string name="asq_acuity">Are you having thoughts of killing yourself right now?</string>
+    <string name="asq_yes">Yes</string>
+    <string name="asq_no">No</string>
+    <string name="asq_footer">There is no wrong answer here, and nothing you pick is stored as a verdict.</string>
+</resources>

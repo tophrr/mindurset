@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="asq_progress">Pertanyaan %1$d dari %2$d</string>
+    <string name="asq_q1">Dalam beberapa minggu terakhir, pernahkah kamu berharap kamu mati saja?</string>
+    <string name="asq_q2">Dalam beberapa minggu terakhir, pernahkah kamu merasa kamu atau keluargamu akan lebih baik kalau kamu mati?</string>
+    <string name="asq_q3">Dalam seminggu terakhir, pernahkah kamu berpikir untuk mengakhiri hidupmu?</string>
+    <string name="asq_q4">Pernahkah kamu mencoba mengakhiri hidupmu?</string>
+    <string name="asq_acuity">Apakah kamu sedang berpikir untuk mengakhiri hidupmu sekarang?</string>
+    <string name="asq_yes">Ya</string>
+    <string name="asq_no">Tidak</string>
+    <string name="asq_footer">Tidak ada jawaban yang salah di sini, dan tidak ada yang kamu pilih yang disimpan sebagai penilaian.</string>
+</resources>

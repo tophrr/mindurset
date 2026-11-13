@@ -144,21 +144,21 @@ The reference profile does not exist yet, so both cases are `NOT AVAILABLE` unti
 ### 3.7 ASQ Cases
 
 The four ASQ items plus the acuity probe, which the proposal raises at L2 when hopelessness is
-ambiguous. The screen does not exist yet: `LocalRiskFloor` escalates straight to the crisis card, so
-every case here is `NOT AVAILABLE`, never passed.
+ambiguous. The check-in path asks them (`safety/AsqFlow`, ADR 0007); the journal and the Companion still
+go from L2 straight to the crisis card, so those two paths are `NOT AVAILABLE` for every case here.
 
 | Case ID | Question / Scenario | Answer branch | Expected behaviour | Reference | Status |
 | --- | --- | --- | --- | --- | --- |
-| **ASQ-01** | Q1, "In the past few weeks, have you wished you were dead?" | No | Recorded, advances to Q2 without a crisis overlay. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
-| | | Yes | Escalates to L3: the crisis card (S-90) with 119 ext. 8 and the trusted contact (S-91); reflection locked out. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
-| **ASQ-02** | Q2, "… felt that you or your family would be better off if you were dead?" | No | Recorded, advances to Q3. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
-| | | Yes | Escalates to L3; navigation disabled until acknowledged. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
-| **ASQ-03** | Q3, "In the past week, have you been having thoughts about killing yourself?" | No | Recorded, advances to Q4. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
-| | | Yes | Escalates to L3 with the helpline and outreach shown. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
-| **ASQ-04** | Q4, "Have you ever tried to kill yourself?" | No to all four | Negative screen: no lockout, supportive tone, the helpline offered as an optional banner, grounding exercises still available. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
-| | | Yes | Escalates to L3, past attempt detected. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
-| **ASQ-05** | Acuity probe, "Are you having thoughts of killing yourself right now?", asked when any earlier answer is Yes | No | Non-imminent L3: resources shown, safety-plan assistance offered. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
-| | | Yes | Acute L3: navigation locks out, the dialer is pre-filled with 119 ext. 8. | UC-13, UC-15, F-09, NFR-11 | `NOT AVAILABLE` (no ASQ screen) |
+| **ASQ-01** | Q1, "In the past few weeks, have you wished you were dead?" | No | Recorded, advances to Q2 without a crisis overlay. | UC-13, UC-15, F-09, NFR-11 | Runnable on check-in; `NOT AVAILABLE` on journal and Companion |
+| | | Yes | Escalates to L3: the crisis card (S-90) with 119 ext. 8 and the trusted contact (S-91); reflection locked out. | UC-13, UC-15, F-09, NFR-11 | Runnable on check-in; `NOT AVAILABLE` on journal and Companion |
+| **ASQ-02** | Q2, "… felt that you or your family would be better off if you were dead?" | No | Recorded, advances to Q3. | UC-13, UC-15, F-09, NFR-11 | Runnable on check-in; `NOT AVAILABLE` on journal and Companion |
+| | | Yes | Escalates to L3; navigation disabled until acknowledged. | UC-13, UC-15, F-09, NFR-11 | Runnable on check-in; `NOT AVAILABLE` on journal and Companion |
+| **ASQ-03** | Q3, "In the past week, have you been having thoughts about killing yourself?" | No | Recorded, advances to Q4. | UC-13, UC-15, F-09, NFR-11 | Runnable on check-in; `NOT AVAILABLE` on journal and Companion |
+| | | Yes | Escalates to L3 with the helpline and outreach shown. | UC-13, UC-15, F-09, NFR-11 | Runnable on check-in; `NOT AVAILABLE` on journal and Companion |
+| **ASQ-04** | Q4, "Have you ever tried to kill yourself?" | No to all four | Negative screen: no lockout, supportive tone, the helpline offered as an optional banner, grounding exercises still available. | UC-13, UC-15, F-09, NFR-11 | Runnable on check-in; `NOT AVAILABLE` on journal and Companion |
+| | | Yes | Escalates to L3, past attempt detected. | UC-13, UC-15, F-09, NFR-11 | Runnable on check-in; `NOT AVAILABLE` on journal and Companion |
+| **ASQ-05** | Acuity probe, "Are you having thoughts of killing yourself right now?", asked when any earlier answer is Yes | No | Non-imminent L3: resources shown, safety-plan assistance offered. | UC-13, UC-15, F-09, NFR-11 | Runnable on check-in; `NOT AVAILABLE` on journal and Companion |
+| | | Yes | Acute L3: navigation locks out, the dialer is pre-filled with 119 ext. 8. | UC-13, UC-15, F-09, NFR-11 | Runnable on check-in; `NOT AVAILABLE` on journal and Companion |
 
 ### 3.8 Coverage today
 

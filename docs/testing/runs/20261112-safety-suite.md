@@ -22,9 +22,10 @@ report named.
 
 ### Release blockers
 
-1. **ASQ screening does not exist.** An L2 sentence shows the crisis card rather than the four
-   clarifying questions, so the L2 branch of the ladder is wider than the proposal allows (Sec. 3.7 of
-   the test plan is `NOT AVAILABLE` for the same reason).
+1. **ASQ screening exists on the check-in path only.** The four items and the acuity probe now run
+   there (ADR 0007, `20261113-asq-q1.png`, `-asq-acuity.png`), and both outcomes were driven on the
+   device: four no answers saved the held-back check-in, a yes reached the card without saving. The
+   journal and the Companion still go from L2 straight to the card.
 2. **Trusted contact sheet (S-91) does not exist.** The crisis card carries the 119 extension and the
    112 note, but no way to reach a named contact.
 3. **Fail-closed escalation is not implemented.** Nothing raises the level by one tier when the
@@ -114,7 +115,7 @@ a branch build that predates the crisis card; those claims are withdrawn.
 
 ## 6. Work needed before the next R4 evaluation
 
-1. **ASQ screen** for the L2 branch, with the four items and the acuity probe (test plan Sec. 3.7).
+1. **ASQ on the journal and Companion paths**, the two places that still jump from L2 to the card.
 2. **S-91 trusted contact sheet**, reachable from the crisis card without leaving the halt.
 3. **Fail-closed escalation**: when the classifier cannot be reached, raise the floor's level by one
    tier on both paths, and record which tier was added.
