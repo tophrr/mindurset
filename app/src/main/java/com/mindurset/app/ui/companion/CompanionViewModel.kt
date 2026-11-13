@@ -7,7 +7,8 @@ import com.mindurset.app.domain.model.RiskLevel
 import com.mindurset.app.domain.model.SafetyEvent
 import com.mindurset.app.domain.repository.SafetyRepository
 import com.mindurset.app.domain.repository.SessionStore
-import com.mindurset.app.safety.LocalRiskFloor
+import com.mindurset.app.safety.RiskScreening
+import com.mindurset.app.safety.Screening
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +21,15 @@ import java.util.UUID
 
 /** The same retention the check-in and journal paths apply to a safety event. */
 private const val SAFETY_EVENT_RETENTION_MILLIS = 30L * 24 * 60 * 60 * 1000
+
+/** What the local floor alone saw. */
+private const val TRIGGER_MESSAGE = "companion_message"
+
+/** What the Worker's classifier raised the level to. */
+private const val TRIGGER_CLASSIFIER = "companion_classifier"
+
+/** A call that could not be made, escalated one tier. */
+private const val TRIGGER_CLASSIFIER_UNAVAILABLE = "companion_classifier_unavailable"
 
 class CompanionViewModel(
     private val generationClient: GenerationClient,
@@ -53,10 +63,9 @@ class CompanionViewModel(
         val clean = message.trim()
         if (clean.isBlank() || _uiState.value.replyState == CompanionReplyState.Sending) return
 
-        val hit = LocalRiskFloor.match(clean)
-        if (hit != null && hit.level >= RiskLevel.L2) {
-            _crisisLevel.value = hit.level
-            recordSafetyEvent(level = hit.level, patternId = hit.patternId)
+        val screening = RiskScreening.screenLocal(clean)
+        if (screening.halts) {
+            halt(screening, trigger = TRIGGER_MESSAGE)
             return
         }
 
@@ -66,6 +75,7 @@ class CompanionViewModel(
             it.copy(
                 lines = it.lines + CompanionLine(text = clean, fromUser = true),
                 replyState = CompanionReplyState.Sending,
+                resourcesOffered = false,
             )
         }
         request(request)
@@ -82,7 +92,7 @@ class CompanionViewModel(
         request(pending)
     }
 
-    private fun recordSafetyEvent(level: RiskLevel, patternId: String) {
+    private fun recordSafetyEvent(level: RiskLevel, patternId: String, trigger: String) {
         scope.launch {
             val session = sessionStore.current() ?: return@launch
             val at = now()
@@ -91,7 +101,7 @@ class CompanionViewModel(
                     id = newId(),
                     userId = session.userId,
                     level = level,
-                    trigger = "companion_message",
+                    trigger = trigger,
                     patternId = patternId,
                     createdAt = at,
                     retentionUntil = at + SAFETY_EVENT_RETENTION_MILLIS,
@@ -113,16 +123,42 @@ class CompanionViewModel(
                             sourceIds = response.sourceIds,
                         ),
                         replyState = CompanionReplyState.Reply(response),
+                        resourcesOffered = false,
                     )
                 }
+                // The Worker classifies too, and it may only raise the floor.
+                val combined = RiskScreening.screenWith(request.message, response.classifierLevel())
+                if (combined.halts) halt(combined, trigger = TRIGGER_CLASSIFIER)
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: IOException) {
-                addOfflineFallback(CompanionReplyState.OfflineFallback)
+                failClosed(request, CompanionReplyState.OfflineFallback)
             } catch (_: Exception) {
-                addOfflineFallback(CompanionReplyState.Error)
+                failClosed(request, CompanionReplyState.Error)
             }
         }
+    }
+
+    /**
+     * The classifier could not answer. Fail closed: one tier up from the floor, and the offline copy
+     * gains a way to reach a person when the raised level is the L1 affordance.
+     */
+    private fun failClosed(request: PendingRequest, state: CompanionReplyState) {
+        val screening = RiskScreening.screenWith(request.message, classifier = null)
+        if (screening.halts) {
+            addOfflineFallback(state)
+            halt(screening, trigger = TRIGGER_CLASSIFIER_UNAVAILABLE)
+            return
+        }
+        addOfflineFallback(state)
+        if (screening.level == RiskLevel.L1) {
+            _uiState.update { it.copy(resourcesOffered = true) }
+        }
+    }
+
+    private fun halt(screening: Screening, trigger: String) {
+        _crisisLevel.value = screening.level
+        recordSafetyEvent(level = screening.level, patternId = screening.patternId.orEmpty(), trigger = trigger)
     }
 
     private fun addOfflineFallback(state: CompanionReplyState) {
@@ -136,3 +172,7 @@ class CompanionViewModel(
 
     private data class PendingRequest(val message: String, val mode: CompanionSupportMode)
 }
+
+/** The reply's own level, or null when it is not one the client knows. */
+private fun com.mindurset.app.data.remote.GenerationResponse.classifierLevel(): RiskLevel? =
+    runCatching { RiskLevel.valueOf(riskLevel.level) }.getOrNull()

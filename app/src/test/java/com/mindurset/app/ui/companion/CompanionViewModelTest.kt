@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -153,6 +154,48 @@ class CompanionViewModelTest {
         scope.cancel()
     }
 
+    @Test
+    fun anUnreachableWorkerOffersResourcesInsteadOfStoppingSilently() {
+        val (viewModel, safety, scope) = viewModelWithSafety(OfflineTransport())
+
+        viewModel.send("A busy day, mostly deadlines")
+
+        assertEquals(CompanionReplyState.OfflineFallback, viewModel.uiState.value.replyState)
+        assertTrue("L0 plus an outage is L1", viewModel.uiState.value.resourcesOffered)
+        assertNull(viewModel.crisisLevel.value)
+        assertEquals(0, safety.events.size)
+        scope.cancel()
+    }
+
+    @Test
+    fun aClassifierThatRaisesTheLevelHalts() {
+        val raised = JSONObject(fixture)
+            .put("risk_level", JSONObject().put("level", "L2").put("confidence", 0.8))
+            .toString()
+        val (viewModel, safety, scope) = viewModelWithSafety(QueuedTransport(raised))
+
+        viewModel.send("deadlines everywhere, nothing else")
+
+        assertEquals(RiskLevel.L2, viewModel.crisisLevel.value)
+        assertEquals(1, safety.events.size)
+        assertEquals("companion_classifier", safety.events.single().trigger)
+        scope.cancel()
+    }
+
+    @Test
+    fun theOfferedResourcesClearWhenAReplyArrives() {
+        val (viewModel, _, scope) = viewModelWithSafety(FailOnceTransport(fixture))
+
+        viewModel.send("A busy day, mostly deadlines")
+        assertTrue("the outage raised the level to L1", viewModel.uiState.value.resourcesOffered)
+
+        viewModel.retry()
+
+        assertFalse(viewModel.uiState.value.resourcesOffered)
+        assertTrue(viewModel.uiState.value.replyState is CompanionReplyState.Reply)
+        scope.cancel()
+    }
+
     private fun viewModelWith(
         transport: GenerationTransport,
         baseUrl: String = "http://localhost:8787",
@@ -189,6 +232,30 @@ class CompanionViewModelTest {
             lastPath = path
             lastBody = body
             return queued.removeAt(0)
+        }
+    }
+
+    /** Fails the first call, then serves a body: the retry path after an outage. */
+    private class FailOnceTransport(private val thenSucceed: String) : GenerationTransport {
+        private var failed = false
+
+        override suspend fun post(path: String, body: String): String {
+            if (!failed) {
+                failed = true
+                throw java.io.IOException("no route to host")
+            }
+            return thenSucceed
+        }
+    }
+
+    /** A transport that cannot reach the Worker, which is the fail-closed case. */
+    private class OfflineTransport : GenerationTransport {
+        var calls = 0
+            private set
+
+        override suspend fun post(path: String, body: String): String {
+            calls += 1
+            throw java.io.IOException("no route to host")
         }
     }
 
