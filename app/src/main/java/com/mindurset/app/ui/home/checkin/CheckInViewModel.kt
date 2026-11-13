@@ -95,16 +95,8 @@ class CheckInViewModel(
                     return@launch
                 }
                 val noteText = _note.value.trim()
-                checkInRepository.insert(
-                    CheckIn(
-                        id = newId(),
-                        userId = userId,
-                        emotion = selected,
-                        intensity = _intensity.value,
-                        note = noteText.ifBlank { null },
-                        createdAt = clock(),
-                    ),
-                )
+                // Screen before the row exists: a note that halts the flow must not reach Room,
+                // otherwise the check-in is stored unmonitored, note text and all.
                 val hit = LocalRiskFloor.match(noteText)
                 if (hit != null && hit.level >= RiskLevel.L2) {
                     val at = clock()
@@ -123,6 +115,16 @@ class CheckInViewModel(
                     _crisisLevel.value = hit.level
                     return@launch
                 }
+                checkInRepository.insert(
+                    CheckIn(
+                        id = newId(),
+                        userId = userId,
+                        emotion = selected,
+                        intensity = _intensity.value,
+                        note = noteText.ifBlank { null },
+                        createdAt = clock(),
+                    ),
+                )
             }
             _saving.value = false
             val offer =

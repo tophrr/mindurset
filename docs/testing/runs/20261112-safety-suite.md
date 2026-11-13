@@ -29,6 +29,9 @@ report named.
    112 note, but no way to reach a named contact.
 3. **Fail-closed escalation is not implemented.** Nothing raises the level by one tier when the
    classifier is unreachable; see Sec. 3.
+4. **The halted note was stored.** Both the check-in and the journal wrote their row before screening.
+   Fixed in this pull request; the suite now fails if a halted note reaches the repository
+   (`CheckInViewModelTest`, `ReflectionFormViewModelTest`).
 
 ## 2. Red-Team Sentences (Section 2)
 
@@ -54,8 +57,12 @@ on the build that carried the same check-in wiring.
 
 Two observations worth keeping from the device work:
 
-- The acknowledged card does **not** write the sentence to Room: the check-in count does not move and
-  the note is not stored, which is what "no unmonitored saving" means in practice.
+- The card halts the flow, but on the build this report was first written against the row already
+  existed: `CheckInViewModel.save` inserted the check-in before it screened, so an L3 or L2 note was
+  stored with its text, and the journal path did the same. That is unmonitored saving, and the first
+  version of this report claimed the opposite. Fixed here — screening runs before the write on both
+  paths — and re-verified on the device: `20261113-count-unchanged.png` shows the count unchanged
+  after an L3 note and its acknowledgement.
 - `aku ingin mati` reaches L2, not L3. L3 needs an explicit intent phrase (`bunuh diri`,
   `mengakhiri hidup`, `lebih baik aku mati`). The wording in `DEMO-R3-2026-11-06.md` was corrected
   for the same reason.
@@ -99,6 +106,8 @@ All paths are relative to the repository.
 4. `docs/testing/evidence/20261112-companion-crisis.png` — the same L3 halt reached from the Companion,
    with no request sent to the Worker.
 5. `docs/testing/evidence/20261111-s06-auth-login.png` — the sign-in screen S-06.
+6. `docs/testing/evidence/20261113-count-unchanged.png` — Home after an L3 note and its acknowledgement,
+   still three check-ins: the halted note was not written.
 
 The first draft of this report cited a logcat file that was never committed and three screenshots from
 a branch build that predates the crisis card; those claims are withdrawn.

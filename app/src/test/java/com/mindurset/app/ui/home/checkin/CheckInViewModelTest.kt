@@ -111,6 +111,24 @@ class CheckInViewModelTest {
     }
 
     @Test
+    fun `a note that halts the flow is never stored`() {
+        listOf("aku ingin mati", "I want to kill myself tonight").forEach { note ->
+            saved.clear()
+            safety.events.clear()
+            val viewModel = viewModel()
+            viewModel.selectEmotion(Emotion.LOW)
+            viewModel.setIntensity(6)
+            viewModel.setNote(note)
+
+            viewModel.save { onDoneCalls++ }
+
+            assertTrue("$note reached the crisis card", viewModel.crisisLevel.value != null)
+            assertTrue("$note was written to Room before the halt", saved.isEmpty())
+            assertEquals("$note recorded no safety event", 1, safety.events.size)
+        }
+    }
+
+    @Test
     fun `a benign note records no safety event`() {
         val viewModel = viewModel()
         viewModel.selectEmotion(Emotion.LOW)
