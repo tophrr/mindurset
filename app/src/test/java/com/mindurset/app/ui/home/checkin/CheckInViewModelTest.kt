@@ -10,6 +10,7 @@ import com.mindurset.app.domain.repository.CheckInRepository
 import com.mindurset.app.domain.repository.ConsentRepository
 import com.mindurset.app.domain.repository.SafetyRepository
 import com.mindurset.app.domain.repository.SessionStore
+import com.mindurset.app.safety.AsqFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -93,7 +94,7 @@ class CheckInViewModelTest {
     }
 
     @Test
-    fun `a note with a red flag shows the crisis card instead of the reframe`() {
+    fun `an L2 note opens the screening step instead of the card`() {
         val viewModel = viewModel()
         viewModel.selectEmotion(Emotion.ANXIOUS)
         viewModel.setIntensity(8)
@@ -101,31 +102,66 @@ class CheckInViewModelTest {
 
         viewModel.save { onDoneCalls++ }
 
-        assertEquals(RiskLevel.L2, viewModel.crisisLevel.value)
-        assertFalse(viewModel.offerReframe.value)
+        assertTrue("the ASQ step should be open", viewModel.asq.value != null)
+        assertNull("L2 does not jump to the card any more", viewModel.crisisLevel.value)
+        assertTrue("nothing may be written before the answers", saved.isEmpty())
         assertEquals(0, onDoneCalls)
         val event = safety.events.single()
         assertEquals("checkin_note", event.trigger)
         assertEquals(RiskLevel.L2, event.level)
-        assertEquals("u1", event.userId)
     }
 
     @Test
-    fun `a note that halts the flow is never stored`() {
-        listOf("aku ingin mati", "I want to kill myself tonight").forEach { note ->
-            saved.clear()
-            safety.events.clear()
-            val viewModel = viewModel()
-            viewModel.selectEmotion(Emotion.LOW)
-            viewModel.setIntensity(6)
-            viewModel.setNote(note)
+    fun `an L3 note goes straight to the card and is never stored`() {
+        val viewModel = viewModel()
+        viewModel.selectEmotion(Emotion.LOW)
+        viewModel.setIntensity(6)
+        viewModel.setNote("I want to kill myself tonight")
 
-            viewModel.save { onDoneCalls++ }
+        viewModel.save { onDoneCalls++ }
 
-            assertTrue("$note reached the crisis card", viewModel.crisisLevel.value != null)
-            assertTrue("$note was written to Room before the halt", saved.isEmpty())
-            assertEquals("$note recorded no safety event", 1, safety.events.size)
-        }
+        assertEquals(RiskLevel.L3, viewModel.crisisLevel.value)
+        assertNull(viewModel.asq.value)
+        assertTrue("a halted note was written", saved.isEmpty())
+        assertEquals(0, onDoneCalls)
+    }
+
+    @Test
+    fun `a positive screen halts without saving`() {
+        val viewModel = viewModel()
+        viewModel.selectEmotion(Emotion.LOW)
+        viewModel.setIntensity(4)
+        viewModel.setNote("aku ingin mati")
+        viewModel.save { onDoneCalls++ }
+
+        viewModel.answerAsq(yes = true)
+        repeat(3) { viewModel.answerAsq(yes = false) }
+        val pending = requireNotNull(viewModel.asq.value)
+        assertEquals("acuity comes last", AsqFlow.ID_ACUITY, AsqFlow.nextQuestion(pending)?.id)
+        viewModel.answerAsq(yes = false)
+
+        assertEquals(RiskLevel.L3, viewModel.crisisLevel.value)
+        assertTrue("a positive screen must not store the note", saved.isEmpty())
+        assertEquals(0, onDoneCalls)
+        assertEquals("asq_positive", safety.events.last().trigger)
+        assertEquals(RiskLevel.L3, safety.events.last().level)
+    }
+
+    @Test
+    fun `four no answers save the check-in that was held back`() {
+        val viewModel = viewModel()
+        viewModel.selectEmotion(Emotion.LOW)
+        viewModel.setIntensity(4)
+        viewModel.setNote("aku ingin mati")
+        viewModel.save { onDoneCalls++ }
+
+        repeat(4) { viewModel.answerAsq(yes = false) }
+
+        assertNull(viewModel.asq.value)
+        assertNull(viewModel.crisisLevel.value)
+        assertEquals(1, saved.size)
+        assertEquals("aku ingin mati", saved.single().note)
+        assertEquals(1, onDoneCalls)
     }
 
     @Test

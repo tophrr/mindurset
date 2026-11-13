@@ -12,6 +12,7 @@ import com.mindurset.app.domain.repository.ConsentRepository
 import com.mindurset.app.domain.repository.SafetyRepository
 import com.mindurset.app.domain.repository.SessionStore
 import com.mindurset.app.domain.usecase.EvaluateTriage
+import com.mindurset.app.safety.AsqFlow
 import com.mindurset.app.safety.LocalRiskFloor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,6 +59,16 @@ class CheckInViewModel(
 
     /** Set when the offline floor found risk in the note, so the screen shows the crisis card. */
     val crisisLevel: StateFlow<RiskLevel?> = _crisisLevel.asStateFlow()
+
+    private val _asq = MutableStateFlow<AsqFlow.State?>(null)
+
+    /**
+     * Set when the note reached L2: the check-in is held back until the four screening items are
+     * answered, because a yes moves it to the crisis card and a no lets it save.
+     */
+    val asq: StateFlow<AsqFlow.State?> = _asq.asStateFlow()
+
+    private var pending: PendingCheckIn? = null
 
     private val _needsConsent = MutableStateFlow(false)
 
@@ -112,7 +123,21 @@ class CheckInViewModel(
                         ),
                     )
                     _saving.value = false
-                    _crisisLevel.value = hit.level
+                    if (hit.level >= RiskLevel.L3) {
+                        _crisisLevel.value = hit.level
+                    } else {
+                        // L2 is the ambiguous rung: the ASQ items decide, not the phrase table alone.
+                        pending = PendingCheckIn(
+                            id = newId(),
+                            userId = userId,
+                            emotion = selected,
+                            intensity = _intensity.value,
+                            note = noteText.ifBlank { null },
+                            createdAt = clock(),
+                            onSaved = onSaved,
+                        )
+                        _asq.value = AsqFlow.State()
+                    }
                     return@launch
                 }
                 checkInRepository.insert(
@@ -145,11 +170,80 @@ class CheckInViewModel(
         _crisisLevel.value = null
     }
 
+    /**
+     * Answers the question on screen. A negative screen saves the check-in that was held back; a
+     * positive one records an L3 safety event and hands over to the crisis card.
+     */
+    fun answerAsq(yes: Boolean) {
+        val state = _asq.value ?: return
+        val question = AsqFlow.nextQuestion(state) ?: return
+        val next = AsqFlow.answer(state, question.id, yes)
+        val result = AsqFlow.result(next)
+        if (result == null) {
+            _asq.value = next
+            return
+        }
+        val held = pending
+        pending = null
+        _asq.value = null
+        _saving.value = true
+        scope.launch {
+            if (held == null) {
+                _saving.value = false
+                return@launch
+            }
+            if (result.level >= RiskLevel.L3) {
+                val at = clock()
+                safetyRepository.record(
+                    SafetyEvent(
+                        id = newId(),
+                        userId = held.userId,
+                        level = RiskLevel.L3,
+                        trigger = TRIGGER_ASQ_POSITIVE,
+                        patternId = null,
+                        createdAt = at,
+                        retentionUntil = at + SAFETY_EVENT_RETENTION_MILLIS,
+                    ),
+                )
+                _saving.value = false
+                _crisisLevel.value = RiskLevel.L3
+                return@launch
+            }
+            checkInRepository.insert(held.toCheckIn())
+            _saving.value = false
+            val offer =
+                EvaluateTriage.evaluate(held.emotion, held.intensity) == EvaluateTriage.Offer.Reframe
+            _offerReframe.value = offer
+            if (!offer) held.onSaved()
+        }
+    }
+
+    /** The check-in and the callback that the ASQ step holds while it asks its questions. */
+    private data class PendingCheckIn(
+        val id: String,
+        val userId: String,
+        val emotion: Emotion,
+        val intensity: Int,
+        val note: String?,
+        val createdAt: Long,
+        val onSaved: () -> Unit,
+    ) {
+        fun toCheckIn() = CheckIn(
+            id = id,
+            userId = userId,
+            emotion = emotion,
+            intensity = intensity,
+            note = note,
+            createdAt = createdAt,
+        )
+    }
+
     companion object {
         const val MIN_INTENSITY = 1
         const val MAX_INTENSITY = 10
         private const val DEFAULT_INTENSITY = 5
         private const val TRIGGER_CHECK_IN_NOTE = "checkin_note"
+        private const val TRIGGER_ASQ_POSITIVE = "asq_positive"
 
         /** Safety events are kept for thirty days, then pruned by the data policy. */
         private const val SAFETY_EVENT_RETENTION_MILLIS = 30L * 24 * 60 * 60 * 1000

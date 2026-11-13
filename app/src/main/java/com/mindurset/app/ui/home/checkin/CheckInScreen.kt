@@ -90,6 +90,7 @@ fun CheckInScreen(
     val offerReframe by vm.offerReframe.collectAsStateWithLifecycle()
     val crisisLevel by vm.crisisLevel.collectAsStateWithLifecycle()
     val needsConsent by vm.needsConsent.collectAsStateWithLifecycle()
+    val asq by vm.asq.collectAsStateWithLifecycle()
 
     LaunchedEffect(crisisLevel) {
         val level = crisisLevel
@@ -121,6 +122,11 @@ fun CheckInScreen(
             .imePadding(),
     ) {
         CheckInTopBar(onBack = onBack)
+        val asqState = asq
+        if (asqState != null) {
+            com.mindurset.app.ui.safety.AsqPanel(state = asqState, onAnswer = vm::answerAsq)
+            return@Column
+        }
         Column(
             modifier = Modifier
                 .fillMaxSize()
