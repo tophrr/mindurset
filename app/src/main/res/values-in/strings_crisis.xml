@@ -9,4 +9,16 @@
     <string name="crisis_title_l2">Kedengarannya berat sekali</string>
     <string name="crisis_body_l2">Yang kamu tulis terdengar lebih berat dari hari yang biasa. Berbicara dengan seseorang sekarang bisa membantu, dan tidak ada yang di aplikasi ini bisa menggantikan manusia.</string>
     <string name="crisis_acknowledge_l2">Saya baik-baik saja untuk sekarang</string>
+    <string name="crisis_contact_action">Hubungi orang yang saya percaya</string>
+    <string name="crisis_contact_title">Orang yang kamu percaya</string>
+    <string name="crisis_contact_empty">Tambahkan satu orang yang bisa kamu hubungi saat keadaan berat. Datanya tersimpan di ponsel ini saja.</string>
+    <string name="crisis_contact_name">Nama</string>
+    <string name="crisis_contact_phone">Nomor telepon</string>
+    <string name="crisis_contact_save">Simpan</string>
+    <string name="crisis_contact_cancel">Batal</string>
+    <string name="crisis_contact_change">Ubah</string>
+    <string name="crisis_contact_call">Telepon</string>
+    <string name="crisis_contact_message">Kirim pesan</string>
+    <string name="crisis_contact_message_body">Aku sedang dalam masa sulit dan tidak ingin menanggungnya sendirian.</string>
+    <string name="crisis_contact_invalid">Isi nama dan nomor yang bisa dihubungi.</string>
 </resources>

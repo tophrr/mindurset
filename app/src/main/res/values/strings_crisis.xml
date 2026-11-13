@@ -9,4 +9,16 @@
     <string name="crisis_title_l2">That sounds like a lot to carry</string>
     <string name="crisis_body_l2">What you wrote sounds heavier than an ordinary hard day. Talking to someone now can help, and nothing in this app replaces a person.</string>
     <string name="crisis_acknowledge_l2">I am okay for now</string>
+    <string name="crisis_contact_action">Message someone I trust</string>
+    <string name="crisis_contact_title">Someone you trust</string>
+    <string name="crisis_contact_empty">Add one person you can reach when things get heavy. They are stored on this phone and nowhere else.</string>
+    <string name="crisis_contact_name">Name</string>
+    <string name="crisis_contact_phone">Phone</string>
+    <string name="crisis_contact_save">Save</string>
+    <string name="crisis_contact_cancel">Cancel</string>
+    <string name="crisis_contact_change">Change</string>
+    <string name="crisis_contact_call">Call</string>
+    <string name="crisis_contact_message">Send a message</string>
+    <string name="crisis_contact_message_body">I am having a hard time right now and I did not want to be alone with it.</string>
+    <string name="crisis_contact_invalid">Add a name and a number that can be dialled.</string>
 </resources>

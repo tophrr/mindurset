@@ -8,6 +8,7 @@ import com.mindurset.app.domain.model.ReframeSession
 import com.mindurset.app.domain.model.SafetyEvent
 import com.mindurset.app.domain.model.SessionInfo
 import com.mindurset.app.domain.model.SessionMessage
+import com.mindurset.app.domain.model.TrustedContact
 import com.mindurset.app.domain.model.UserAccount
 import com.mindurset.app.domain.model.UserProfile
 import kotlinx.coroutines.flow.Flow
@@ -122,4 +123,16 @@ interface ConsentRepository {
     suspend fun grant(record: ConsentRecord)
 
     suspend fun revoke(id: String, at: Long)
+}
+
+/**
+ * The person the crisis card offers to reach (S-91). The number belongs to someone else, so it stays
+ * out of the data export; see ADR 0006.
+ */
+interface TrustedContactRepository {
+    fun observe(userId: String): Flow<List<TrustedContact>>
+
+    suspend fun upsert(contact: TrustedContact)
+
+    suspend fun delete(id: String)
 }

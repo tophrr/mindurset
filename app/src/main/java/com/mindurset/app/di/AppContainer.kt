@@ -15,6 +15,7 @@ import com.mindurset.app.data.repository.MicroActionRepositoryImpl
 import com.mindurset.app.data.repository.ProfileRepositoryImpl
 import com.mindurset.app.data.repository.SafetyRepositoryImpl
 import com.mindurset.app.data.repository.SessionRepositoryImpl
+import com.mindurset.app.data.repository.TrustedContactRepositoryImpl
 import com.mindurset.app.domain.repository.AuthRepository
 import com.mindurset.app.domain.repository.CheckInRepository
 import com.mindurset.app.domain.repository.ConsentRepository
@@ -25,6 +26,7 @@ import com.mindurset.app.domain.repository.ProfileRepository
 import com.mindurset.app.domain.repository.SafetyRepository
 import com.mindurset.app.domain.repository.SessionRepository
 import com.mindurset.app.domain.repository.SessionStore
+import com.mindurset.app.domain.repository.TrustedContactRepository
 
 /**
  * Manual dependency container: one object graph for the whole app, no annotation
@@ -69,6 +71,9 @@ class AppContainer(context: Context) {
     val safetyRepository: SafetyRepository = SafetyRepositoryImpl(database.safetyEventDao())
 
     val consentRepository: ConsentRepository = ConsentRepositoryImpl(database.consentRecordDao())
+
+    val trustedContactRepository: TrustedContactRepository =
+        TrustedContactRepositoryImpl(database.trustedContactDao())
 }
 
 val LocalAppContainer =
