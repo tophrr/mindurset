@@ -31,4 +31,6 @@ data class CompanionUiState(
     val supportMode: CompanionSupportMode = CompanionSupportMode.PERSONAL,
     val lines: List<CompanionLine> = emptyList(),
     val replyState: CompanionReplyState = CompanionReplyState.Idle,
+    /** Set when the Worker could not be reached and the level was raised a tier (L1). */
+    val resourcesOffered: Boolean = false,
 )

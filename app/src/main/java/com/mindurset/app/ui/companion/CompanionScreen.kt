@@ -1,5 +1,7 @@
 package com.mindurset.app.ui.companion
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -30,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -52,6 +56,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mindurset.app.R
 import com.mindurset.app.di.LocalAppContainer
 import com.mindurset.app.domain.model.RiskLevel
+import com.mindurset.app.safety.CrisisResources
 import com.mindurset.app.ui.common.AppCard
 import com.mindurset.app.ui.common.CircleIconButton
 import com.mindurset.app.ui.common.FloatingNavSpace
@@ -211,6 +216,10 @@ fun CompanionScreen(onOpenDrawer: () -> Unit, onCrisis: (RiskLevel) -> Unit = {}
 
                     CompanionReplyState.Error -> RetryReply(onRetry = vm::retry, showError = true)
                 }
+
+                if (state.resourcesOffered) {
+                    ResourcesCard()
+                }
                 Spacer(Modifier.height(8.dp))
             }
 
@@ -354,6 +363,40 @@ private fun SendButton(enabled: Boolean, onClick: () -> Unit, contentDescription
                 modifier = Modifier.size(20.dp),
                 tint = if (enabled) SurfaceWhite else MutedGray,
             )
+        }
+    }
+}
+
+/**
+ * The L1 affordance: the Worker could not be reached, so the level went up one tier. It is not the
+ * crisis card — the floor saw nothing — but the offline copy should not be the last word either.
+ */
+@Composable
+private fun ResourcesCard() {
+    val context = LocalContext.current
+    AppCard {
+        Text(
+            text = stringResource(R.string.companion_resources_title),
+            color = NavyInk,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = stringResource(R.string.companion_resources_body),
+            color = MutedGray,
+            fontSize = 12.sp,
+            lineHeight = 17.sp,
+        )
+        Spacer(Modifier.height(6.dp))
+        TextButton(
+            onClick = {
+                context.startActivity(
+                    Intent(Intent.ACTION_DIAL, Uri.parse("tel:${CrisisResources.PHONE}")),
+                )
+            },
+        ) {
+            Text(stringResource(R.string.companion_resources_call))
         }
     }
 }
