@@ -16,9 +16,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -26,7 +31,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mindurset.app.R
+import com.mindurset.app.di.LocalAppContainer
 import com.mindurset.app.domain.model.RiskLevel
 import com.mindurset.app.safety.CrisisResources
 import com.mindurset.app.ui.common.AppCard
@@ -43,6 +51,16 @@ import com.mindurset.app.ui.theme.NavyInk
 @Composable
 fun CrisisScreen(level: RiskLevel = RiskLevel.L3, onAcknowledge: () -> Unit) {
     BackHandler(enabled = true) { /* acknowledgement, not the back gesture, leaves this screen */ }
+
+    val container = LocalAppContainer.current
+    val contactViewModel: CrisisContactViewModel = viewModel {
+        CrisisContactViewModel(
+            repository = container.trustedContactRepository,
+            sessionStore = container.sessionStore,
+        )
+    }
+    val contactState by contactViewModel.state.collectAsStateWithLifecycle()
+    var sheetOpen by remember { mutableStateOf(false) }
 
     val direct = level >= RiskLevel.L3
     val context = LocalContext.current
@@ -96,7 +114,15 @@ fun CrisisScreen(level: RiskLevel = RiskLevel.L3, onAcknowledge: () -> Unit) {
                 Text(stringResource(R.string.crisis_call))
             }
         }
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(12.dp))
+        OutlinedButton(
+            onClick = { sheetOpen = true },
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+            shape = RoundedCornerShape(24.dp),
+        ) {
+            Text(stringResource(R.string.crisis_contact_action))
+        }
+        Spacer(Modifier.height(12.dp))
         Text(
             text = stringResource(R.string.crisis_contact_note),
             style = MaterialTheme.typography.bodySmall,
@@ -107,5 +133,17 @@ fun CrisisScreen(level: RiskLevel = RiskLevel.L3, onAcknowledge: () -> Unit) {
         TextButton(onClick = onAcknowledge, modifier = Modifier.height(48.dp)) {
             Text(stringResource(if (direct) R.string.crisis_acknowledge else R.string.crisis_acknowledge_l2))
         }
+    }
+
+    if (sheetOpen) {
+        TrustedContactSheet(
+            state = contactState,
+            onDismiss = { sheetOpen = false },
+            onStartEditing = contactViewModel::startEditing,
+            onCancelEditing = contactViewModel::cancelEditing,
+            onNameChange = contactViewModel::onNameChange,
+            onPhoneChange = contactViewModel::onPhoneChange,
+            onSave = contactViewModel::save,
+        )
     }
 }
