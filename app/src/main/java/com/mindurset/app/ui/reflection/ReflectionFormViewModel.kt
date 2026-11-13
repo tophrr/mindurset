@@ -13,6 +13,7 @@ import com.mindurset.app.domain.repository.SafetyRepository
 import com.mindurset.app.domain.repository.SessionStore
 import com.mindurset.app.domain.usecase.ValidateReflection
 import com.mindurset.app.safety.LocalRiskFloor
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -29,7 +30,9 @@ class ReflectionFormViewModel(
     private val sessionStore: SessionStore,
     private val safetyRepository: SafetyRepository,
     private val clock: () -> Long = System::currentTimeMillis,
+    externalScope: CoroutineScope? = null,
 ) : ViewModel() {
+    private val scope: CoroutineScope = externalScope ?: viewModelScope
     val isEdit: Boolean = entryId != null
 
     var crisisLevel by mutableStateOf<RiskLevel?>(null)
@@ -75,7 +78,7 @@ class ReflectionFormViewModel(
     }
 
     private fun load(id: String) {
-        viewModelScope.launch {
+        scope.launch {
             val entry = journalRepository.observeById(id).first()
             if (entry == null) {
                 notFound = true
@@ -111,7 +114,7 @@ class ReflectionFormViewModel(
         gratitudeTouched = true
         if (!isValid || isSaving) return
         isSaving = true
-        viewModelScope.launch {
+        scope.launch {
             val session = sessionStore.current()
             if (session == null) {
                 isSaving = false
@@ -129,7 +132,8 @@ class ReflectionFormViewModel(
                     createdAt = previous?.createdAt ?: now,
                     updatedAt = now,
                 )
-            journalRepository.upsert(entry)
+            // Screen before the row exists, for the same reason as the check-in: a halted entry must
+            // not be stored with its text.
             val hit =
                 LocalRiskFloor.match(
                     listOf(entry.challenge, entry.reframe, entry.gratitude).joinToString(" "),
@@ -151,6 +155,7 @@ class ReflectionFormViewModel(
                 crisisLevel = hit.level
                 return@launch
             }
+            journalRepository.upsert(entry)
             isSaving = false
             onSaved()
         }
