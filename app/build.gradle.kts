@@ -28,6 +28,8 @@ android {
 
     buildTypes {
         debug {
+            enableUnitTestCoverage = true
+
             // Loopback plus `adb reverse tcp:8787 tcp:8787` is the default. A phone on the same
             // network can point at the host instead:
             //   ./gradlew :app:assembleDebug -Pmindurset.endpoint=http://192.168.1.10:8787
@@ -51,6 +53,10 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
     }
 
     sourceSets
@@ -80,4 +86,12 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.json)
+    testImplementation(libs.kotlinx.coroutines.test)
+
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation(libs.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
+    debugImplementation(libs.compose.ui.test.manifest)
 }
