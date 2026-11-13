@@ -8,4 +8,7 @@
     <string name="companion_sending">Sedang mencari respons…</string>
     <string name="companion_error">Terjadi kendala. Balasan offline kamu ditampilkan.</string>
     <string name="companion_retry">Coba lagi</string>
+    <string name="companion_resources_title">Companion belum bisa menjawab sekarang</string>
+    <string name="companion_resources_body">Koneksimu terputus, jadi balasan belum bisa diperiksa oleh model. Kalau ini terasa lebih berat dari itu, kamu tetap bisa menghubungi seseorang: 119 ext. 8.</string>
+    <string name="companion_resources_call">Telepon 119 ext. 8</string>
 </resources>
