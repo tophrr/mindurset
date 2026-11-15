@@ -47,9 +47,13 @@ import com.mindurset.app.ui.theme.NavyInk
  * It is deliberately not a conversation: nothing to fill in, one number to call, one way out that
  * says the person is safe for now. The back gesture is blocked until that acknowledgement, which is
  * what "cannot be dismissed" means in practice.
+ *
+ * The route owns everything that needs a device or a ViewModel: the back block, the dial intent and
+ * the trusted-contact sheet. [CrisisContent] below renders the same copy without any of it, so the
+ * card can be exercised in a UI test without an Activity, a Context or a container.
  */
 @Composable
-fun CrisisScreen(level: RiskLevel = RiskLevel.L3, onAcknowledge: () -> Unit) {
+fun CrisisRoute(level: RiskLevel = RiskLevel.L3, onAcknowledge: () -> Unit) {
     BackHandler(enabled = true) { /* acknowledgement, not the back gesture, leaves this screen */ }
 
     val container = LocalAppContainer.current
@@ -62,12 +66,42 @@ fun CrisisScreen(level: RiskLevel = RiskLevel.L3, onAcknowledge: () -> Unit) {
     val contactState by contactViewModel.state.collectAsStateWithLifecycle()
     var sheetOpen by remember { mutableStateOf(false) }
 
-    val direct = level >= RiskLevel.L3
     val context = LocalContext.current
     val dial = {
         val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${CrisisResources.PHONE}"))
         context.startActivity(intent)
     }
+
+    CrisisContent(
+        level = level,
+        onCall = dial,
+        onOpenContactSheet = { sheetOpen = true },
+        onAcknowledge = onAcknowledge,
+    )
+
+    if (sheetOpen) {
+        TrustedContactSheet(
+            state = contactState,
+            onDismiss = { sheetOpen = false },
+            onStartEditing = contactViewModel::startEditing,
+            onCancelEditing = contactViewModel::cancelEditing,
+            onNameChange = contactViewModel::onNameChange,
+            onPhoneChange = contactViewModel::onPhoneChange,
+            onSave = contactViewModel::save,
+        )
+    }
+}
+
+/**
+ * The card itself: copy, the hotline number, and three ways out. Stateless on purpose — every action
+ * arrives as a lambda, so nothing here reaches a Context, an Intent or a ViewModel.
+ *
+ * The strings, the level-specific labels and the 48 dp touch targets are unchanged from the screen
+ * this was split out of. The copy is clinically reviewed; a reworded string is a defect.
+ */
+@Composable
+fun CrisisContent(level: RiskLevel, onCall: () -> Unit, onOpenContactSheet: () -> Unit, onAcknowledge: () -> Unit) {
+    val direct = level >= RiskLevel.L3
 
     Column(
         modifier =
@@ -107,7 +141,7 @@ fun CrisisScreen(level: RiskLevel = RiskLevel.L3, onAcknowledge: () -> Unit) {
             )
             Spacer(Modifier.size(8.dp))
             Button(
-                onClick = dial,
+                onClick = onCall,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(26.dp),
             ) {
@@ -116,7 +150,7 @@ fun CrisisScreen(level: RiskLevel = RiskLevel.L3, onAcknowledge: () -> Unit) {
         }
         Spacer(Modifier.height(12.dp))
         OutlinedButton(
-            onClick = { sheetOpen = true },
+            onClick = onOpenContactSheet,
             modifier = Modifier.fillMaxWidth().height(48.dp),
             shape = RoundedCornerShape(24.dp),
         ) {
@@ -133,17 +167,5 @@ fun CrisisScreen(level: RiskLevel = RiskLevel.L3, onAcknowledge: () -> Unit) {
         TextButton(onClick = onAcknowledge, modifier = Modifier.height(48.dp)) {
             Text(stringResource(if (direct) R.string.crisis_acknowledge else R.string.crisis_acknowledge_l2))
         }
-    }
-
-    if (sheetOpen) {
-        TrustedContactSheet(
-            state = contactState,
-            onDismiss = { sheetOpen = false },
-            onStartEditing = contactViewModel::startEditing,
-            onCancelEditing = contactViewModel::cancelEditing,
-            onNameChange = contactViewModel::onNameChange,
-            onPhoneChange = contactViewModel::onPhoneChange,
-            onSave = contactViewModel::save,
-        )
     }
 }
