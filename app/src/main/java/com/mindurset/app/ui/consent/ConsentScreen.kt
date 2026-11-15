@@ -34,13 +34,22 @@ import com.mindurset.app.ui.theme.NavyInk
  * dismissed consent is not a consent.
  */
 @Composable
-fun ConsentScreen(onAgreed: () -> Unit, onLater: () -> Unit) {
+fun ConsentRoute(onAgreed: () -> Unit, onLater: () -> Unit) {
     val container = LocalAppContainer.current
     val viewModel: ConsentViewModel = viewModel {
         ConsentViewModel(container.consentRepository, container.sessionStore)
     }
     val saving by viewModel.saving.collectAsStateWithLifecycle()
 
+    ConsentContent(
+        saving = saving,
+        onAgree = { viewModel.grant(onAgreed) },
+        onLater = onLater,
+    )
+}
+
+@Composable
+fun ConsentContent(saving: Boolean, onAgree: () -> Unit, onLater: () -> Unit) {
     Column(
         modifier =
         Modifier
@@ -75,7 +84,7 @@ fun ConsentScreen(onAgreed: () -> Unit, onLater: () -> Unit) {
         }
         Spacer(Modifier.height(4.dp))
         Button(
-            onClick = { viewModel.grant(onAgreed) },
+            onClick = onAgree,
             enabled = !saving,
             modifier = Modifier.fillMaxWidth().height(52.dp),
             shape = RoundedCornerShape(26.dp),
