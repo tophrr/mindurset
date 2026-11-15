@@ -55,7 +55,7 @@ import com.mindurset.app.ui.auth.LoginScreen
 import com.mindurset.app.ui.auth.RegisterScreen
 import com.mindurset.app.ui.common.LogoutConfirmDialog
 import com.mindurset.app.ui.companion.CompanionScreen
-import com.mindurset.app.ui.consent.ConsentScreen
+import com.mindurset.app.ui.consent.ConsentRoute
 import com.mindurset.app.ui.dashboard.DashboardScreen
 import com.mindurset.app.ui.home.checkin.CheckInScreen
 import com.mindurset.app.ui.info.AboutScreen
@@ -234,7 +234,7 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
                     )
                 }
                 composable(Routes.CONSENT) {
-                    ConsentScreen(
+                    ConsentRoute(
                         onAgreed = { goToDestination(Routes.DASHBOARD) },
                         onLater = { goToDestination(Routes.DASHBOARD) },
                     )
