@@ -67,7 +67,7 @@ import com.mindurset.app.ui.profile.SettingsScreen
 import com.mindurset.app.ui.reflection.ReflectionDetailScreen
 import com.mindurset.app.ui.reflection.ReflectionFormScreen
 import com.mindurset.app.ui.reflection.ReflectionListScreen
-import com.mindurset.app.ui.safety.CrisisScreen
+import com.mindurset.app.ui.safety.CrisisRoute
 import com.mindurset.app.ui.theme.AppIcons
 import com.mindurset.app.ui.theme.CardShadow
 import com.mindurset.app.ui.theme.SurfaceWhite
@@ -252,7 +252,7 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
                     val level = entry.arguments?.getString(Routes.ARG_LEVEL)
                         ?.let { name -> RiskLevel.entries.firstOrNull { it.name == name } }
                         ?: RiskLevel.L3
-                    CrisisScreen(level = level, onAcknowledge = { goToDestination(Routes.DASHBOARD) })
+                    CrisisRoute(level = level, onAcknowledge = { goToDestination(Routes.DASHBOARD) })
                 }
                 composable(Routes.REFLECTION_LIST) {
                     ReflectionListScreen(
