@@ -129,6 +129,12 @@ lima belas ViewModel sekarang punya test: `ReflectionDetailViewModel`, `Reflecti
 Tiga yang belum: `DashboardViewModel` (45 baris), `ProfileViewModel` (42), `RegisterViewModel` (23).
 Bonus DAO test (+5) juga terpenuhi.
 
+Angka itu juga tampil sebagai badge di `README.md`: shields.io membaca
+`docs/testing/coverage.json`, dan job **ViewModel coverage** di CI menolak pull request bila badge
+tidak sama dengan laporan terbaru atau bila coverage turun di bawah 70 %
+(`python3 scripts/viewmodel_coverage.py --check --min 70`). Jadi badge tidak bisa basi tanpa
+ketahuan: mengubah test tanpa memperbarui badge akan memerahkan CI.
+
 ## E. Refleksi
 
 1. **Bug apa yang ditemukan test?** Bukan bug baru, tetapi urutan yang salah: check-in dulu menyimpan

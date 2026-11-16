@@ -97,3 +97,33 @@ jobs:
         run: |
           docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest \
             detect --source=/repo --redact --verbose
+
+  coverage:
+    name: ViewModel coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+
+      - name: Set up Gradle (with cache)
+        uses: gradle/actions/setup-gradle@v4
+
+      # The badge in README.md is a shields.io endpoint pointing at docs/testing/coverage.json.
+      # This job regenerates the report, then fails if the committed badge disagrees with it or if
+      # ViewModel coverage drops below the course's 70 percent.
+      - name: Unit tests with the coverage report
+        run: ./gradlew :app:createDebugUnitTestCoverageReport -Dorg.gradle.java.home="$JAVA_HOME" --console=plain
+
+      - name: Check the badge against the report
+        run: python3 scripts/viewmodel_coverage.py --check --min 70
