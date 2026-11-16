@@ -1,5 +1,7 @@
 # Mind-Ur-Set
 
+![Android Tests](https://github.com/tophrr/mindurset/actions/workflows/android.yml/badge.svg)
+
 Mind-Ur-Set is an offline-first Android app for the moment a thought starts repeating
 itself. It offers a fifteen-second emotion check-in, a short guided reframe, and one small
 thing to do next.
