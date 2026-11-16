@@ -5,7 +5,7 @@
 
 | Anggota (Nama / GitHub) | Tugas testing | Berkas test yang ditulis |
 |---|---|---|
-| Christopher (@tophrr) | dependensi test, `MainDispatcherRule`, laporan ini | `testutil/MainDispatcherRuleTest.kt`, `gradle/libs.versions.toml`, `TESTING.md` |
+| Christopher (@tophrr) | dependensi test, `MainDispatcherRule`, test ViewModel yang belum tercakup, laporan ini | `testutil/MainDispatcherRuleTest.kt`, `ui/auth/LoginViewModelTest.kt`, `ui/profile/{Settings,ProfileEdit}ViewModelTest.kt`, `ui/reflection/{ReflectionList,ReflectionDetail}ViewModelTest.kt`, `TESTING.md` |
 | Christian (@repyh) | pisahkan consent gate, UI test consent | `ui/consent/ConsentScreenTest.kt`, `ui/consent/ConsentScreen.kt` |
 | Tora (@toraaxlv) | pisahkan kartu krisis, UI test kartu krisis | `ui/safety/CrisisScreenTest.kt`, `ui/safety/CrisisScreen.kt` |
 | Evan (@VANTER25) | DAO test Room in-memory | `data/local/CheckInDaoTest.kt`, `data/local/JournalDaoTest.kt` |
@@ -28,7 +28,7 @@ PR merge: **✔ 14 · ⚠ 3 · ✘ 1**, dan satu-satunya ✘ adalah berkas ini s
 
 | No | Pemeriksaan | Sudah | Belum | Commit perbaikan |
 |----|-------------|:-----:|:-----:|------------------|
-| 1 | Setiap ViewModel menerima repository lewat constructor | ✔ | | fondasi `f4e9a8e`, dijaga oleh 51 test ViewModel |
+| 1 | Setiap ViewModel menerima repository lewat constructor | ✔ | | fondasi `f4e9a8e`, dijaga oleh 76 test ViewModel |
 | 2 | Repository punya interface, ViewModel bergantung pada interface | ✔ | | `domain/repository/Repositories.kt`, 8 interface |
 | 3 | ViewModel tidak memakai `Context`, `Uri`, `Log`, `Toast`, `FirebaseFirestore` | ✔ | | tidak ada pelanggaran di 15 ViewModel |
 | 4 | Logika ada di fungsi murni, bukan di Composable | ✔ | | `domain/usecase/` + `safety/` (6 kelas, semua ber-test JVM) |
@@ -48,6 +48,9 @@ refactor serupa.
 | ViewModel | `CompanionViewModel` | `ui/companion/CompanionViewModelTest.kt` | 1 |
 | ViewModel | `ConsentViewModel` | `ui/consent/ConsentViewModelTest.kt` | 1 |
 | ViewModel | `ActionViewModel`, `ReframeViewModel`, `CrisisContactViewModel`, `ReflectionFormViewModel` | `ui/*/…Test.kt` | 2 |
+| ViewModel | `LoginViewModel` (validasi, kredensial salah, jalur tamu) | `ui/auth/LoginViewModelTest.kt` | 1 |
+| ViewModel | `ReflectionListViewModel`, `ReflectionDetailViewModel` (loading, kosong, error, retry, hapus) | `ui/reflection/…Test.kt` | 1 |
+| ViewModel | `SettingsViewModel`, `ProfileEditViewModel` (DataStore, validasi nama) | `ui/profile/…Test.kt` | 2 |
 | Fungsi murni | `ClassifyRiskLocally`, `EvaluateTriage`, `ComputeIntensityScore`, `IsQuietHour`, `ReframeStateMachine`, `LocalRiskFloor` | `domain/usecase/`, `safety/` | 1 |
 | Mapper | `GenerationResponseParser` (kontrak Worker → domain) | `data/remote/GenerationResponseParserTest.kt` | 2 |
 | Screen (UI) | `ConsentContent` | `androidTest/…/ui/consent/ConsentScreenTest.kt` | 1 |
@@ -63,6 +66,8 @@ refactor serupa.
 | 3 | `ConsentViewModel` | Given consent sudah diberikan / When grant dipanggil lagi / Then tetap satu baris di tabel | Aksi pengguna | `granting twice keeps one row` |
 | 4 | `CheckInViewModel` | Given consent belum ada / When check-in disimpan / Then ditolak dan tidak ada baris tertulis | Gagal | `without consent a check-in is refused and nothing is stored` |
 | 5 | `CheckInViewModel` | Given catatan memuat frasa L3 / When disimpan / Then kartu krisis muncul dan catatan tidak pernah ditulis | Loading / validasi | `an L3 note goes straight to the card and is never stored` |
+| 6 | `LoginViewModel` | Given email terdaftar tapi password salah / When submit / Then satu pesan generik, tanpa sesi, tanpa efek navigasi | Gagal | `wrong credentials show one generic message and start no session` |
+| 7 | `ReflectionListViewModel` | Given pembacaan jurnal gagal / When state dibaca lalu retry / Then error tampil dan retry memuat daftar | Gagal → sukses | `a failing read is reported and retry reads the journal again` |
 
 **Test double yang dipakai:**
 
@@ -79,14 +84,14 @@ refactor serupa.
 
 | Jenis test | Jumlah | Lulus | Perintah |
 |------------|:------:|:-----:|----------|
-| Unit test (JVM) | 107 | 107 | `./gradlew :app:testDebugUnitTest` |
+| Unit test (JVM) | 132 | 132 | `./gradlew :app:testDebugUnitTest` |
 | UI test (Compose) | 8 | 8 | `./gradlew :app:connectedDebugAndroidTest` |
 | Integration test (DAO) | 7 | 7 | `./gradlew :app:connectedDebugAndroidTest` |
 
-Angka di atas berasal dari run di mesin pengembang pada `main` `fde7df5`:
+Angka di atas berasal dari run di mesin pengembang pada `main` `4a3234e` plus PR coverage:
 
-- Unit: 107 test di 21 kelas, 0 gagal (`app/build/test-results/testDebugUnitTest/*.xml`), di antaranya
-  **51 test ViewModel** di 7 kelas.
+- Unit: 132 test di 26 kelas, 0 gagal (`app/build/test-results/testDebugUnitTest/*.xml`), di antaranya
+  **76 test ViewModel** di 12 kelas.
 - Instrumented, dijalankan pada handset `M2101K6G` (Android 16, SDK 36):
   `adb shell am instrument -w com.mindurset.app.test/androidx.test.runner.AndroidJUnitRunner` →
   `OK (15 tests)` dalam 11,9 detik. Rinciannya 5 `CheckInDaoTest`, 2 `JournalDaoTest`,
@@ -115,13 +120,14 @@ laporannya mencatat `tests="15" failures="0"`, sementara APK yang sama menghasil
 `am instrument`. Itu masalah pencatatan UTP, bukan test yang gagal; instrumented test bukan gerbang CI
 di repository ini.
 
-**(Bonus) Coverage baris ViewModel: 60,4 %** (`346/584` baris pada kelas ViewModel tingkat atas;
-`./gradlew :app:createDebugUnitTestCoverageReport`). Ambang bonus 70 % belum tercapai: 7 dari 15
-ViewModel punya test, enam di antaranya di atas 90 % (`ActionViewModel` 95,0 %, `ReframeViewModel`
-94,6 %, `CrisisContactViewModel` 93,5 %, `ConsentViewModel` 92,9 %, `CompanionViewModel` 91,8 %,
-`CheckInViewModel` 91,4 %; `ReflectionFormViewModel` 73,5 %), sedangkan `Dashboard`, `Login`,
-`Register`, `Profile`, `ProfileEdit`, `Settings`, `ReflectionList`, dan `ReflectionDetail` belum punya
-test sama sekali. Bonus DAO test (+5) terpenuhi.
+**(Bonus) Coverage baris ViewModel: 75,2 %** (`439/584` baris pada kelas ViewModel tingkat atas;
+`./gradlew :app:createDebugUnitTestCoverageReport`), jadi ambang bonus 70 % terpenuhi. Dua belas dari
+lima belas ViewModel sekarang punya test: `ReflectionDetailViewModel`, `ReflectionListViewModel`,
+`LoginViewModel`, `ProfileEditViewModel`, dan `SettingsViewModel` di 100 %, lalu `ActionViewModel`
+95,0 %, `ReframeViewModel` 94,6 %, `CrisisContactViewModel` 93,5 %, `ConsentViewModel` 92,9 %,
+`CompanionViewModel` 91,8 %, `CheckInViewModel` 91,4 %, dan `ReflectionFormViewModel` 73,5 %.
+Tiga yang belum: `DashboardViewModel` (45 baris), `ProfileViewModel` (42), `RegisterViewModel` (23).
+Bonus DAO test (+5) juga terpenuhi.
 
 ## E. Refleksi
 
@@ -145,10 +151,12 @@ test sama sekali. Bonus DAO test (+5) terpenuhi.
    ada teks pengguna yang tersimpan. Kegagalan di sini tidak terlihat di UI — kartunya tetap muncul —
    sehingga hanya test yang memeriksa sisi penyimpanan yang dapat menangkapnya.
 
-4. **Apa yang belum diuji, dan mengapa.** Delapan layar masih route-coupled sehingga belum punya UI
-   test (`CheckIn`, `Dashboard`, `Therapy`, `Companion`, `Reflection*`, `Profile*`), dan delapan
-   ViewModel tanpa test adalah alasan coverage berhenti di 60,4 %. Jalur jaringan Companion ke Worker
-   hanya diuji di sisi kontrak (`worker/`, Vitest) dan parser DTO di JVM; panggilan sungguhan ke Worker
-   belum masuk suite otomatis karena butuh `wrangler dev` di mesin yang sama. Pengujian pada bahasa
-   Indonesia juga belum otomatis: assertion UI test mengambil teks dari resource sehingga lolos di
-   `values-in/`, tetapi tidak ada test yang benar-benar menjalankan aplikasi dalam locale Indonesia.
+4. **Apa yang belum diuji, dan mengapa.** Tiga ViewModel belum punya test: `DashboardViewModel`
+   (menggabungkan lima sumber dan dua jam), `ProfileViewModel`, dan `RegisterViewModel`; keduanya yang
+   membuat coverage berhenti di 75,2 % dan bukan 100 %. Delapan layar masih route-coupled sehingga belum
+   punya UI test (`CheckIn`, `Dashboard`, `Therapy`, `Companion`, `Reflection*`, `Profile*`). Jalur
+   jaringan Companion ke Worker hanya diuji di sisi kontrak (`worker/`, Vitest) dan parser DTO di JVM;
+   panggilan sungguhan ke Worker belum masuk suite otomatis karena butuh `wrangler dev` di mesin yang
+   sama. Pengujian pada bahasa Indonesia juga belum otomatis: assertion UI test mengambil teks dari
+   resource sehingga lolos di `values-in/`, tetapi tidak ada test yang benar-benar menjalankan aplikasi
+   dalam locale Indonesia.
