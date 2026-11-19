@@ -6,6 +6,12 @@
 // Indonesian message can still reach English source material.
 
 import { CORPUS, CORPUS_VERSION, type Excerpt } from "./corpus/index";
+import {
+  MIN_SCORE,
+  embed,
+  type EmbeddingBinding,
+  type VectorizeBinding,
+} from "./vector";
 
 export { CORPUS_VERSION };
 export type { Excerpt };
@@ -106,6 +112,80 @@ export function retrieve(query: string, k = 3): Excerpt[] {
     .sort((a, b) => b.score - a.score || a.excerpt.sourceId.localeCompare(b.excerpt.sourceId))
     .slice(0, Math.max(1, k))
     .map((entry) => entry.excerpt);
+}
+
+/**
+ * The bindings semantic retrieval reads. `AI` stays `unknown` here because the
+ * pipeline owns the chat shape of the same binding; this module only claims the
+ * embedding call it makes, and validates the answer before trusting it.
+ */
+export interface SemanticEnv {
+  AI?: unknown;
+  VECTORIZE?: VectorizeBinding;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** A Vectorize match, as far as this module needs to check it. */
+function isMatch(value: unknown): value is { id: string; score: number } {
+  return (
+    isRecord(value) &&
+    typeof value.id === "string" &&
+    typeof value.score === "number" &&
+    Number.isFinite(value.score)
+  );
+}
+
+/**
+ * Vector retrieval with the keyword retriever as the fallback.
+ *
+ * A query is embedded, the index is searched for the top k above MIN_SCORE, and
+ * the ids are mapped back to CORPUS. A missing binding, a model or query error,
+ * a malformed response, or no hit at or above the floor all return
+ * `retrieve(query, k)`, so the shipped Worker behaves exactly as before when no
+ * index is configured. An id the corpus does not carry is dropped, never cited.
+ */
+export async function retrieveSemantic(
+  env: SemanticEnv,
+  query: string,
+  k = 3,
+): Promise<Excerpt[]> {
+  const top = Math.max(1, k);
+
+  try {
+    if (!env.AI || !env.VECTORIZE) return retrieve(query, k);
+
+    const [values] = await embed(env.AI as EmbeddingBinding, [query]);
+    if (!values) return retrieve(query, k);
+
+    const response = await env.VECTORIZE.query(values, { topK: top });
+    if (!isRecord(response) || !Array.isArray(response.matches)) {
+      return retrieve(query, k);
+    }
+
+    const byId = new Map(CORPUS.map((excerpt) => [excerpt.sourceId, excerpt]));
+    const hits = response.matches
+      .filter(isMatch)
+      .filter((match) => match.score >= MIN_SCORE)
+      .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
+
+    const seen = new Set<string>();
+    const excerpts: Excerpt[] = [];
+    for (const hit of hits) {
+      if (seen.has(hit.id)) continue;
+      const excerpt = byId.get(hit.id);
+      if (!excerpt) continue;
+      seen.add(hit.id);
+      excerpts.push(excerpt);
+      if (excerpts.length === top) break;
+    }
+
+    return excerpts.length > 0 ? excerpts : retrieve(query, k);
+  } catch {
+    return retrieve(query, k);
+  }
 }
 
 export function sourceIds(excerpts: Excerpt[]): string[] {
