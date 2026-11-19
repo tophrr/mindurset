@@ -1,7 +1,7 @@
 # 0003: Keyword retrieval before a vector index
 
 Date: 2026-11-11
-Status: accepted
+Status: superseded by 0008
 Deciders: Christopher M. M. Gijoh (project manager)
 Related: 0001, 0002; proposal Sec. 9.1 and deliverable 14.3
 
