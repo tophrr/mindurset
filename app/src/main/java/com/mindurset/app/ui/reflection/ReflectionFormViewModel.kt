@@ -12,6 +12,7 @@ import com.mindurset.app.domain.repository.JournalRepository
 import com.mindurset.app.domain.repository.SafetyRepository
 import com.mindurset.app.domain.repository.SessionStore
 import com.mindurset.app.domain.usecase.ValidateReflection
+import com.mindurset.app.safety.AsqFlow
 import com.mindurset.app.safety.LocalRiskFloor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
@@ -38,6 +39,13 @@ class ReflectionFormViewModel(
     var crisisLevel by mutableStateOf<RiskLevel?>(null)
         private set
 
+    /**
+     * Set when the floor found ambiguous hopelessness (L2): the entry is held back until the four
+     * screening items are answered, because a yes moves it to the crisis card and a no lets it save.
+     */
+    var asq by mutableStateOf<AsqFlow.State?>(null)
+        private set
+
     var challenge by mutableStateOf("")
         private set
     var reframe by mutableStateOf("")
@@ -60,6 +68,7 @@ class ReflectionFormViewModel(
         private set
 
     private var original: JournalEntry? = null
+    private var pending: PendingEntry? = null
 
     val validation: ValidateReflection.Result
         get() = ValidateReflection.validate(challenge, reframe, gratitude)
@@ -145,14 +154,21 @@ class ReflectionFormViewModel(
                         id = UUID.randomUUID().toString(),
                         userId = entry.userId,
                         level = hit.level,
-                        trigger = "journal_entry",
+                        trigger = TRIGGER_JOURNAL_ENTRY,
                         patternId = hit.patternId,
                         createdAt = at,
                         retentionUntil = at + SAFETY_EVENT_RETENTION_MILLIS,
                     ),
                 )
                 isSaving = false
-                crisisLevel = hit.level
+                if (hit.level >= RiskLevel.L3) {
+                    crisisLevel = hit.level
+                } else {
+                    // L2 is the ambiguous rung: the ASQ items decide, not the phrase table alone.
+                    // The entry, new or edited, is held in memory and never reaches Room here.
+                    pending = PendingEntry(entry = entry, onSaved = onSaved)
+                    asq = AsqFlow.State()
+                }
                 return@launch
             }
             journalRepository.upsert(entry)
@@ -161,8 +177,61 @@ class ReflectionFormViewModel(
         }
     }
 
+    /**
+     * Answers the question on screen. A negative screen saves the entry that was held back; a
+     * positive one records an L3 safety event and hands over to the crisis card.
+     */
+    fun answerAsq(yes: Boolean) {
+        val state = asq ?: return
+        val question = AsqFlow.nextQuestion(state) ?: return
+        val next = AsqFlow.answer(state, question.id, yes)
+        val result = AsqFlow.result(next)
+        if (result == null) {
+            asq = next
+            return
+        }
+        val held = pending
+        pending = null
+        asq = null
+        isSaving = true
+        scope.launch {
+            if (held == null) {
+                isSaving = false
+                return@launch
+            }
+            if (result.level >= RiskLevel.L3) {
+                val at = clock()
+                safetyRepository.record(
+                    SafetyEvent(
+                        id = UUID.randomUUID().toString(),
+                        userId = held.entry.userId,
+                        level = RiskLevel.L3,
+                        trigger = TRIGGER_ASQ_POSITIVE,
+                        patternId = null,
+                        createdAt = at,
+                        retentionUntil = at + SAFETY_EVENT_RETENTION_MILLIS,
+                    ),
+                )
+                isSaving = false
+                crisisLevel = RiskLevel.L3
+                return@launch
+            }
+            journalRepository.upsert(held.entry)
+            isSaving = false
+            held.onSaved()
+        }
+    }
+
     /** Clears the flag after the crisis card was shown, so it does not repeat. */
     fun acknowledgeCrisis() {
         crisisLevel = null
+    }
+
+    /** The entry and the callback that the ASQ step holds while it asks its questions. */
+    private data class PendingEntry(val entry: JournalEntry, val onSaved: () -> Unit)
+
+    private companion object {
+        const val TRIGGER_JOURNAL_ENTRY = "journal_entry"
+        const val TRIGGER_ASQ_POSITIVE = "asq_positive"
     }
 }

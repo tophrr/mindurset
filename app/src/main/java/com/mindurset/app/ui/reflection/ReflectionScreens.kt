@@ -64,6 +64,7 @@ import com.mindurset.app.ui.common.FloatingNavSpace
 import com.mindurset.app.ui.common.LoadingState
 import com.mindurset.app.ui.common.SectionTitle
 import com.mindurset.app.ui.common.SegmentedTabs
+import com.mindurset.app.ui.safety.AsqPanel
 import com.mindurset.app.ui.theme.AppIcons
 import com.mindurset.app.ui.theme.CanvasBlue
 import com.mindurset.app.ui.theme.CardShadow
@@ -437,18 +438,28 @@ fun ReflectionFormScreen(
             )
         },
     ) { innerPadding ->
-        when {
-            viewModel.isLoading -> LoadingState(label = stringResource(R.string.loading))
-
-            viewModel.notFound -> ErrorState(
-                message = stringResource(R.string.reflection_detail_not_found),
+        val asqState = viewModel.asq
+        if (asqState != null) {
+            // The entry is held in the ViewModel while the ladder asks, so leaving here saves nothing.
+            AsqPanel(
+                state = asqState,
+                onAnswer = viewModel::answerAsq,
+                modifier = Modifier.padding(innerPadding),
             )
+        } else {
+            when {
+                viewModel.isLoading -> LoadingState(label = stringResource(R.string.loading))
 
-            else -> ReflectionFormBody(
-                viewModel = viewModel,
-                contentPadding = innerPadding,
-                onSaved = onSaved,
-            )
+                viewModel.notFound -> ErrorState(
+                    message = stringResource(R.string.reflection_detail_not_found),
+                )
+
+                else -> ReflectionFormBody(
+                    viewModel = viewModel,
+                    contentPadding = innerPadding,
+                    onSaved = onSaved,
+                )
+            }
         }
     }
 }
