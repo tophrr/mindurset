@@ -6,11 +6,14 @@
 
 export const EMBED_MODEL = "@cf/baai/bge-m3";
 
-// Cosine-similarity floor for a citation. The corpus is seven short topics, so
-// even an unrelated query lands near the nearest section with roughly 0.4-0.5.
-// Without a floor the model would cite that section; with it, an unrelated
-// query returns nothing and the keyword retriever gets the query instead.
-export const MIN_SCORE = 0.6;
+// Cosine-similarity floor for a citation, measured rather than guessed. On
+// 19 November, bge-m3 against the twenty-one sections of corpus v1: a relevant
+// query peaks between 0.47 and 0.54 ("kepalaku penuh, susah fokus, badan lemas"
+// reached 0.538 on stress#exam-pressure), while an unrelated one stays at or
+// below 0.37 ("cara membuat kue bolu kukus" reached 0.368 on
+// action#make-the-step-concrete). 0.42 sits in that gap. The forty-case
+// evaluation run has to re-check the number instead of inheriting it.
+export const MIN_SCORE = 0.42;
 
 /** The one call this module makes on the shared `AI` platform binding. */
 export interface EmbeddingBinding {
@@ -29,7 +32,7 @@ export interface VectorMatch {
 export interface VectorizeBinding {
   query(
     vector: number[],
-    options: { topK: number; returnMetadata: boolean },
+    options: { topK: number },
   ): Promise<unknown>;
   upsert(vectors: Array<{ id: string; values: number[] }>): Promise<unknown>;
 }

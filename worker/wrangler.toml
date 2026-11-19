@@ -16,6 +16,7 @@ remote = true
 [[vectorize]]
 binding = "VECTORIZE"
 index_name = "mindurset-corpus"
+remote = true
 
 # The corpus is markdown on disk. Wrangler bundles it as text, and
 # vitest.config.mjs gives the test runner the same behaviour.

@@ -160,10 +160,7 @@ export async function retrieveSemantic(
     const [values] = await embed(env.AI as EmbeddingBinding, [query]);
     if (!values) return retrieve(query, k);
 
-    const response = await env.VECTORIZE.query(values, {
-      topK: top,
-      returnMetadata: false,
-    });
+    const response = await env.VECTORIZE.query(values, { topK: top });
     if (!isRecord(response) || !Array.isArray(response.matches)) {
       return retrieve(query, k);
     }

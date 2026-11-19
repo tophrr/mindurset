@@ -41,11 +41,12 @@ Without a binding or a successful model call, every generation endpoint returns 
 
 `retrieve` still runs the deterministic keyword score, and that is the path when no index is
 configured. When the `VECTORIZE` binding is present, `retrieveSemantic` embeds the query with
-`@cf/baai/bge-m3`, asks the index for the top k, and keeps only hits at or above `MIN_SCORE` (0.6).
+`@cf/baai/bge-m3`, asks the index for the top k, and keeps only hits at or above `MIN_SCORE` (0.42).
 Below that floor, or on any binding, model or index error, it returns the keyword result, so CI and
 the offline fallback behave exactly as before.
 
-`VECTORIZE` is a platform binding next to `AI`; no token lives in this repository.
+`VECTORIZE` is a platform binding next to `AI`; no token lives in this repository. Vectorize has no
+local emulation, so the binding carries `remote = true` and `wrangler dev` talks to the real index.
 
 ```bash
 cd worker
@@ -57,8 +58,9 @@ npx wrangler vectorize insert mindurset-corpus --file .vectors.ndjson
 The reindex script mirrors the corpus chunking, so every vector id is a `<topic>#<section>` the
 Worker can resolve. It is run by hand, never in CI; `--upload` posts the same file directly.
 
-The floor exists because seven short topics put an unrelated query near 0.5: without it the model
-would cite the nearest section, so an off-topic query would get a wrong source. Workers AI's free
+The floor exists because an unrelated query still lands on the nearest section: measured on 19 November
+against the twenty-one indexed sections, a relevant query peaks at 0.47 to 0.54 while an unrelated one
+stays at or below 0.37, so 0.42 separates them. Workers AI's free
 allocation is 10,000 Neurons/day and Vectorize's free plan allows 30M queried and 5M stored vector
 dimensions per month; this corpus stores about 1,024 per excerpt.
 
