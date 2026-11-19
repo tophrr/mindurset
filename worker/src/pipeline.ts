@@ -21,7 +21,7 @@ import {
   type ModelClient,
 } from "./model";
 import { PROMPT_VERSION, readMode, type Mode } from "./prompts";
-import { retrieve, type Excerpt } from "./retrieval";
+import { retrieveSemantic, type Excerpt } from "./retrieval";
 
 export const MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 export const OFFLINE_MODEL_VERSION = "offline-fallback";
@@ -237,7 +237,7 @@ export async function runGeneration(
     if (floor.level === "L3") return crisisResponse(detectLanguage(userText));
     if (userText.length === 0) return fallback(kind, floor);
 
-    const excerpts = retrieve(userText, 3);
+    const excerpts = await retrieveSemantic(env, userText, 3);
     if (excerpts.length === 0) return fallback(kind, floor);
 
     const client = selectModelClient(env);
