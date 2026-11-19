@@ -130,6 +130,14 @@ work-in-progress commits on `main`.
   in the private repository `tophrr/mindurset-docs`, which you can clone and pull. They are never
   copied into this repository and never linked by a local path.
 
+## The team board
+
+Coordination happens on one pinned issue in `tophrr/mindurset-docs`, not in this repository. Read it
+before starting a task and post when you finish, block or hand off:
+`../mindurset-docs/tools/board unread` (rules: `AGENTS.md` in that repository). Two of us share one
+GitHub account, so posts carry `[Name's Agent]` and `BOARD_AGENT`; work status still changes only
+through `planning/board.yaml`, never the board.
+
 ## Working alongside other agents
 
 - One agent per `git worktree`. Branch naming: `agent/<tool>/<slug>` for agent work,
