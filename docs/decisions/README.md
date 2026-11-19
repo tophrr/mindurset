@@ -25,3 +25,8 @@ Deciders:
 | --- | --- | --- |
 | 0001 | Repository conventions, access model and quality gates | accepted |
 | 0002 | Review gate rollout, staged | accepted |
+| 0003 | Keyword retrieval before a vector index | superseded by 0008 |
+| 0005 | Fail closed where a classifier runs | accepted |
+| 0006 | The trusted contact stays local | accepted |
+| 0007 | The ASQ step asks the published items and keeps no answers | accepted |
+| 0008 | A vector index for retrieval, and when the build catches up | accepted |
