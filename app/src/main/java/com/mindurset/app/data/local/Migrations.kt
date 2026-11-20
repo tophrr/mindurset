@@ -75,3 +75,15 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_consent_record_kind` ON `consent_record` (`kind`)")
     }
 }
+
+/**
+ * The reframe generation path records which prompt and model produced a row, as the proposal asks
+ * (`prompt_version` on every session message). Additive, so a device that already holds sessions
+ * keeps them.
+ */
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `session_message` ADD COLUMN `promptVersion` TEXT")
+        db.execSQL("ALTER TABLE `session_message` ADD COLUMN `modelVersion` TEXT")
+    }
+}
