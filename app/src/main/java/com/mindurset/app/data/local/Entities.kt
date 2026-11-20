@@ -70,6 +70,8 @@ data class SessionMessageEntity(
     val content: String,
     val sequence: Int,
     val createdAt: Long,
+    val promptVersion: String? = null,
+    val modelVersion: String? = null,
 )
 
 /** Contextual memory: at most three of these survive, each with its own retention date. */

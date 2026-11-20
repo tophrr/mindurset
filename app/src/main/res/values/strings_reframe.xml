@@ -26,4 +26,9 @@
     <string name="reframe_offline_note">A fixed exercise from the app. Not personalised, and not generated.</string>
     <string name="reframe_saved_done">Done</string>
     <string name="therapy_start_reframe">Start a three-step reframe</string>
+    <string name="reframe_generating">Looking for a fairer reading…</string>
+    <string name="reframe_grounded_label">Grounded answer</string>
+    <string name="reframe_based_on">Based on: %1$s</string>
+    <string name="reframe_distortion">The pattern: %1$s</string>
+    <string name="reframe_perspectives_title">Two readings, pick one</string>
 </resources>

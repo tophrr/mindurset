@@ -23,11 +23,25 @@ class GenerationClient(
     suspend fun reply(message: String, mode: String): GenerationResponse {
         require(message.isNotBlank()) { "message must not be blank" }
         require(mode in MODES) { "mode is outside the chat contract" }
-        // A build without an endpoint never sends the line: the screen shows the offline exercise
+        val request = JSONObject().put("message", message).put("mode", mode).toString()
+        return grounded("/v1/chat", request)
+    }
+
+    /**
+     * Step one of the reframe: the Worker names the thinking pattern and offers readings to choose
+     * between. The request field is `thought`, which is what `readUserText` reads for this route.
+     */
+    suspend fun reframe(thought: String): GenerationResponse {
+        require(thought.isNotBlank()) { "thought must not be blank" }
+        val request = JSONObject().put("thought", thought).toString()
+        return grounded("/v1/reframe", request)
+    }
+
+    private suspend fun grounded(path: String, request: String): GenerationResponse {
+        // A build without an endpoint never sends the text: the screen shows the offline exercise
         // instead. This is what keeps a debug-only address out of a shipped APK.
         if (baseUrl.isBlank()) throw IOException("no generation endpoint is configured in this build")
-        val request = JSONObject().put("message", message).put("mode", mode).toString()
-        val response = GenerationResponseParser.parse(transport.post("/v1/chat", request))
+        val response = GenerationResponseParser.parse(transport.post(path, request))
         // An answer that cites nothing, or that the Worker says it produced offline, is not grounded.
         if (response.sourceIds.isEmpty() || response.modelVersion == OFFLINE_MODEL_VERSION) {
             throw UngroundedGenerationException()
