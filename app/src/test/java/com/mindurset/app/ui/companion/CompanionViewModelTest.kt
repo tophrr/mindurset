@@ -7,6 +7,7 @@ import com.mindurset.app.domain.model.SafetyEvent
 import com.mindurset.app.domain.model.SessionInfo
 import com.mindurset.app.domain.repository.SafetyRepository
 import com.mindurset.app.domain.repository.SessionStore
+import com.mindurset.app.safety.AsqFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -110,6 +111,7 @@ class CompanionViewModelTest {
         viewModel.send("aku mau bunuh diri")
 
         assertEquals(RiskLevel.L3, viewModel.crisisLevel.value)
+        assertNull(viewModel.asq.value)
         assertTrue(viewModel.uiState.value.lines.isEmpty())
         assertEquals(0, transport.calls)
         assertEquals(1, safety.events.size)
@@ -121,14 +123,92 @@ class CompanionViewModelTest {
     }
 
     @Test
-    fun anL2LineIsScreenedTheSameWay() {
-        val (viewModel, safety, scope) = viewModelWithSafety(NeverCalledTransport())
+    fun anL2LineOpensTheAsqPanelWithoutCallingTheWorker() {
+        val transport = NeverCalledTransport()
+        val (viewModel, safety, scope) = viewModelWithSafety(transport)
 
         viewModel.send("aku ingin mati")
 
-        assertEquals(RiskLevel.L2, viewModel.crisisLevel.value)
+        assertEquals(AsqFlow.State(), viewModel.asq.value)
+        assertNull("L2 opens the ASQ panel instead of jumping to the card", viewModel.crisisLevel.value)
         assertTrue(viewModel.uiState.value.lines.isEmpty())
+        assertEquals(0, transport.calls)
         assertEquals(1, safety.events.size)
+        val event = safety.events.single()
+        assertEquals(RiskLevel.L2, event.level)
+        assertEquals("companion_message", event.trigger)
+        assertEquals("id-hopeless", event.patternId)
+        scope.cancel()
+    }
+
+    @Test
+    fun aPositiveAsqScreenAfterAnL2LineHaltsAtL3WithoutCallingTheWorker() {
+        val transport = NeverCalledTransport()
+        val (viewModel, safety, scope) = viewModelWithSafety(transport)
+
+        viewModel.send("there is no reason to live")
+
+        // Q1 yes, Q2-Q4 no, then acuity probe comes last.
+        viewModel.answerAsq(yes = true)
+        repeat(3) { viewModel.answerAsq(yes = false) }
+        val pending = requireNotNull(viewModel.asq.value)
+        assertEquals("acuity comes last", AsqFlow.ID_ACUITY, AsqFlow.nextQuestion(pending)?.id)
+        assertNull("the crisis card must wait for the acuity probe", viewModel.crisisLevel.value)
+        assertEquals(0, transport.calls)
+
+        viewModel.answerAsq(yes = false)
+
+        assertEquals(RiskLevel.L3, viewModel.crisisLevel.value)
+        assertNull(viewModel.asq.value)
+        assertTrue(viewModel.uiState.value.lines.isEmpty())
+        assertEquals(0, transport.calls)
+        assertEquals(2, safety.events.size)
+        val positive = safety.events.last()
+        assertEquals("asq_positive", positive.trigger)
+        assertEquals(RiskLevel.L3, positive.level)
+        assertNull(positive.patternId)
+        scope.cancel()
+    }
+
+    @Test
+    fun fourNoAnswersOfferOfflineSupportWithoutCallingTheWorkerOrLockingOut() {
+        val transport = QueuedTransport(fixture)
+        val (viewModel, safety, scope) = viewModelWithSafety(transport)
+
+        viewModel.send("aku ingin mati")
+        repeat(4) { viewModel.answerAsq(yes = false) }
+
+        assertNull(viewModel.asq.value)
+        assertNull(viewModel.crisisLevel.value)
+        assertNull("L2 text must never be sent to the Worker", transport.lastPath)
+        assertEquals(1, viewModel.uiState.value.lines.size)
+        assertTrue(viewModel.uiState.value.lines.single().offline)
+        assertTrue(viewModel.uiState.value.asqSupportOffered)
+        assertEquals(CompanionReplyState.Idle, viewModel.uiState.value.replyState)
+        assertEquals(1, safety.events.size)
+        assertEquals("companion_message", safety.events.single().trigger)
+
+        // Chat remains open after a negative screen, and a new ordinary message clears the banner.
+        viewModel.send("A busy day, mostly deadlines")
+        assertEquals("/v1/chat", transport.lastPath)
+        assertFalse(viewModel.uiState.value.asqSupportOffered)
+        assertTrue(viewModel.uiState.value.replyState is CompanionReplyState.Reply)
+        scope.cancel()
+    }
+
+    @Test
+    fun sendsAndModeChangesAreIgnoredWhileAsqIsOpen() {
+        val transport = NeverCalledTransport()
+        val (viewModel, _, scope) = viewModelWithSafety(transport)
+
+        viewModel.send("aku ingin mati")
+        viewModel.selectMode(CompanionSupportMode.NEGATIVE_THOUGHTS)
+        viewModel.send("A busy day")
+
+        assertEquals(CompanionSupportMode.PERSONAL, viewModel.uiState.value.supportMode)
+        assertEquals(AsqFlow.State(), viewModel.asq.value)
+        assertTrue(viewModel.uiState.value.lines.isEmpty())
+        assertEquals(0, transport.calls)
         scope.cancel()
     }
 
@@ -168,7 +248,7 @@ class CompanionViewModelTest {
     }
 
     @Test
-    fun aClassifierThatRaisesTheLevelHalts() {
+    fun aClassifierThatRaisesToL2OpensAsqAndReleasesReplyOnNegativeScreen() {
         val raised = JSONObject(fixture)
             .put("risk_level", JSONObject().put("level", "L2").put("confidence", 0.8))
             .toString()
@@ -176,9 +256,57 @@ class CompanionViewModelTest {
 
         viewModel.send("deadlines everywhere, nothing else")
 
-        assertEquals(RiskLevel.L2, viewModel.crisisLevel.value)
+        assertEquals(AsqFlow.State(), viewModel.asq.value)
+        assertNull(viewModel.crisisLevel.value)
+        assertEquals("reply is held until ASQ finishes", 1, viewModel.uiState.value.lines.size)
         assertEquals(1, safety.events.size)
         assertEquals("companion_classifier", safety.events.single().trigger)
+        assertEquals(RiskLevel.L2, safety.events.single().level)
+
+        repeat(4) { viewModel.answerAsq(yes = false) }
+
+        assertNull(viewModel.asq.value)
+        assertNull(viewModel.crisisLevel.value)
+        assertTrue(viewModel.uiState.value.replyState is CompanionReplyState.Reply)
+        assertTrue(viewModel.uiState.value.asqSupportOffered)
+        assertEquals(2, viewModel.uiState.value.lines.size)
+        scope.cancel()
+    }
+
+    @Test
+    fun aClassifierThatRaisesToL2HaltsAtL3WhenAsqIsPositive() {
+        val raised = JSONObject(fixture)
+            .put("risk_level", JSONObject().put("level", "L2").put("confidence", 0.8))
+            .toString()
+        val (viewModel, safety, scope) = viewModelWithSafety(QueuedTransport(raised))
+
+        viewModel.send("deadlines everywhere, nothing else")
+        viewModel.answerAsq(yes = true)
+        repeat(4) { viewModel.answerAsq(yes = false) }
+
+        assertEquals(RiskLevel.L3, viewModel.crisisLevel.value)
+        assertNull(viewModel.asq.value)
+        assertEquals("held reply must not be added on a positive screen", 1, viewModel.uiState.value.lines.size)
+        assertEquals(2, safety.events.size)
+        assertEquals("companion_classifier", safety.events[0].trigger)
+        assertEquals("asq_positive", safety.events[1].trigger)
+        scope.cancel()
+    }
+
+    @Test
+    fun aClassifierThatRaisesToL3HaltsImmediately() {
+        val raised = JSONObject(fixture)
+            .put("risk_level", JSONObject().put("level", "L3").put("confidence", 0.95))
+            .toString()
+        val (viewModel, safety, scope) = viewModelWithSafety(QueuedTransport(raised))
+
+        viewModel.send("deadlines everywhere, nothing else")
+
+        assertEquals(RiskLevel.L3, viewModel.crisisLevel.value)
+        assertNull(viewModel.asq.value)
+        assertEquals(1, safety.events.size)
+        assertEquals("companion_classifier", safety.events.single().trigger)
+        assertEquals(RiskLevel.L3, safety.events.single().level)
         scope.cancel()
     }
 
