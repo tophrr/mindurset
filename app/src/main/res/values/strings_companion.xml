@@ -11,4 +11,6 @@
     <string name="companion_resources_title">The companion cannot answer right now</string>
     <string name="companion_resources_body">The connection is down, so the model could not check a reply. If this feels heavier than that, you can still reach a person: 119 ext. 8.</string>
     <string name="companion_resources_call">Call 119 ext. 8</string>
+    <string name="companion_asq_resources_title">Support is still one tap away</string>
+    <string name="companion_asq_resources_body">Thank you for answering those questions. You can keep talking slowly here or pause anytime; if things feel heavier later, you can reach a person at 119 ext. 8.</string>
 </resources>

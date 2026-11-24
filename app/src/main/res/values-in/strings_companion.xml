@@ -11,4 +11,6 @@
     <string name="companion_resources_title">Companion belum bisa menjawab sekarang</string>
     <string name="companion_resources_body">Koneksimu terputus, jadi balasan belum bisa diperiksa oleh model. Kalau ini terasa lebih berat dari itu, kamu tetap bisa menghubungi seseorang: 119 ext. 8.</string>
     <string name="companion_resources_call">Telepon 119 ext. 8</string>
+    <string name="companion_asq_resources_title">Bantuan tetap satu ketukan dari sini</string>
+    <string name="companion_asq_resources_body">Terima kasih sudah menjawab pertanyaan tadi. Kamu bisa lanjut pelan-pelan di sini atau berhenti kapan saja; kalau nanti rasanya jadi lebih berat, kamu bisa menghubungi seseorang di 119 ext. 8.</string>
 </resources>
