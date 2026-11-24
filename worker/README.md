@@ -84,7 +84,7 @@ still returns `offline-fallback`.
 | --- | --- |
 | `src/corpus/` | Corpus v1: one markdown file per topic plus `version.json` |
 | `src/retrieval.ts` | Deterministic keyword retrieval, top-k excerpts, real source ids |
-| `src/prompts.ts` | Prompt text at `v1.1.0`, exported with its version string |
+| `src/prompts.ts` | Prompt text at `v1.2.0`, exported with its version string, and the three support modes |
 | `src/guardrails.ts` | Local risk floor, medication/diagnosis/self-harm output checks, crisis copy |
 | `src/model.ts` | `ModelClient` boundary: Workers AI client plus the deterministic local adapter |
 | `src/pipeline.ts` | Orchestration, normalisation into the frozen shape, fallback |

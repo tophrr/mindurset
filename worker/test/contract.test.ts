@@ -65,12 +65,13 @@ describe("mindurset-worker contract stub", () => {
     const known = await worker.fetch(
       new Request("http://stub.test/v1/chat", {
         method: "POST",
-        body: JSON.stringify({ message: "hello", mode: "reflect" }),
+        body: JSON.stringify({ message: "hello", mode: "solve" }),
       }),
     );
     const knownMessage = ((await known.json()) as { message: string }).message;
     expect(knownMessage).not.toContain("mode:");
-    expect(knownMessage).not.toContain("reflect");
+    // The allowlisted mode reaches the prompt only; it never comes back in the copy.
+    expect(knownMessage.toLowerCase()).not.toContain("solve");
 
     const hostile = await worker.fetch(
       new Request("http://stub.test/v1/chat", {

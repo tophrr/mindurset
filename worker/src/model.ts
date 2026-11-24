@@ -102,15 +102,15 @@ function buildLocalDraft(input: PromptInput): Record<string, unknown> | null {
         ? "This session moved through a check-in and a reframe. What stands out is how much room the hard moment took, and that the next step stayed small enough to start."
         : "Sesi ini bergerak dari check-in ke reframe. Yang terlihat adalah seberapa besar ruang yang diambil momen berat itu, dan bahwa langkah berikutnya tetap cukup kecil untuk dimulai.";
     }
-    if (input.mode === "plan") {
+    if (input.mode === "solve") {
       return english
         ? "It sounds like this is taking up a lot of room right now. Pick one small step you can finish in the next few minutes; that is enough to start."
         : "Kedengarannya ini sedang memenuhi banyak ruang sekarang. Pilih satu langkah kecil yang bisa selesai dalam beberapa menit; itu sudah cukup untuk mulai.";
     }
-    if (input.mode === "reflect") {
+    if (input.mode === "distract") {
       return english
-        ? "It sounds like this is taking up a lot of room right now. One hard moment is information about the moment, not a verdict about you."
-        : "Kedengarannya ini sedang memenuhi banyak ruang sekarang. Satu momen berat adalah informasi tentang momen itu, bukan vonis tentang dirimu.";
+        ? "Let us step away from the spiral for a minute. Name five things you can see around you, slowly, out loud if you can."
+        : "Ayo menjauh dari pusaran itu sebentar. Sebutkan lima benda yang bisa kamu lihat di sekitarmu, pelan-pelan, dengan suara keras kalau bisa.";
     }
     return english
       ? "It sounds like this is taking up a lot of room right now. I am here with you; what feels heaviest as you say it out loud?"

@@ -37,6 +37,21 @@ function fakeAI(draft: unknown): Env {
   };
 }
 
+/**
+ * A fake binding that records the messages the pipeline sent, so a test can
+ * assert on the prompt itself rather than on the copy that came back.
+ */
+function capturingAI(draft: unknown, prompts: string[]): Env {
+  return {
+    AI: {
+      run: async (_model, inputs) => {
+        prompts.push(inputs.messages.map((message) => message.content).join("\n---\n"));
+        return { response: JSON.stringify(draft) };
+      },
+    },
+  };
+}
+
 function draftFor(query: string, overrides: Record<string, unknown> = {}): Record<string, unknown> {
   const sourceIds = retrieve(query, 3).map((excerpt) => excerpt.sourceId);
   return {
@@ -239,7 +254,7 @@ describe("pipeline", () => {
   it("returns a schema-valid 200 fallback for every endpoint when the binding is absent", async () => {
     const cases: Array<[string, unknown]> = [
       ["/v1/reframe", { thought: "I am worried about my exam" }],
-      ["/v1/chat", { message: "hello", mode: "reflect" }],
+      ["/v1/chat", { message: "hello", mode: "solve" }],
       ["/v1/summarise", { session_id: "s1" }],
     ];
 
@@ -285,7 +300,7 @@ describe("pipeline", () => {
   it("serves contract-valid local responses for every endpoint", async () => {
     const cases: Array<[string, unknown]> = [
       ["/v1/reframe", { thought: "I am worried about my exam" }],
-      ["/v1/chat", { message: "I am worried about my exam", mode: "reflect" }],
+      ["/v1/chat", { message: "I am worried about my exam", mode: "solve" }],
       ["/v1/summarise", { transcript: "I had a hard exam and opened the outline." }],
     ];
 
@@ -338,11 +353,77 @@ describe("pipeline", () => {
 
   it("wires the chat endpoint to the same pipeline", async () => {
     const query = "I keep thinking I will fail my exam";
-    const res = await post("/v1/chat", { message: query, mode: "reflect" }, fakeAI(draftFor(query)));
+    const res = await post("/v1/chat", { message: query, mode: "solve" }, fakeAI(draftFor(query)));
     const body = (await res.json()) as GenerationResponse;
 
     expect(validate(body)).toBe(true);
     expect(body.model_version).toBe(MODEL_ID);
+  });
+
+  describe("support modes", () => {
+    it("sends the selected mode and its instruction to the model", async () => {
+      const query = "I keep thinking I will fail my exam";
+
+      for (const [mode, marker] of [
+        ["listen", "Listen mode."],
+        ["solve", "Solve mode."],
+        ["distract", "Distract mode."],
+      ] as const) {
+        const prompts: string[] = [];
+        const res = await post(
+          "/v1/chat",
+          { message: query, mode },
+          capturingAI(draftFor(query), prompts),
+        );
+        const prompt = prompts.at(0) ?? "";
+
+        expect(res.status).toBe(200);
+        expect(prompts).toHaveLength(1);
+        expect(prompt).toContain(`Mode: ${mode}`);
+        expect(prompt).toContain(marker);
+      }
+    });
+
+    it("gives each mode a different instruction, not only a different label", async () => {
+      const query = "I keep thinking I will fail my exam";
+      const instructions = new Set<string>();
+
+      for (const mode of ["listen", "solve", "distract"] as const) {
+        const prompts: string[] = [];
+        await post("/v1/chat", { message: query, mode }, capturingAI(draftFor(query), prompts));
+        instructions.add(prompts.at(0) ?? "");
+      }
+
+      expect(instructions.size).toBe(3);
+    });
+
+    it("coerces the retired and unknown modes to listen", async () => {
+      const query = "I keep thinking I will fail my exam";
+
+      for (const mode of ["reflect", "plan", "DISTRACT", 7, null, undefined]) {
+        const prompts: string[] = [];
+        await post("/v1/chat", { message: query, mode }, capturingAI(draftFor(query), prompts));
+
+        expect(prompts[0]).toContain("Mode: listen");
+        expect(prompts[0]).toContain("Listen mode.");
+      }
+    });
+
+    it("serves a distinct local-adapter reply for each mode", async () => {
+      const query = "I keep thinking I will fail my exam";
+      const replies = new Set<string>();
+
+      for (const mode of ["listen", "solve", "distract"] as const) {
+        const res = await post("/v1/chat", { message: query, mode }, { DEV_MODEL: "local" });
+        const body = (await res.json()) as GenerationResponse;
+
+        expect(validate(body)).toBe(true);
+        expect(body.model_version).toBe(LOCAL_MODEL_VERSION);
+        replies.add(body.message);
+      }
+
+      expect(replies.size).toBe(3);
+    });
   });
 
   it("wires the summarise endpoint to the same pipeline", async () => {
