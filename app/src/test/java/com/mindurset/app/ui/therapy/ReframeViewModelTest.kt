@@ -1,5 +1,7 @@
 package com.mindurset.app.ui.therapy
 
+import com.mindurset.app.data.remote.GenerationClient
+import com.mindurset.app.data.remote.GenerationTransport
 import com.mindurset.app.domain.model.MicroAction
 import com.mindurset.app.domain.model.ReframeSession
 import com.mindurset.app.domain.model.SessionInfo
@@ -17,10 +19,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.IOException
 
 class ReframeViewModelTest {
     private val sessions = FakeSessionRepository()
@@ -132,10 +137,65 @@ class ReframeViewModelTest {
         assertEquals("I passed before", viewModel.state.value.evidence)
     }
 
-    private fun viewModel(): ReframeViewModel = ReframeViewModel(
+    @Test
+    fun `a grounded answer offers two readings and records their versions`() {
+        val transport = FakeTransport(GENERATED)
+        val viewModel = viewModel(transport)
+
+        viewModel.setThought("I will fail no matter what")
+        viewModel.next()
+
+        assertEquals("/v1/reframe", transport.paths.single())
+        assertEquals("I will fail no matter what", JSONObject(transport.bodies.single()).getString("thought"))
+        assertTrue(viewModel.state.value.generated)
+        assertEquals("all-or-nothing thinking", viewModel.state.value.distortion)
+        assertEquals(2, viewModel.state.value.perspectives.size)
+        assertEquals(listOf("who-stress-01#p3"), viewModel.state.value.sources)
+
+        val stored = sessions.messages.single { it.role == ReframeViewModel.ROLE_GENERATION }
+        assertEquals("v1.1.0", stored.promptVersion)
+        assertEquals("test-model", stored.modelVersion)
+    }
+
+    @Test
+    fun `choosing a reading fills the fairer version`() {
+        val viewModel = viewModel(FakeTransport(GENERATED))
+        viewModel.setThought("I will fail no matter what")
+        viewModel.next()
+
+        viewModel.choosePerspective(1)
+
+        assertEquals(viewModel.state.value.perspectives[1], viewModel.state.value.alternative)
+    }
+
+    @Test
+    fun `the suggested action prefills the last step`() {
+        val viewModel = viewModel(FakeTransport(GENERATED))
+        viewModel.setThought("I will fail no matter what")
+        viewModel.next()
+
+        assertEquals("Open the exam outline for ten minutes", viewModel.state.value.actionTitle)
+        assertEquals(10, viewModel.state.value.minutes)
+    }
+
+    @Test
+    fun `a failed answer leaves the session on the offline path`() {
+        val viewModel = viewModel(FailingTransport())
+
+        viewModel.setThought("I will fail no matter what")
+        viewModel.next()
+
+        assertEquals(1, viewModel.state.value.step)
+        assertFalse(viewModel.state.value.generated)
+        assertTrue(viewModel.state.value.perspectives.isEmpty())
+        assertEquals(listOf("thought"), sessions.messages.map { it.role })
+    }
+
+    private fun viewModel(transport: GenerationTransport? = null): ReframeViewModel = ReframeViewModel(
         sessions = sessions,
         actions = actions,
         sessionStore = FixedSessionStore(SessionInfo("u1", "guest@local")),
+        generation = transport?.let { GenerationClient("http://worker.test", it) },
         now = { 1_700_000_002_000 },
         newId = { "id-${sessions.messages.size}" },
         externalScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),
@@ -209,4 +269,35 @@ private class FixedSessionStore(initial: SessionInfo?) : SessionStore {
     override suspend fun signOut() {
         state.value = null
     }
+}
+
+private const val GENERATED = """
+{
+  "message": "You wrote that you will fail no matter what. That reads like all-or-nothing thinking.",
+  "distortion": "all-or-nothing thinking",
+  "perspectives": [
+    "You passed other exams after bad weeks.",
+    "One paper is not the degree."
+  ],
+  "micro_action": { "title": "Open the exam outline for ten minutes", "minutes": 10 },
+  "source_ids": ["who-stress-01#p3"],
+  "risk_level": { "level": "L0", "confidence": 0.9 },
+  "prompt_version": "v1.1.0",
+  "model_version": "test-model"
+}
+"""
+
+private class FakeTransport(private val response: String) : GenerationTransport {
+    val paths = mutableListOf<String>()
+    val bodies = mutableListOf<String>()
+
+    override suspend fun post(path: String, body: String): String {
+        paths += path
+        bodies += body
+        return response
+    }
+}
+
+private class FailingTransport : GenerationTransport {
+    override suspend fun post(path: String, body: String): String = throw IOException("worker unreachable")
 }
