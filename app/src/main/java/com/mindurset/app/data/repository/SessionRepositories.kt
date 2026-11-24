@@ -138,6 +138,8 @@ private fun SessionMessage.toEntity() = SessionMessageEntity(
     content = content,
     sequence = sequence,
     createdAt = createdAt,
+    promptVersion = promptVersion,
+    modelVersion = modelVersion,
 )
 
 private fun SessionMessageEntity.toModel() = SessionMessage(
@@ -147,6 +149,8 @@ private fun SessionMessageEntity.toModel() = SessionMessage(
     content = content,
     sequence = sequence,
     createdAt = createdAt,
+    promptVersion = promptVersion,
+    modelVersion = modelVersion,
 )
 
 private fun MicroAction.toEntity() = MicroActionEntity(

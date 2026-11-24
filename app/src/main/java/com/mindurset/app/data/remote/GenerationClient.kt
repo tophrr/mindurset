@@ -36,7 +36,7 @@ class GenerationClient(
 
     /**
      * Step one of the reframe: the Worker names the thinking pattern and offers readings to choose
-     * between. The request field is `thought`, which is what the Worker reads for this route.
+     * between. The request field is `thought`, which is what `readUserText` reads for this route.
      */
     suspend fun reframe(thought: String, context: String? = null): GenerationResponse {
         require(thought.isNotBlank()) { "thought must not be blank" }

@@ -26,4 +26,9 @@
     <string name="reframe_offline_note">Latihan tetap dari aplikasi. Tidak dipersonalisasi, dan tidak dihasilkan model.</string>
     <string name="reframe_saved_done">Selesai</string>
     <string name="therapy_start_reframe">Mulai reframe tiga langkah</string>
+    <string name="reframe_generating">Mencari bacaan yang lebih adil…</string>
+    <string name="reframe_grounded_label">Jawaban bersumber</string>
+    <string name="reframe_based_on">Berdasarkan: %1$s</string>
+    <string name="reframe_distortion">Polanya: %1$s</string>
+    <string name="reframe_perspectives_title">Dua bacaan, pilih satu</string>
 </resources>
