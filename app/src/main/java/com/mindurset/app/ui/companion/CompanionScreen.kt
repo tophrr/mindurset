@@ -2,6 +2,7 @@ package com.mindurset.app.ui.companion
 
 import android.content.Intent
 import android.net.Uri
+import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -45,6 +46,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -61,6 +63,7 @@ import com.mindurset.app.ui.common.AppCard
 import com.mindurset.app.ui.common.CircleIconButton
 import com.mindurset.app.ui.common.FloatingNavSpace
 import com.mindurset.app.ui.profile.MindTopBar
+import com.mindurset.app.ui.safety.AsqPanel
 import com.mindurset.app.ui.theme.AppIcons
 import com.mindurset.app.ui.theme.CanvasBlue
 import com.mindurset.app.ui.theme.MutedGray
@@ -81,9 +84,11 @@ fun CompanionScreen(onOpenDrawer: () -> Unit, onCrisis: (RiskLevel) -> Unit = {}
     }
     val state by vm.uiState.collectAsStateWithLifecycle()
     val crisis by vm.crisisLevel.collectAsStateWithLifecycle()
+    val asq by vm.asq.collectAsStateWithLifecycle()
     var draft by remember { mutableStateOf("") }
     val scrollState = rememberScrollState()
     val keyboardUp = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     // Clear the flag before navigating: coming back must not push the crisis card a second time.
     LaunchedEffect(crisis) {
@@ -92,7 +97,11 @@ fun CompanionScreen(onOpenDrawer: () -> Unit, onCrisis: (RiskLevel) -> Unit = {}
         onCrisis(level)
     }
 
-    LaunchedEffect(state.lines.size, state.replyState) {
+    LaunchedEffect(asq != null) {
+        if (asq != null) keyboardController?.hide()
+    }
+
+    LaunchedEffect(state.lines.size, state.replyState, state.resourcesOffered, state.asqSupportOffered) {
         if (state.lines.isNotEmpty() || state.replyState == CompanionReplyState.Sending) {
             scrollState.animateScrollTo(scrollState.maxValue)
         }
@@ -100,7 +109,7 @@ fun CompanionScreen(onOpenDrawer: () -> Unit, onCrisis: (RiskLevel) -> Unit = {}
 
     fun sendDraft() {
         val text = draft.trim()
-        if (text.isBlank() || state.replyState == CompanionReplyState.Sending) return
+        if (text.isBlank() || state.replyState == CompanionReplyState.Sending || asq != null) return
         // The ViewModel runs the local floor first, so this only forwards a line that passed it.
         vm.send(text)
         draft = ""
@@ -126,6 +135,11 @@ fun CompanionScreen(onOpenDrawer: () -> Unit, onCrisis: (RiskLevel) -> Unit = {}
                 .imePadding()
                 .padding(top = 10.dp, bottom = if (keyboardUp) 16.dp else FloatingNavSpace + 26.dp),
         ) {
+            val asqState = asq
+            if (asqState != null) {
+                AsqPanel(state = asqState, onAnswer = vm::answerAsq)
+                return@Column
+            }
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -218,7 +232,15 @@ fun CompanionScreen(onOpenDrawer: () -> Unit, onCrisis: (RiskLevel) -> Unit = {}
                 }
 
                 if (state.resourcesOffered) {
-                    ResourcesCard()
+                    ResourcesCard(
+                        titleRes = R.string.companion_resources_title,
+                        bodyRes = R.string.companion_resources_body,
+                    )
+                } else if (state.asqSupportOffered) {
+                    ResourcesCard(
+                        titleRes = R.string.companion_asq_resources_title,
+                        bodyRes = R.string.companion_asq_resources_body,
+                    )
                 }
                 Spacer(Modifier.height(8.dp))
             }
@@ -368,22 +390,22 @@ private fun SendButton(enabled: Boolean, onClick: () -> Unit, contentDescription
 }
 
 /**
- * The L1 affordance: the Worker could not be reached, so the level went up one tier. It is not the
- * crisis card — the floor saw nothing — but the offline copy should not be the last word either.
+ * Optional helpline banner, used when a connection outage escalates to L1 or after a negative ASQ
+ * screen so support stays one tap away without locking the chat.
  */
 @Composable
-private fun ResourcesCard() {
+private fun ResourcesCard(@StringRes titleRes: Int, @StringRes bodyRes: Int) {
     val context = LocalContext.current
     AppCard {
         Text(
-            text = stringResource(R.string.companion_resources_title),
+            text = stringResource(titleRes),
             color = NavyInk,
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
         )
         Spacer(Modifier.height(4.dp))
         Text(
-            text = stringResource(R.string.companion_resources_body),
+            text = stringResource(bodyRes),
             color = MutedGray,
             fontSize = 12.sp,
             lineHeight = 17.sp,
