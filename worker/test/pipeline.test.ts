@@ -424,6 +424,23 @@ describe("pipeline", () => {
 
       expect(replies.size).toBe(3);
     });
+
+    it("makes distract redirect attention instead of analysing the thought", async () => {
+      const query = "I keep thinking I will fail my exam";
+
+      const distract = await post(
+        "/v1/chat",
+        { message: query, mode: "distract" },
+        { DEV_MODEL: "local" },
+      );
+      const distractBody = (await distract.json()) as GenerationResponse;
+
+      // The grounding prompt asks the person to look outward, and it does not
+      // interrogate the thought the way listen and solve do.
+      expect(distractBody.message.toLowerCase()).toContain("five things");
+      expect(distractBody.message).not.toContain("?");
+      expect(distractBody.message).not.toContain("Pick one small step");
+    });
   });
 
   it("wires the summarise endpoint to the same pipeline", async () => {
