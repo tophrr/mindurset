@@ -47,6 +47,9 @@ class SessionRepositoryImpl(private val sessionDao: ReframeSessionDao, private v
 
     override suspend fun findById(id: String): ReframeSession? = sessionDao.findById(id)?.toModel()
 
+    override suspend fun latestCompleted(userId: String): ReframeSession? =
+        sessionDao.latestCompleted(userId)?.toModel()
+
     override suspend fun save(session: ReframeSession) {
         sessionDao.upsert(session.toEntity(session.startedAt))
     }
@@ -135,6 +138,8 @@ private fun SessionMessage.toEntity() = SessionMessageEntity(
     content = content,
     sequence = sequence,
     createdAt = createdAt,
+    promptVersion = promptVersion,
+    modelVersion = modelVersion,
 )
 
 private fun SessionMessageEntity.toModel() = SessionMessage(
@@ -144,6 +149,8 @@ private fun SessionMessageEntity.toModel() = SessionMessage(
     content = content,
     sequence = sequence,
     createdAt = createdAt,
+    promptVersion = promptVersion,
+    modelVersion = modelVersion,
 )
 
 private fun MicroAction.toEntity() = MicroActionEntity(

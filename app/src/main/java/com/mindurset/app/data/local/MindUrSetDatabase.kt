@@ -19,7 +19,7 @@ import androidx.room.RoomDatabase
         TrustedContactEntity::class,
         ConsentRecordEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class MindUrSetDatabase : RoomDatabase() {
@@ -50,7 +50,7 @@ abstract class MindUrSetDatabase : RoomDatabase() {
 
         fun build(context: Context): MindUrSetDatabase =
             Room.databaseBuilder(context.applicationContext, MindUrSetDatabase::class.java, NAME)
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
     }
 }

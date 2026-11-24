@@ -33,4 +33,6 @@ data class CompanionUiState(
     val replyState: CompanionReplyState = CompanionReplyState.Idle,
     /** Set when the Worker could not be reached and the level was raised a tier (L1). */
     val resourcesOffered: Boolean = false,
+    /** Set after a negative ASQ screen so the helpline stays one tap away without a lockout. */
+    val asqSupportOffered: Boolean = false,
 )

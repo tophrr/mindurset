@@ -17,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -48,6 +49,8 @@ fun ReframeScreen(onBack: () -> Unit, onFinished: () -> Unit) {
             sessions = container.sessionRepository,
             actions = container.microActionRepository,
             sessionStore = container.sessionStore,
+            generation = container.generationClient,
+            summaryScheduler = container.summaryWorker,
         )
     }
     val state by vm.state.collectAsStateWithLifecycle()
@@ -89,20 +92,63 @@ fun ReframeScreen(onBack: () -> Unit, onFinished: () -> Unit) {
                 color = MutedGray,
             )
 
-            Text(
-                text = stringResource(R.string.reframe_offline_label),
-                style = MaterialTheme.typography.labelSmall,
-                color = NavyInk,
-                modifier =
-                Modifier
-                    .background(PaleBlue, RoundedCornerShape(8.dp))
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-            )
-            Text(
-                text = stringResource(R.string.reframe_offline_note),
-                style = MaterialTheme.typography.bodySmall,
-                color = MutedGray,
-            )
+            when {
+                state.generating -> {
+                    Text(
+                        text = stringResource(R.string.reframe_generating),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = NavyInk,
+                        modifier =
+                        Modifier
+                            .background(PaleBlue, RoundedCornerShape(8.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                    )
+                }
+
+                state.generated -> {
+                    Text(
+                        text = stringResource(R.string.reframe_grounded_label),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = NavyInk,
+                        modifier =
+                        Modifier
+                            .background(PaleBlue, RoundedCornerShape(8.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                    )
+                    state.sources.firstOrNull()?.let { source ->
+                        Text(
+                            text = stringResource(R.string.reframe_based_on, moduleTitle(source)),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MutedGray,
+                        )
+                    }
+                }
+
+                else -> {
+                    Text(
+                        text = stringResource(R.string.reframe_offline_label),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = NavyInk,
+                        modifier =
+                        Modifier
+                            .background(PaleBlue, RoundedCornerShape(8.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                    )
+                    Text(
+                        text = stringResource(R.string.reframe_offline_note),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MutedGray,
+                    )
+                }
+            }
+
+            if (state.distortion.isNotBlank()) {
+                Text(
+                    text = stringResource(R.string.reframe_distortion, state.distortion),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = NavyInk,
+                )
+            }
 
             when (state.step) {
                 0 ->
@@ -121,13 +167,41 @@ fun ReframeScreen(onBack: () -> Unit, onFinished: () -> Unit) {
                         onValueChange = vm::setEvidence,
                     )
 
-                2 ->
-                    StepField(
-                        title = stringResource(R.string.reframe_step3_title),
-                        hint = stringResource(R.string.reframe_step3_hint),
-                        value = state.alternative,
-                        onValueChange = vm::setAlternative,
-                    )
+                2 -> {
+                    if (state.perspectives.isNotEmpty()) {
+                        Text(
+                            text = stringResource(R.string.reframe_perspectives_title),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = NavyInk,
+                        )
+                        Text(
+                            text = stringResource(R.string.reframe_step3_hint),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MutedGray,
+                        )
+                        state.perspectives.forEachIndexed { index, perspective ->
+                            val chosen = state.alternative == perspective
+                            OutlinedButton(
+                                onClick = { vm.choosePerspective(index) },
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Text(
+                                    text = perspective,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (chosen) NavyInk else MutedGray,
+                                )
+                            }
+                        }
+                    } else {
+                        StepField(
+                            title = stringResource(R.string.reframe_step3_title),
+                            hint = stringResource(R.string.reframe_step3_hint),
+                            value = state.alternative,
+                            onValueChange = vm::setAlternative,
+                        )
+                    }
+                }
 
                 else -> {
                     Text(
@@ -244,4 +318,14 @@ private fun FinishedCard(onFinished: () -> Unit) {
     ) {
         Text(stringResource(R.string.reframe_saved_done))
     }
+}
+
+/**
+ * A corpus identifier such as `stress#what-stress-does-to-a-body` turned into the module name a
+ * reader can recognise. The Worker cites sections, not titles, so the part before the hash is the
+ * most honest label available without changing the frozen contract.
+ */
+internal fun moduleTitle(sourceId: String): String {
+    val module = sourceId.substringBefore('#').replace('-', ' ')
+    return module.replaceFirstChar { it.uppercase() }
 }

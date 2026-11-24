@@ -8,6 +8,7 @@ import com.mindurset.app.domain.model.ReframeSession
 import com.mindurset.app.domain.model.SafetyEvent
 import com.mindurset.app.domain.model.SessionInfo
 import com.mindurset.app.domain.model.SessionMessage
+import com.mindurset.app.domain.model.SessionSummary
 import com.mindurset.app.domain.model.TrustedContact
 import com.mindurset.app.domain.model.UserAccount
 import com.mindurset.app.domain.model.UserProfile
@@ -70,6 +71,9 @@ interface PreferencesStore {
     val reminderHour: Flow<Int>
     val language: Flow<String>
     val theme: Flow<String>
+    val memoryEnabled: Flow<Boolean>
+
+    fun memoryNote(userId: String): Flow<String>
 
     suspend fun setReminderEnabled(enabled: Boolean)
 
@@ -78,6 +82,10 @@ interface PreferencesStore {
     suspend fun setLanguage(language: String)
 
     suspend fun setTheme(theme: String)
+
+    suspend fun setMemoryEnabled(enabled: Boolean)
+
+    suspend fun setMemoryNote(userId: String, note: String)
 }
 
 /** A reframe session and its messages. Steps run 0..2, step 3 means completed. */
@@ -87,6 +95,8 @@ interface SessionRepository {
     suspend fun findActive(userId: String): ReframeSession?
 
     suspend fun findById(id: String): ReframeSession?
+
+    suspend fun latestCompleted(userId: String): ReframeSession? = null
 
     suspend fun save(session: ReframeSession)
 
@@ -135,4 +145,34 @@ interface TrustedContactRepository {
     suspend fun upsert(contact: TrustedContact)
 
     suspend fun delete(id: String)
+}
+
+/**
+ * Layer 2 of contextual memory (proposal Sec. 9.3): up to three user-visible session summaries
+ * kept locally, automatically trimmed and purged on retention expiry.
+ */
+interface SessionSummaryRepository {
+    fun observe(userId: String): Flow<List<SessionSummary>>
+
+    suspend fun latest(userId: String, now: Long): List<SessionSummary>
+
+    suspend fun saveAndTrim(summary: SessionSummary, now: Long)
+
+    suspend fun updateText(id: String, summary: String)
+
+    suspend fun delete(id: String)
+
+    suspend fun deleteAll(userId: String)
+
+    suspend fun purgeExpired(now: Long)
+}
+
+/** Assembles the compact three-layer memory string for generation prompts, or null when off. */
+interface MemoryContextProvider {
+    suspend fun contextFor(userId: String): String?
+}
+
+/** Schedules background session summarisation when a reframe or companion session closes. */
+interface SessionSummaryScheduler {
+    fun enqueue(userId: String, sessionId: String, transcript: List<String>)
 }

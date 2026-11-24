@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -362,7 +363,7 @@ fun ProfileEditScreen(onSaved: () -> Unit, onBack: () -> Unit) {
 // ---------------------------------------------------------------------------
 
 @Composable
-fun SettingsScreen(onBack: () -> Unit, onDataConsent: () -> Unit = onBack) {
+fun SettingsScreen(onBack: () -> Unit, onDataConsent: () -> Unit = onBack, onOpenMemory: () -> Unit = {}) {
     val container = LocalAppContainer.current
     val vm: SettingsViewModel = viewModel { SettingsViewModel(container.preferencesStore) }
     val state by vm.uiState.collectAsStateWithLifecycle()
@@ -404,16 +405,7 @@ fun SettingsScreen(onBack: () -> Unit, onDataConsent: () -> Unit = onBack) {
                         Switch(
                             checked = state.reminderEnabled,
                             onCheckedChange = vm::setReminderEnabled,
-                            // The default off state sat on a near-white track, so it had no
-                            // contrast against the white card; give both states real colours.
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = SurfaceWhite,
-                                checkedTrackColor = NavyDeep,
-                                checkedBorderColor = NavyDeep,
-                                uncheckedThumbColor = SurfaceWhite,
-                                uncheckedTrackColor = MutedGray.copy(alpha = 0.55f),
-                                uncheckedBorderColor = MutedGray,
-                            ),
+                            colors = appSwitchColors(),
                         )
                     }
                     Text(
@@ -438,6 +430,50 @@ fun SettingsScreen(onBack: () -> Unit, onDataConsent: () -> Unit = onBack) {
                             text = stringResource(R.string.profile_time_value, state.reminderHour),
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+
+                SettingsSection(title = stringResource(R.string.settings_memory_section)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.settings_memory_enabled),
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = NavyInk,
+                        )
+                        Switch(
+                            checked = state.memoryEnabled,
+                            onCheckedChange = vm::setMemoryEnabled,
+                            colors = appSwitchColors(),
+                        )
+                    }
+                    Text(
+                        text = stringResource(R.string.settings_memory_note),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MutedGray,
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onOpenMemory() }
+                            .padding(vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.settings_memory_manage),
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = NavyDeep,
+                            fontWeight = FontWeight.Medium,
+                        )
+                        Icon(
+                            imageVector = AppIcons.ChevronRight,
+                            contentDescription = null,
+                            tint = MutedGray,
                         )
                     }
                 }
@@ -486,6 +522,16 @@ fun SettingsScreen(onBack: () -> Unit, onDataConsent: () -> Unit = onBack) {
         )
     }
 }
+
+@Composable
+private fun appSwitchColors() = SwitchDefaults.colors(
+    checkedThumbColor = SurfaceWhite,
+    checkedTrackColor = NavyDeep,
+    checkedBorderColor = NavyDeep,
+    uncheckedThumbColor = SurfaceWhite,
+    uncheckedTrackColor = MutedGray.copy(alpha = 0.55f),
+    uncheckedBorderColor = MutedGray,
+)
 
 @Composable
 private fun SettingsSection(title: String, content: @Composable () -> Unit) {

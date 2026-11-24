@@ -2,12 +2,14 @@ package com.mindurset.app.ui.therapy
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mindurset.app.data.remote.GenerationClient
 import com.mindurset.app.domain.model.MicroAction
 import com.mindurset.app.domain.model.ReframeSession
 import com.mindurset.app.domain.model.SessionMessage
 import com.mindurset.app.domain.repository.MicroActionRepository
 import com.mindurset.app.domain.repository.SessionRepository
 import com.mindurset.app.domain.repository.SessionStore
+import com.mindurset.app.domain.repository.SessionSummaryScheduler
 import com.mindurset.app.domain.usecase.ReframeStateMachine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.IOException
 import java.util.UUID
 
 /**
@@ -24,11 +27,18 @@ import java.util.UUID
  * killing the process in the middle of step two resumes at step two instead of starting over. The
  * last step turns into one [MicroAction], which is the point of the exercise: leave with something
  * small to do.
+ *
+ * When a [GenerationClient] is present, the first step is sent to `/v1/reframe` and the answer
+ * enriches the rest of the session: the pattern it names, two readings to choose between, and a
+ * suggested action. A failed or ungrounded answer is not an error the person has to fix. The
+ * session simply continues as the offline exercise, which is the same three fields as before.
  */
 class ReframeViewModel(
     private val sessions: SessionRepository,
     private val actions: MicroActionRepository,
     private val sessionStore: SessionStore,
+    private val generation: GenerationClient? = null,
+    private val summaryScheduler: SessionSummaryScheduler? = null,
     private val now: () -> Long = System::currentTimeMillis,
     private val newId: () -> String = { UUID.randomUUID().toString() },
     externalScope: CoroutineScope? = null,
@@ -42,6 +52,16 @@ class ReframeViewModel(
         val minutes: Int = 2,
         val error: Error? = null,
         val finished: Boolean = false,
+        /** True while the Worker is being asked for a reading. */
+        val generating: Boolean = false,
+        /** True once a grounded answer arrived; the screen then stops calling itself offline. */
+        val generated: Boolean = false,
+        /** The thinking pattern the Worker named, in the person's own language. */
+        val distortion: String = "",
+        /** Two readings to choose between, or empty on the offline path. */
+        val perspectives: List<String> = emptyList(),
+        /** Corpus identifiers behind the answer, shown as "based on". */
+        val sources: List<String> = emptyList(),
     )
 
     enum class Error { ThoughtRequired, EvidenceRequired, AlternativeRequired, ActionRequired }
@@ -65,6 +85,12 @@ class ReframeViewModel(
     fun setAction(value: String) = _state.update { it.copy(actionTitle = value, error = null) }
 
     fun setMinutes(value: Int) = _state.update { it.copy(minutes = value.coerceIn(1, MAX_MINUTES)) }
+
+    /** Picks one of the readings the Worker offered; the text stays editable afterwards. */
+    fun choosePerspective(index: Int) {
+        val option = _state.value.perspectives.getOrNull(index) ?: return
+        _state.update { it.copy(alternative = option, error = null) }
+    }
 
     /** Advances one step, saving the answer and the step counter. */
     fun next() {
@@ -100,6 +126,7 @@ class ReframeViewModel(
                 ),
             )
             _state.update { it.copy(step = next.currentStep, error = null) }
+            if (current.step == 0) requestGeneration(answer, session.id)
         }
     }
 
@@ -113,6 +140,7 @@ class ReframeViewModel(
         scope.launch {
             val userId = sessionStore.current()?.userId ?: return@launch
             val at = now()
+            val sid = sessionId ?: newId()
             actions.add(
                 MicroAction(
                     id = newId(),
@@ -126,7 +154,60 @@ class ReframeViewModel(
                     completedAt = null,
                 ),
             )
+            val transcript = listOf(
+                current.thought.trim(),
+                current.evidence.trim(),
+                current.alternative.trim(),
+                current.actionTitle.trim(),
+            ).filter { it.isNotEmpty() }
+            if (transcript.isNotEmpty()) {
+                summaryScheduler?.enqueue(userId = userId, sessionId = sid, transcript = transcript)
+            }
             _state.update { it.copy(finished = true, error = null) }
+        }
+    }
+
+    /**
+     * Asks the Worker for a reading of the thought. Any failure, including an answer that cites no
+     * source, leaves the session on the offline path instead of turning the screen into an error.
+     */
+    private suspend fun requestGeneration(thought: String, sessionId: String) {
+        val client = generation ?: return
+        _state.update { it.copy(generating = true) }
+        try {
+            val response = client.reframe(thought)
+            val persisted =
+                buildString {
+                    appendLine(response.distortion)
+                    response.perspectives.forEach { appendLine(it) }
+                }
+            sessions.appendMessage(
+                SessionMessage(
+                    id = newId(),
+                    sessionId = sessionId,
+                    role = ROLE_GENERATION,
+                    content = persisted.trim(),
+                    sequence = GENERATION_SEQUENCE,
+                    createdAt = now(),
+                    promptVersion = response.promptVersion,
+                    modelVersion = response.modelVersion,
+                ),
+            )
+            _state.update {
+                it.copy(
+                    generating = false,
+                    generated = true,
+                    distortion = response.distortion,
+                    perspectives = response.perspectives.take(MAX_PERSPECTIVES),
+                    sources = response.sourceIds,
+                    minutes = response.microAction.minutes.coerceIn(1, MAX_MINUTES),
+                    actionTitle = it.actionTitle.ifBlank { response.microAction.title },
+                )
+            }
+        } catch (failure: IOException) {
+            _state.update { it.copy(generating = false, generated = false) }
+        } catch (failure: IllegalArgumentException) {
+            _state.update { it.copy(generating = false, generated = false) }
         }
     }
 
@@ -136,12 +217,17 @@ class ReframeViewModel(
         sessionId = active.id
         val messages = sessions.messages(active.id)
         fun content(role: String) = messages.firstOrNull { it.role == role }?.content.orEmpty()
+        val generationRow = messages.firstOrNull { it.role == ROLE_GENERATION }
+        val lines = generationRow?.content?.lines()?.filter { it.isNotBlank() }.orEmpty()
         _state.value =
             State(
                 step = active.currentStep.coerceIn(0, LAST_INPUT_STEP),
                 thought = content(ROLE_THOUGHT),
                 evidence = content(ROLE_EVIDENCE),
                 alternative = content(ROLE_ALTERNATIVE),
+                generated = generationRow != null,
+                distortion = lines.firstOrNull().orEmpty(),
+                perspectives = lines.drop(1),
             )
     }
 
@@ -184,8 +270,13 @@ class ReframeViewModel(
         /** Steps 0, 1 and 2 collect text; step 3 is the closing card. */
         const val LAST_INPUT_STEP = 2
         const val MAX_MINUTES = 15
+        const val MAX_PERSPECTIVES = 2
         const val ROLE_THOUGHT = "thought"
         const val ROLE_EVIDENCE = "evidence"
         const val ROLE_ALTERNATIVE = "alternative"
+        const val ROLE_GENERATION = "generation"
+
+        /** Sorts before the first answer so the stored transcript still reads in order. */
+        const val GENERATION_SEQUENCE = -1
     }
 }

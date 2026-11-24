@@ -44,6 +44,9 @@ data class SessionMessage(
     val content: String,
     val sequence: Int,
     val createdAt: Long,
+    /** Which prompt and model produced this row; null for anything the person typed. */
+    val promptVersion: String? = null,
+    val modelVersion: String? = null,
 )
 
 data class MicroAction(
