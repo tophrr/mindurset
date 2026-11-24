@@ -9,6 +9,7 @@ import com.mindurset.app.domain.model.SessionMessage
 import com.mindurset.app.domain.repository.MicroActionRepository
 import com.mindurset.app.domain.repository.SessionRepository
 import com.mindurset.app.domain.repository.SessionStore
+import com.mindurset.app.domain.repository.SessionSummaryScheduler
 import com.mindurset.app.domain.usecase.ReframeStateMachine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +38,7 @@ class ReframeViewModel(
     private val actions: MicroActionRepository,
     private val sessionStore: SessionStore,
     private val generation: GenerationClient? = null,
+    private val summaryScheduler: SessionSummaryScheduler? = null,
     private val now: () -> Long = System::currentTimeMillis,
     private val newId: () -> String = { UUID.randomUUID().toString() },
     externalScope: CoroutineScope? = null,
@@ -138,6 +140,7 @@ class ReframeViewModel(
         scope.launch {
             val userId = sessionStore.current()?.userId ?: return@launch
             val at = now()
+            val sid = sessionId ?: newId()
             actions.add(
                 MicroAction(
                     id = newId(),
@@ -151,6 +154,15 @@ class ReframeViewModel(
                     completedAt = null,
                 ),
             )
+            val transcript = listOf(
+                current.thought.trim(),
+                current.evidence.trim(),
+                current.alternative.trim(),
+                current.actionTitle.trim(),
+            ).filter { it.isNotEmpty() }
+            if (transcript.isNotEmpty()) {
+                summaryScheduler?.enqueue(userId = userId, sessionId = sid, transcript = transcript)
+            }
             _state.update { it.copy(finished = true, error = null) }
         }
     }

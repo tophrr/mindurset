@@ -2,6 +2,7 @@ package com.mindurset.app.data.remote
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.IOException
@@ -20,10 +21,16 @@ class GenerationClient(
     private val baseUrl: String,
     private val transport: GenerationTransport = HttpGenerationTransport(baseUrl),
 ) {
-    suspend fun reply(message: String, mode: String): GenerationResponse {
+    suspend fun reply(message: String, mode: String, context: String? = null): GenerationResponse {
         require(message.isNotBlank()) { "message must not be blank" }
         require(mode in MODES) { "mode is outside the chat contract" }
-        val request = JSONObject().put("message", message).put("mode", mode).toString()
+        val request = JSONObject()
+            .put("message", message)
+            .put("mode", mode)
+            .apply {
+                if (!context.isNullOrBlank()) put("context", context.trim())
+            }
+            .toString()
         return grounded("/v1/chat", request)
     }
 
@@ -31,14 +38,36 @@ class GenerationClient(
      * Step one of the reframe: the Worker names the thinking pattern and offers readings to choose
      * between. The request field is `thought`, which is what `readUserText` reads for this route.
      */
-    suspend fun reframe(thought: String): GenerationResponse {
+    suspend fun reframe(thought: String, context: String? = null): GenerationResponse {
         require(thought.isNotBlank()) { "thought must not be blank" }
-        val request = JSONObject().put("thought", thought).toString()
+        val request = JSONObject()
+            .put("thought", thought)
+            .apply {
+                if (!context.isNullOrBlank()) put("context", context.trim())
+            }
+            .toString()
         return grounded("/v1/reframe", request)
     }
 
+    /**
+     * Summarises a finished reframe or companion transcript via `/v1/summarise`. Offline or
+     * ungrounded responses throw so the client never stores canned copy as session memory.
+     */
+    suspend fun summarise(transcript: List<String>, notes: String? = null): GenerationResponse {
+        val lines = transcript.map { it.trim() }.filter { it.isNotEmpty() }
+        val cleanNotes = notes?.trim()?.takeIf { it.isNotEmpty() }
+        require(lines.isNotEmpty() || cleanNotes != null) { "transcript or notes must not be empty" }
+        val request = JSONObject()
+            .apply {
+                if (lines.isNotEmpty()) put("transcript", JSONArray(lines))
+                if (cleanNotes != null) put("notes", cleanNotes)
+            }
+            .toString()
+        return grounded("/v1/summarise", request)
+    }
+
     private suspend fun grounded(path: String, request: String): GenerationResponse {
-        // A build without an endpoint never sends the text: the screen shows the offline exercise
+        // A build without an endpoint never sends the line: the screen shows the offline exercise
         // instead. This is what keeps a debug-only address out of a shipped APK.
         if (baseUrl.isBlank()) throw IOException("no generation endpoint is configured in this build")
         val response = GenerationResponseParser.parse(transport.post(path, request))

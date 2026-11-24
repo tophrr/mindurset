@@ -4,6 +4,7 @@ import com.mindurset.app.data.local.AccountDao
 import com.mindurset.app.data.local.CheckInDao
 import com.mindurset.app.data.local.JournalDao
 import com.mindurset.app.data.local.ProfileDao
+import com.mindurset.app.data.local.SessionSummaryDao
 import com.mindurset.app.data.local.UserAccountEntity
 import com.mindurset.app.data.local.UserProfileEntity
 import com.mindurset.app.domain.auth.PasswordHasher
@@ -16,6 +17,7 @@ class AuthRepositoryImpl(
     private val profileDao: ProfileDao,
     private val journalDao: JournalDao,
     private val checkInDao: CheckInDao,
+    private val sessionSummaryDao: SessionSummaryDao? = null,
     private val now: () -> Long = System::currentTimeMillis,
 ) : AuthRepository {
     override suspend fun findAccount(email: String): UserAccount? =
@@ -50,6 +52,7 @@ class AuthRepositoryImpl(
     }
 
     override suspend fun deleteAccount(userId: String) {
+        sessionSummaryDao?.deleteForUser(userId)
         journalDao.deleteForUser(userId)
         checkInDao.deleteForUser(userId)
         profileDao.delete(userId)

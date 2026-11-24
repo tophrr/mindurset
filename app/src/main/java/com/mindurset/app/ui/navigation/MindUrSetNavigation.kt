@@ -60,6 +60,7 @@ import com.mindurset.app.ui.dashboard.DashboardScreen
 import com.mindurset.app.ui.home.checkin.CheckInScreen
 import com.mindurset.app.ui.info.AboutScreen
 import com.mindurset.app.ui.info.DataConsentScreen
+import com.mindurset.app.ui.memory.MemoryManagerRoute
 import com.mindurset.app.ui.menu.AppDrawer
 import com.mindurset.app.ui.profile.ProfileEditScreen
 import com.mindurset.app.ui.profile.ProfileScreen
@@ -139,6 +140,7 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
             val session = container.sessionStore.current()
             if (deleteLocalData && session != null) {
                 container.authRepository.deleteAccount(session.userId)
+                container.preferencesStore.setMemoryNote(session.userId, "")
             }
             container.sessionStore.signOut()
             logoutDialogVisible = false
@@ -337,6 +339,7 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
                     SettingsScreen(
                         onBack = { navController.popBackStack() },
                         onDataConsent = { navController.navigate(Routes.DATA_CONSENT) },
+                        onOpenMemory = { navController.navigate(Routes.MEMORY) },
                     )
                 }
                 composable(Routes.DATA_CONSENT) {
@@ -345,7 +348,11 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
                         onWithdrawn = {
                             navController.navigate(Routes.CONSENT) { popUpTo(0) { inclusive = true } }
                         },
+                        onOpenMemory = { navController.navigate(Routes.MEMORY) },
                     )
+                }
+                composable(Routes.MEMORY) {
+                    MemoryManagerRoute(onBack = { navController.popBackStack() })
                 }
                 composable(Routes.ABOUT) { AboutScreen(onBack = { navController.popBackStack() }) }
             }

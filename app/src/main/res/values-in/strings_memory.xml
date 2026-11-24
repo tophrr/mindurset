@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- S-53 Pengaturan -->
+    <string name="settings_memory_section">Memori kontekstual</string>
+    <string name="settings_memory_enabled">Ingat konteks terbaru</string>
+    <string name="settings_memory_note">Menyimpan satu baris kondisi singkat, hingga tiga ringkasan sesi, dan catatan pribadimu agar percakapan terasa lebih nyambung. Bisa diubah atau dihapus kapan saja.</string>
+    <string name="settings_memory_manage">Kelola memori</string>
+
+    <!-- S-92 Data & persetujuan -->
+    <string name="consent_manage_memory">Buka pengelola memori</string>
+
+    <!-- S-52 Pengelola memori -->
+    <string name="memory_title">Pengelola memori</string>
+    <string name="memory_back">Kembali</string>
+    <string name="memory_toggle_title">Memori kontekstual</string>
+    <string name="memory_toggle_hint_on">Aktif: hingga tiga ringkasan sesi terbaru dan catatanmu dapat digunakan untuk menyambung balasan Pendamping.</string>
+    <string name="memory_toggle_hint_off">Dijeda: setiap sesi berjalan seperti sesi pertama, dan ringkasan baru tidak disimpan.</string>
+    <string name="memory_paused_banner">Memori sedang dimatikan. Item yang tersimpan tidak disertakan ke prompt sampai kamu menyalakannya kembali, atau kamu bisa menghapusnya di bawah.</string>
+
+    <string name="memory_summaries_heading">Ringkasan sesi terbaru</string>
+    <string name="memory_summaries_subtitle">Maksimal tiga ringkasan disimpan bersamaan. Ringkasan yang lebih lama otomatis terhapus setelah tiga puluh hari atau saat ringkasan keempat disimpan.</string>
+    <string name="memory_summaries_empty">Belum ada ringkasan sesi yang tersimpan. Saat sesi yang terhubung berakhir dengan memori aktif, ringkasan singkat akan muncul di sini.</string>
+    <string name="memory_summary_meta">Disimpan %1$s · disimpan hingga %2$s</string>
+    <string name="memory_summary_edit">Ubah</string>
+    <string name="memory_summary_delete">Hapus</string>
+
+    <string name="memory_edit_dialog_title">Ubah ringkasan</string>
+    <string name="memory_edit_field_label">Teks ringkasan</string>
+    <string name="memory_edit_save">Simpan</string>
+    <string name="memory_delete_dialog_title">Hapus ringkasan ini?</string>
+    <string name="memory_delete_dialog_body">Ringkasan ini akan dihapus permanen dari ponselmu.</string>
+    <string name="memory_delete_confirm">Hapus</string>
+
+    <string name="memory_note_heading">Catatanmu untuk pendamping</string>
+    <string name="memory_note_subtitle">Konteks opsional yang ingin kamu bagikan, misalnya ritme percakapan atau hal yang paling membantumu saat ini.</string>
+    <string name="memory_note_placeholder">Tulis catatan singkat tentang hal yang membantu…</string>
+    <string name="memory_note_counter">%1$d/%2$d</string>
+    <string name="memory_note_save">Simpan catatan</string>
+    <string name="memory_note_saved">Tersimpan</string>
+    <string name="memory_note_clear">Hapus catatan</string>
+
+    <string name="memory_clear_all">Hapus semua memori</string>
+    <string name="memory_clear_all_dialog_title">Hapus semua memori tersimpan?</string>
+    <string name="memory_clear_all_dialog_body">Tindakan ini menghapus seluruh ringkasan sesi dan catatan memori pribadimu dari ponsel ini.</string>
+    <string name="memory_clear_all_confirm">Hapus semua</string>
+    <string name="memory_cancel">Batal</string>
+
+    <!-- Pendamping -->
+    <string name="memory_companion_end_session">Akhiri sesi &amp; simpan ringkasan</string>
+</resources>

@@ -33,7 +33,7 @@ import com.mindurset.app.ui.profile.MindTopBar
 
 /** Plain, honest summary of what the app stores and where. */
 @Composable
-fun DataConsentScreen(onBack: () -> Unit, onWithdrawn: () -> Unit = onBack) {
+fun DataConsentScreen(onBack: () -> Unit, onWithdrawn: () -> Unit = onBack, onOpenMemory: () -> Unit = {}) {
     val container = LocalAppContainer.current
     val consentViewModel: ConsentViewModel = viewModel {
         ConsentViewModel(container.consentRepository, container.sessionStore)
@@ -74,6 +74,9 @@ fun DataConsentScreen(onBack: () -> Unit, onWithdrawn: () -> Unit = onBack) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(8.dp))
+            TextButton(onClick = onOpenMemory) {
+                Text(stringResource(R.string.consent_manage_memory))
+            }
             TextButton(
                 onClick = { consentViewModel.revoke(onWithdrawn) },
                 enabled = !consentSaving,

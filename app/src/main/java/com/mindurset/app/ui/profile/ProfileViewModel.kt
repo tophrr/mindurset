@@ -104,6 +104,7 @@ class ProfileViewModel(
             val session = sessionStore.current()
             if (deleteLocalData && session != null) {
                 authRepository.deleteAccount(session.userId)
+                preferencesStore.setMemoryNote(session.userId, "")
             }
             sessionStore.signOut()
             _loggedOut.value = true

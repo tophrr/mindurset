@@ -6,8 +6,10 @@ import com.mindurset.app.data.remote.GenerationClient
 import com.mindurset.app.data.remote.GenerationResponse
 import com.mindurset.app.domain.model.RiskLevel
 import com.mindurset.app.domain.model.SafetyEvent
+import com.mindurset.app.domain.repository.MemoryContextProvider
 import com.mindurset.app.domain.repository.SafetyRepository
 import com.mindurset.app.domain.repository.SessionStore
+import com.mindurset.app.domain.repository.SessionSummaryScheduler
 import com.mindurset.app.safety.AsqFlow
 import com.mindurset.app.safety.RiskScreening
 import com.mindurset.app.safety.Screening
@@ -40,6 +42,8 @@ class CompanionViewModel(
     private val generationClient: GenerationClient,
     private val safetyRepository: SafetyRepository,
     private val sessionStore: SessionStore,
+    private val memoryContextProvider: MemoryContextProvider? = null,
+    private val summaryScheduler: SessionSummaryScheduler? = null,
     private val now: () -> Long = System::currentTimeMillis,
     private val newId: () -> String = { UUID.randomUUID().toString() },
     externalScope: CoroutineScope? = null,
@@ -62,6 +66,9 @@ class CompanionViewModel(
 
     private var lastRequest: PendingRequest? = null
     private var pendingAsq: PendingAsq? = null
+    private var activeUserId: String? = null
+    private var sessionId: String = newId()
+    private var lastSummarisedLineCount: Int = 0
 
     fun selectMode(mode: CompanionSupportMode) {
         if (_uiState.value.replyState != CompanionReplyState.Sending && _asq.value == null) {
@@ -162,6 +169,36 @@ class CompanionViewModel(
         request(pending)
     }
 
+    /** Closes the current chat round and enqueues a summary when memory is enabled and grounded. */
+    fun endSession() {
+        if (_uiState.value.replyState == CompanionReplyState.Sending || _asq.value != null) return
+        enqueueSummaryIfGrounded()
+        lastRequest = null
+        pendingAsq = null
+        lastSummarisedLineCount = 0
+        sessionId = newId()
+        _uiState.update { CompanionUiState(supportMode = it.supportMode) }
+    }
+
+    override fun onCleared() {
+        enqueueSummaryIfGrounded()
+    }
+
+    private fun enqueueSummaryIfGrounded() {
+        if (_asq.value != null || _crisisLevel.value != null) return
+        val userId = activeUserId ?: return
+        val lines = _uiState.value.lines
+        if (lines.size <= lastSummarisedLineCount) return
+        val hasGroundedReply = lines.any { !it.fromUser && !it.offline && !it.text.isNullOrBlank() }
+        if (!hasGroundedReply) return
+        val transcript = lines
+            .filter { !it.offline }
+            .mapNotNull { it.text?.trim()?.takeIf(String::isNotEmpty) }
+        if (transcript.isEmpty()) return
+        lastSummarisedLineCount = lines.size
+        summaryScheduler?.enqueue(userId = userId, sessionId = sessionId, transcript = transcript)
+    }
+
     private fun recordSafetyEvent(level: RiskLevel, patternId: String?, trigger: String) {
         scope.launch {
             val session = sessionStore.current() ?: return@launch
@@ -184,7 +221,9 @@ class CompanionViewModel(
         _uiState.update { it.copy(replyState = CompanionReplyState.Sending) }
         scope.launch {
             try {
-                val response = generationClient.reply(request.message, request.mode.workerMode)
+                val userId = sessionStore.current()?.userId?.also { activeUserId = it }
+                val context = userId?.let { memoryContextProvider?.contextFor(it) }
+                val response = generationClient.reply(request.message, request.mode.workerMode, context)
                 // The Worker classifies too, and it may only raise the floor.
                 val combined = RiskScreening.screenWith(request.message, response.classifierLevel())
                 if (combined.halts) {
