@@ -3,6 +3,7 @@ package com.mindurset.app.ui.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mindurset.app.domain.repository.PreferencesStore
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -15,38 +16,48 @@ data class SettingsUiState(
     val reminderHour: Int = 19,
     val language: String = "en",
     val theme: String = "system",
+    val memoryEnabled: Boolean = true,
 )
 
 /**
  * Settings are read and written straight through the DataStore-backed
  * [PreferencesStore]; there are no local-only switches here.
  */
-class SettingsViewModel(private val preferencesStore: PreferencesStore) : ViewModel() {
+class SettingsViewModel(private val preferencesStore: PreferencesStore, externalScope: CoroutineScope? = null) :
+    ViewModel() {
+    private val scope: CoroutineScope = externalScope ?: viewModelScope
+
     val uiState: StateFlow<SettingsUiState> =
         combine(
             preferencesStore.reminderEnabled,
             preferencesStore.reminderHour,
             preferencesStore.language,
             preferencesStore.theme,
-        ) { enabled, hour, language, theme ->
+            preferencesStore.memoryEnabled,
+        ) { enabled, hour, language, theme, memoryEnabled ->
             SettingsUiState(
                 loading = false,
                 reminderEnabled = enabled,
                 reminderHour = hour,
                 language = language,
                 theme = theme,
+                memoryEnabled = memoryEnabled,
             )
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState(loading = true))
+        }.stateIn(scope, SharingStarted.WhileSubscribed(5_000), SettingsUiState(loading = true))
 
     fun setReminderEnabled(enabled: Boolean) {
-        viewModelScope.launch { preferencesStore.setReminderEnabled(enabled) }
+        scope.launch { preferencesStore.setReminderEnabled(enabled) }
     }
 
     fun setReminderHour(hour: Int) {
-        viewModelScope.launch { preferencesStore.setReminderHour(hour) }
+        scope.launch { preferencesStore.setReminderHour(hour) }
     }
 
     fun setLanguage(language: String) {
-        viewModelScope.launch { preferencesStore.setLanguage(language) }
+        scope.launch { preferencesStore.setLanguage(language) }
+    }
+
+    fun setMemoryEnabled(enabled: Boolean) {
+        scope.launch { preferencesStore.setMemoryEnabled(enabled) }
     }
 }

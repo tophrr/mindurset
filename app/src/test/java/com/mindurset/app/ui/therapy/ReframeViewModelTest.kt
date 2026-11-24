@@ -7,6 +7,7 @@ import com.mindurset.app.domain.model.SessionMessage
 import com.mindurset.app.domain.repository.MicroActionRepository
 import com.mindurset.app.domain.repository.SessionRepository
 import com.mindurset.app.domain.repository.SessionStore
+import com.mindurset.app.domain.repository.SessionSummaryScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -25,6 +26,7 @@ import org.junit.Test
 class ReframeViewModelTest {
     private val sessions = FakeSessionRepository()
     private val actions = FakeActionRepository()
+    private val scheduler = RecordingSummaryScheduler()
 
     @Test
     fun `each answer is stored before the next step`() {
@@ -87,6 +89,16 @@ class ReframeViewModelTest {
         assertEquals(10, action.minutes)
         assertEquals(sessions.session?.id, action.sessionId)
         assertTrue(viewModel.state.value.finished)
+        assertEquals(1, scheduler.calls.size)
+        assertEquals(
+            listOf(
+                "I will fail",
+                "one exam is not the degree",
+                "This exam is hard; I have passed harder things",
+                "Open the outline for ten minutes",
+            ),
+            scheduler.calls.single().transcript,
+        )
     }
 
     @Test
@@ -136,10 +148,21 @@ class ReframeViewModelTest {
         sessions = sessions,
         actions = actions,
         sessionStore = FixedSessionStore(SessionInfo("u1", "guest@local")),
+        summaryScheduler = scheduler,
         now = { 1_700_000_002_000 },
         newId = { "id-${sessions.messages.size}" },
         externalScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),
     )
+}
+
+private class RecordingSummaryScheduler : SessionSummaryScheduler {
+    data class Call(val userId: String, val sessionId: String, val transcript: List<String>)
+
+    val calls = mutableListOf<Call>()
+
+    override fun enqueue(userId: String, sessionId: String, transcript: List<String>) {
+        calls += Call(userId, sessionId, transcript)
+    }
 }
 
 private class FakeSessionRepository : SessionRepository {

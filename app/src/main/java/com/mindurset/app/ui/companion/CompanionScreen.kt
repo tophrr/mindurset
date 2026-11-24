@@ -80,6 +80,8 @@ fun CompanionScreen(onOpenDrawer: () -> Unit, onCrisis: (RiskLevel) -> Unit = {}
             generationClient = container.generationClient,
             safetyRepository = container.safetyRepository,
             sessionStore = container.sessionStore,
+            memoryContextProvider = container.memoryContextProvider,
+            summaryScheduler = container.summaryWorker,
         )
     }
     val state by vm.uiState.collectAsStateWithLifecycle()
@@ -241,6 +243,12 @@ fun CompanionScreen(onOpenDrawer: () -> Unit, onCrisis: (RiskLevel) -> Unit = {}
                         titleRes = R.string.companion_asq_resources_title,
                         bodyRes = R.string.companion_asq_resources_body,
                     )
+                }
+                val hasGroundedReply = state.lines.any { !it.fromUser && !it.offline && !it.text.isNullOrBlank() }
+                if (hasGroundedReply && state.replyState != CompanionReplyState.Sending) {
+                    TextButton(onClick = vm::endSession) {
+                        Text(stringResource(R.string.memory_companion_end_session))
+                    }
                 }
                 Spacer(Modifier.height(8.dp))
             }

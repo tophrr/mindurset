@@ -86,6 +86,11 @@ interface ReframeSessionDao {
     @Query("SELECT * FROM reframe_session WHERE userId = :userId AND status = 'active' ORDER BY updatedAt DESC LIMIT 1")
     suspend fun findActive(userId: String): ReframeSessionEntity?
 
+    @Query(
+        "SELECT * FROM reframe_session WHERE userId = :userId AND status = 'completed' ORDER BY completedAt DESC LIMIT 1",
+    )
+    suspend fun latestCompleted(userId: String): ReframeSessionEntity?
+
     @Query("SELECT * FROM reframe_session WHERE userId = :userId ORDER BY createdAt DESC LIMIT :limit")
     suspend fun recent(userId: String, limit: Int): List<ReframeSessionEntity>
 
@@ -122,8 +127,32 @@ interface SessionSummaryDao {
     @Query("SELECT * FROM session_summary WHERE userId = :userId ORDER BY createdAt DESC LIMIT 3")
     suspend fun lastThree(userId: String): List<SessionSummaryEntity>
 
-    @Query("DELETE FROM session_summary WHERE retentionUntil < :now")
+    @Query(
+        "SELECT * FROM session_summary WHERE userId = :userId AND retentionUntil > :now " +
+            "ORDER BY createdAt DESC, id DESC LIMIT 3",
+    )
+    suspend fun activeLastThree(userId: String, now: Long): List<SessionSummaryEntity>
+
+    @Query("SELECT * FROM session_summary WHERE userId = :userId ORDER BY createdAt DESC, id DESC")
+    fun observeForUser(userId: String): Flow<List<SessionSummaryEntity>>
+
+    @Query("UPDATE session_summary SET summary = :summary WHERE id = :id")
+    suspend fun updateSummary(id: String, summary: String)
+
+    @Query("DELETE FROM session_summary WHERE id = :id")
+    suspend fun deleteById(id: String)
+
+    @Query("DELETE FROM session_summary WHERE userId = :userId")
+    suspend fun deleteForUser(userId: String)
+
+    @Query("DELETE FROM session_summary WHERE retentionUntil <= :now")
     suspend fun deleteExpired(now: Long)
+
+    @Query(
+        "DELETE FROM session_summary WHERE userId = :userId AND id NOT IN (" +
+            "SELECT id FROM session_summary WHERE userId = :userId ORDER BY createdAt DESC, id DESC LIMIT :keep)",
+    )
+    suspend fun trimToLatest(userId: String, keep: Int = 3)
 }
 
 @Dao

@@ -48,6 +48,7 @@ fun ReframeScreen(onBack: () -> Unit, onFinished: () -> Unit) {
             sessions = container.sessionRepository,
             actions = container.microActionRepository,
             sessionStore = container.sessionStore,
+            summaryScheduler = container.summaryWorker,
         )
     }
     val state by vm.state.collectAsStateWithLifecycle()

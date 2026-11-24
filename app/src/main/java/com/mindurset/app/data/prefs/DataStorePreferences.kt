@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.mindurset.app.domain.model.MemoryPolicy
 import com.mindurset.app.domain.model.SessionInfo
 import com.mindurset.app.domain.repository.PreferencesStore
 import com.mindurset.app.domain.repository.SessionStore
@@ -33,6 +34,9 @@ class DataStorePreferences(context: Context) :
         val reminderHour = intPreferencesKey("reminder_hour")
         val language = stringPreferencesKey("language")
         val theme = stringPreferencesKey("theme")
+        val memoryEnabled = booleanPreferencesKey("memory_enabled")
+
+        fun memoryNote(userId: String) = stringPreferencesKey("memory_note_$userId")
     }
 
     override val session: Flow<SessionInfo?> =
@@ -66,6 +70,10 @@ class DataStorePreferences(context: Context) :
 
     override val theme: Flow<String> = store.data.map { it[Keys.theme] ?: "system" }
 
+    override val memoryEnabled: Flow<Boolean> = store.data.map { it[Keys.memoryEnabled] ?: true }
+
+    override fun memoryNote(userId: String): Flow<String> = store.data.map { it[Keys.memoryNote(userId)].orEmpty() }
+
     override suspend fun setReminderEnabled(enabled: Boolean) {
         store.edit { it[Keys.reminderEnabled] = enabled }
     }
@@ -80,5 +88,17 @@ class DataStorePreferences(context: Context) :
 
     override suspend fun setTheme(theme: String) {
         store.edit { it[Keys.theme] = theme }
+    }
+
+    override suspend fun setMemoryEnabled(enabled: Boolean) {
+        store.edit { it[Keys.memoryEnabled] = enabled }
+    }
+
+    override suspend fun setMemoryNote(userId: String, note: String) {
+        val clean = note.trim().take(MemoryPolicy.MAX_USER_NOTE_LENGTH)
+        store.edit { prefs ->
+            val key = Keys.memoryNote(userId)
+            if (clean.isEmpty()) prefs.remove(key) else prefs[key] = clean
+        }
     }
 }

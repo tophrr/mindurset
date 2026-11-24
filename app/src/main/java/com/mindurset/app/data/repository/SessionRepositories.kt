@@ -47,6 +47,9 @@ class SessionRepositoryImpl(private val sessionDao: ReframeSessionDao, private v
 
     override suspend fun findById(id: String): ReframeSession? = sessionDao.findById(id)?.toModel()
 
+    override suspend fun latestCompleted(userId: String): ReframeSession? =
+        sessionDao.latestCompleted(userId)?.toModel()
+
     override suspend fun save(session: ReframeSession) {
         sessionDao.upsert(session.toEntity(session.startedAt))
     }

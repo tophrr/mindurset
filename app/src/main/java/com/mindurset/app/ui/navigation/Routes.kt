@@ -23,6 +23,7 @@ object Routes {
     const val PROFILE_EDIT = "profile_edit"
     const val SETTINGS = "settings"
     const val DATA_CONSENT = "data_consent"
+    const val MEMORY = "memory"
     const val ABOUT = "about"
 
     const val CHECK_IN_ROUTE = "$CHECK_IN?$ARG_EMOTION={$ARG_EMOTION}"
