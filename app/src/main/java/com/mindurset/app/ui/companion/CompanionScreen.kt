@@ -56,7 +56,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mindurset.app.R
+import com.mindurset.app.data.repository.AssetOfflineExerciseLibrary
 import com.mindurset.app.di.LocalAppContainer
+import com.mindurset.app.domain.model.OfflineExercise
 import com.mindurset.app.domain.model.RiskLevel
 import com.mindurset.app.safety.CrisisResources
 import com.mindurset.app.ui.common.AppCard
@@ -75,11 +77,16 @@ import com.mindurset.app.ui.theme.SurfaceWhite
 @Composable
 fun CompanionScreen(onOpenDrawer: () -> Unit, onCrisis: (RiskLevel) -> Unit = {}) {
     val container = LocalAppContainer.current
+    val appContext = LocalContext.current.applicationContext
+    val exerciseLibrary = remember(appContext) { AssetOfflineExerciseLibrary(appContext.assets) }
     val vm: CompanionViewModel = viewModel {
         CompanionViewModel(
             generationClient = container.generationClient,
             safetyRepository = container.safetyRepository,
             sessionStore = container.sessionStore,
+            checkInRepository = container.checkInRepository,
+            preferencesStore = container.preferencesStore,
+            exerciseLibrary = exerciseLibrary,
         )
     }
     val state by vm.uiState.collectAsStateWithLifecycle()
@@ -174,23 +181,28 @@ fun CompanionScreen(onOpenDrawer: () -> Unit, onCrisis: (RiskLevel) -> Unit = {}
 
                 state.lines.forEach { line ->
                     if (line.offline) {
-                        ChatBubble(
-                            text = stringResource(R.string.companion_offline_reply),
-                            fromUser = false,
-                        )
-                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text(
-                                text = stringResource(R.string.companion_offline_label),
-                                color = NavyDeep,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
+                        val exercise = line.exercise
+                        if (exercise != null) {
+                            OfflineExerciseCard(exercise = exercise)
+                        } else {
+                            ChatBubble(
+                                text = stringResource(R.string.companion_offline_reply),
+                                fromUser = false,
                             )
-                            Text(
-                                text = stringResource(R.string.companion_offline_sentence),
-                                color = MutedGray,
-                                fontSize = 12.sp,
-                                lineHeight = 17.sp,
-                            )
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(
+                                    text = stringResource(R.string.companion_offline_label),
+                                    color = NavyDeep,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                Text(
+                                    text = stringResource(R.string.companion_offline_sentence),
+                                    color = MutedGray,
+                                    fontSize = 12.sp,
+                                    lineHeight = 17.sp,
+                                )
+                            }
                         }
                     } else {
                         ChatBubble(
@@ -253,6 +265,55 @@ fun CompanionScreen(onOpenDrawer: () -> Unit, onCrisis: (RiskLevel) -> Unit = {}
                 enabled = state.replyState != CompanionReplyState.Sending,
                 placeholder = stringResource(R.string.companion_input_placeholder),
                 sendDescription = stringResource(R.string.companion_send),
+            )
+        }
+    }
+}
+
+@Composable
+private fun OfflineExerciseCard(exercise: OfflineExercise) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        AppCard {
+            Text(
+                text = exercise.title,
+                color = NavyDeep,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(Modifier.height(10.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                exercise.sections.take(2).forEach { section ->
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        if (section.heading.isNotBlank()) {
+                            Text(
+                                text = section.heading,
+                                color = NavyInk,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
+                        Text(
+                            text = section.body,
+                            color = NavyInk,
+                            fontSize = 13.sp,
+                            lineHeight = 19.sp,
+                        )
+                    }
+                }
+            }
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = stringResource(R.string.companion_offline_label),
+                color = NavyDeep,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = stringResource(R.string.companion_offline_attribution, exercise.title),
+                color = MutedGray,
+                fontSize = 11.sp,
+                lineHeight = 15.sp,
             )
         }
     }

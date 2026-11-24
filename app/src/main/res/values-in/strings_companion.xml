@@ -4,6 +4,7 @@
     <string name="companion_offline_reply">Aku di sini untuk menemanimu. Luangkan sejenak untuk menyadari apa yang kamu butuhkan saat ini.</string>
     <string name="companion_offline_label">Latihan offline</string>
     <string name="companion_offline_sentence">Balasan ini berasal dari jalur offline.</string>
+    <string name="companion_offline_attribution">Modul: %1$s (diadaptasi dari materi WHO, CC BY-NC-SA 3.0 IGO)</string>
     <string name="companion_sources">Sumber: %1$s</string>
     <string name="companion_sending">Sedang mencari respons…</string>
     <string name="companion_error">Terjadi kendala. Balasan offline kamu ditampilkan.</string>

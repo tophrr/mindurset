@@ -1,11 +1,12 @@
 package com.mindurset.app.ui.companion
 
 import com.mindurset.app.data.remote.GenerationResponse
+import com.mindurset.app.domain.model.OfflineExercise
 
-enum class CompanionSupportMode(val workerMode: String, val labelRes: Int) {
-    PERSONAL("listen", com.mindurset.app.R.string.companion_chip_personal),
-    NEGATIVE_THOUGHTS("reflect", com.mindurset.app.R.string.companion_chip_negative_thoughts),
-    EMOTION_REGULATION("plan", com.mindurset.app.R.string.companion_chip_emotion_regulation),
+enum class CompanionSupportMode(val workerMode: String, val labelRes: Int, val fallbackTopic: String) {
+    PERSONAL("listen", com.mindurset.app.R.string.companion_chip_personal, "self-compassion"),
+    NEGATIVE_THOUGHTS("reflect", com.mindurset.app.R.string.companion_chip_negative_thoughts, "all-or-nothing"),
+    EMOTION_REGULATION("plan", com.mindurset.app.R.string.companion_chip_emotion_regulation, "stress"),
 }
 
 data class CompanionLine(
@@ -13,6 +14,7 @@ data class CompanionLine(
     val fromUser: Boolean,
     val sourceIds: List<String> = emptyList(),
     val offline: Boolean = false,
+    val exercise: OfflineExercise? = null,
 )
 
 sealed interface CompanionReplyState {
