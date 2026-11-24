@@ -6,27 +6,35 @@ import com.mindurset.app.BuildConfig
 import com.mindurset.app.data.local.MindUrSetDatabase
 import com.mindurset.app.data.prefs.DataStorePreferences
 import com.mindurset.app.data.remote.GenerationClient
+import com.mindurset.app.data.remote.SummaryWorker
 import com.mindurset.app.data.repository.AuthRepositoryImpl
 import com.mindurset.app.data.repository.CheckInRepositoryImpl
 import com.mindurset.app.data.repository.ConsentRepositoryImpl
 import com.mindurset.app.data.repository.DashboardEffortRepository
 import com.mindurset.app.data.repository.JournalRepositoryImpl
+import com.mindurset.app.data.repository.MemoryContextProviderImpl
 import com.mindurset.app.data.repository.MicroActionRepositoryImpl
 import com.mindurset.app.data.repository.ProfileRepositoryImpl
 import com.mindurset.app.data.repository.SafetyRepositoryImpl
 import com.mindurset.app.data.repository.SessionRepositoryImpl
+import com.mindurset.app.data.repository.SessionSummaryRepositoryImpl
 import com.mindurset.app.data.repository.TrustedContactRepositoryImpl
 import com.mindurset.app.domain.repository.AuthRepository
 import com.mindurset.app.domain.repository.CheckInRepository
 import com.mindurset.app.domain.repository.ConsentRepository
 import com.mindurset.app.domain.repository.JournalRepository
+import com.mindurset.app.domain.repository.MemoryContextProvider
 import com.mindurset.app.domain.repository.MicroActionRepository
 import com.mindurset.app.domain.repository.PreferencesStore
 import com.mindurset.app.domain.repository.ProfileRepository
 import com.mindurset.app.domain.repository.SafetyRepository
 import com.mindurset.app.domain.repository.SessionRepository
 import com.mindurset.app.domain.repository.SessionStore
+import com.mindurset.app.domain.repository.SessionSummaryRepository
 import com.mindurset.app.domain.repository.TrustedContactRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 /**
  * Manual dependency container: one object graph for the whole app, no annotation
@@ -34,6 +42,7 @@ import com.mindurset.app.domain.repository.TrustedContactRepository
  */
 class AppContainer(context: Context) {
     private val database = MindUrSetDatabase.build(context)
+    private val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     val preferences: DataStorePreferences = DataStorePreferences(context)
 
@@ -49,6 +58,7 @@ class AppContainer(context: Context) {
             profileDao = database.profileDao(),
             journalDao = database.journalDao(),
             checkInDao = database.checkInDao(),
+            sessionSummaryDao = database.sessionSummaryDao(),
         )
 
     val journalRepository: JournalRepository = JournalRepositoryImpl(database.journalDao())
@@ -64,6 +74,26 @@ class AppContainer(context: Context) {
         )
 
     val microActionRepository: MicroActionRepository = MicroActionRepositoryImpl(database.microActionDao())
+
+    val sessionSummaryRepository: SessionSummaryRepository =
+        SessionSummaryRepositoryImpl(database.sessionSummaryDao())
+
+    val memoryContextProvider: MemoryContextProvider =
+        MemoryContextProviderImpl(
+            preferencesStore = preferencesStore,
+            checkInRepository = checkInRepository,
+            sessionRepository = sessionRepository,
+            microActionRepository = microActionRepository,
+            summaryRepository = sessionSummaryRepository,
+        )
+
+    val summaryWorker: SummaryWorker =
+        SummaryWorker(
+            generationClient = generationClient,
+            summaryRepository = sessionSummaryRepository,
+            preferencesStore = preferencesStore,
+            scope = backgroundScope,
+        )
 
     val dashboardEffortRepository: DashboardEffortRepository =
         DashboardEffortRepository(database.reframeSessionDao(), database.microActionDao())

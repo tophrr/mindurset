@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- S-53 Settings -->
+    <string name="settings_memory_section">Contextual memory</string>
+    <string name="settings_memory_enabled">Remember recent context</string>
+    <string name="settings_memory_note">Keeps a short state line, up to three session summaries, and your own note for calmer continuity. You can edit or erase it anytime.</string>
+    <string name="settings_memory_manage">Manage memory</string>
+
+    <!-- S-92 Data & consent -->
+    <string name="consent_manage_memory">Open memory manager</string>
+
+    <!-- S-52 Memory manager -->
+    <string name="memory_title">Memory manager</string>
+    <string name="memory_back">Back</string>
+    <string name="memory_toggle_title">Contextual memory</string>
+    <string name="memory_toggle_hint_on">Active: up to three recent session summaries and your note may inform Companion replies.</string>
+    <string name="memory_toggle_hint_off">Paused: every session behaves as if it were the first, and no new summaries are saved.</string>
+    <string name="memory_paused_banner">Memory is currently turned off. Saved items stay hidden from prompts until you turn it back on, or you can delete them below.</string>
+
+    <string name="memory_summaries_heading">Recent session summaries</string>
+    <string name="memory_summaries_subtitle">At most three summaries are kept at a time. Older ones roll off automatically after thirty days or when a fourth is saved.</string>
+    <string name="memory_summaries_empty">No session summaries saved yet. When a grounded session ends with memory on, a short summary appears here.</string>
+    <string name="memory_summary_meta">Saved %1$s · kept until %2$s</string>
+    <string name="memory_summary_edit">Edit</string>
+    <string name="memory_summary_delete">Delete</string>
+
+    <string name="memory_edit_dialog_title">Edit summary</string>
+    <string name="memory_edit_field_label">Summary text</string>
+    <string name="memory_edit_save">Save</string>
+    <string name="memory_delete_dialog_title">Delete this summary?</string>
+    <string name="memory_delete_dialog_body">This summary will be removed permanently from your phone.</string>
+    <string name="memory_delete_confirm">Delete</string>
+
+    <string name="memory_note_heading">Your note to the companion</string>
+    <string name="memory_note_subtitle">Optional context you choose to share, such as preferred pacing or what feels helpful right now.</string>
+    <string name="memory_note_placeholder">Add a short note about what helps…</string>
+    <string name="memory_note_counter">%1$d/%2$d</string>
+    <string name="memory_note_save">Save note</string>
+    <string name="memory_note_saved">Saved</string>
+    <string name="memory_note_clear">Clear note</string>
+
+    <string name="memory_clear_all">Delete all memory</string>
+    <string name="memory_clear_all_dialog_title">Delete all saved memory?</string>
+    <string name="memory_clear_all_dialog_body">This removes all saved session summaries and your personal memory note from this phone.</string>
+    <string name="memory_clear_all_confirm">Delete all</string>
+    <string name="memory_cancel">Cancel</string>
+
+    <!-- Companion -->
+    <string name="memory_companion_end_session">End session &amp; save summary</string>
+</resources>

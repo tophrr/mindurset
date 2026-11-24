@@ -9,10 +9,12 @@ import com.mindurset.app.domain.model.RiskLevel
 import com.mindurset.app.domain.model.SafetyEvent
 import com.mindurset.app.domain.model.SessionInfo
 import com.mindurset.app.domain.repository.CheckInRepository
+import com.mindurset.app.domain.repository.MemoryContextProvider
 import com.mindurset.app.domain.repository.OfflineExerciseLibrary
 import com.mindurset.app.domain.repository.PreferencesStore
 import com.mindurset.app.domain.repository.SafetyRepository
 import com.mindurset.app.domain.repository.SessionStore
+import com.mindurset.app.domain.repository.SessionSummaryScheduler
 import com.mindurset.app.safety.AsqFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -335,6 +337,82 @@ class CompanionViewModelTest {
     }
 
     @Test
+    fun injectsContextIntoChatRequestWhenMemoryIsEnabled() {
+        val transport = QueuedTransport(fixture)
+        val contextProvider = FixedMemoryContextProvider("State: last_check_in=anxious(6/10, 1h ago)")
+        val (viewModel, _, scope) = viewModelWithSafety(
+            transport = transport,
+            memoryContextProvider = contextProvider,
+        )
+
+        viewModel.send("A busy day")
+
+        val body = JSONObject(requireNotNull(transport.lastBody))
+        assertEquals("State: last_check_in=anxious(6/10, 1h ago)", body.getString("context"))
+        scope.cancel()
+    }
+
+    @Test
+    fun omitsContextWhenMemoryIsDisabled() {
+        val transport = QueuedTransport(fixture)
+        val contextProvider = FixedMemoryContextProvider(null)
+        val (viewModel, _, scope) = viewModelWithSafety(
+            transport = transport,
+            memoryContextProvider = contextProvider,
+        )
+
+        viewModel.send("A busy day")
+
+        val body = JSONObject(requireNotNull(transport.lastBody))
+        assertFalse(body.has("context"))
+        scope.cancel()
+    }
+
+    @Test
+    fun safetyFloorStillHaltsWithoutCallingWorkerWhenMemoryIsEnabled() {
+        val transport = NeverCalledTransport()
+        val contextProvider = FixedMemoryContextProvider("State: last_check_in=stressed(8/10, 2h ago)")
+        val (viewModel, safety, scope) = viewModelWithSafety(
+            transport = transport,
+            memoryContextProvider = contextProvider,
+        )
+
+        viewModel.send("aku ingin mati")
+
+        assertEquals(AsqFlow.State(), viewModel.asq.value)
+        assertEquals(0, transport.calls)
+        assertEquals(1, safety.events.size)
+        scope.cancel()
+    }
+
+    @Test
+    fun endSessionEnqueuesSummaryForGroundedExchangeAndSkipsOfflineOnly() {
+        val scheduler = RecordingCompanionSummaryScheduler()
+        val (offlineVm, _, offlineScope) = viewModelWithSafety(
+            transport = OfflineTransport(),
+            summaryScheduler = scheduler,
+        )
+        offlineVm.send("A busy day")
+        offlineVm.endSession()
+        assertTrue("offline-only round must not enqueue a summary", scheduler.calls.isEmpty())
+        offlineScope.cancel()
+
+        val (groundedVm, _, groundedScope) = viewModelWithSafety(
+            transport = QueuedTransport(fixture),
+            summaryScheduler = scheduler,
+        )
+        groundedVm.send("A busy day")
+        groundedVm.endSession()
+
+        assertEquals(1, scheduler.calls.size)
+        assertEquals("u1", scheduler.calls.single().userId)
+        assertEquals(2, scheduler.calls.single().transcript.size)
+        assertTrue(groundedVm.uiState.value.lines.isEmpty())
+        assertEquals(CompanionReplyState.Idle, groundedVm.uiState.value.replyState)
+        groundedScope.cancel()
+    }
+
+    @Test
     fun offlineFallbackAttachesMessageMatchedExerciseCard() {
         val (viewModel, scope) = viewModelWithLibrary(OfflineTransport())
 
@@ -414,6 +492,8 @@ class CompanionViewModelTest {
     private fun viewModelWithSafety(
         transport: GenerationTransport,
         baseUrl: String = "http://localhost:8787",
+        memoryContextProvider: MemoryContextProvider? = null,
+        summaryScheduler: SessionSummaryScheduler? = null,
     ): Triple<CompanionViewModel, RecordingSafetyRepository, CoroutineScope> {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val safety = RecordingSafetyRepository()
@@ -421,6 +501,8 @@ class CompanionViewModelTest {
             generationClient = GenerationClient(baseUrl, transport),
             safetyRepository = safety,
             sessionStore = FixedSessionStore(SessionInfo(userId = "u1", email = "guest@local")),
+            memoryContextProvider = memoryContextProvider,
+            summaryScheduler = summaryScheduler,
             now = { 1_700_000_000_000L },
             newId = { "event-1" },
             externalScope = scope,
@@ -503,6 +585,19 @@ class CompanionViewModelTest {
         }
     }
 
+    private class FixedMemoryContextProvider(private val context: String?) : MemoryContextProvider {
+        override suspend fun contextFor(userId: String): String? = context
+    }
+
+    private class RecordingCompanionSummaryScheduler : SessionSummaryScheduler {
+        data class Call(val userId: String, val sessionId: String, val transcript: List<String>)
+
+        val calls = mutableListOf<Call>()
+
+        override fun enqueue(userId: String, sessionId: String, transcript: List<String>) {
+            calls += Call(userId, sessionId, transcript)
+        }
+    }
     private class FixedCheckInRepository(private val items: List<CheckIn>) : CheckInRepository {
         override fun observeAll(userId: String): Flow<List<CheckIn>> = flowOf(items.filter { it.userId == userId })
 
@@ -519,6 +614,9 @@ class CompanionViewModelTest {
         override val reminderHour: Flow<Int> = flowOf(20)
         override val language: Flow<String> = langState.asStateFlow()
         override val theme: Flow<String> = flowOf("light")
+        override val memoryEnabled: Flow<Boolean> = flowOf(false)
+
+        override fun memoryNote(userId: String): Flow<String> = flowOf("")
 
         override suspend fun setReminderEnabled(enabled: Boolean) = Unit
 
@@ -529,5 +627,9 @@ class CompanionViewModelTest {
         }
 
         override suspend fun setTheme(theme: String) = Unit
+
+        override suspend fun setMemoryEnabled(enabled: Boolean) = Unit
+
+        override suspend fun setMemoryNote(userId: String, note: String) = Unit
     }
 }
