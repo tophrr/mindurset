@@ -9,6 +9,15 @@ compatibility_date = "2026-10-21"
 binding = "AI"
 remote = true
 
+# Vectorize platform binding for semantic retrieval. The name is `VECTORIZE`;
+# the index is populated by scripts/reindex.mjs, which is run by hand and never
+# in CI. No key or token is stored in this repository. Without the binding (or
+# without a populated index) retrieval stays keyword-only.
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "mindurset-corpus"
+remote = true
+
 # The corpus is markdown on disk. Wrangler bundles it as text, and
 # vitest.config.mjs gives the test runner the same behaviour.
 [[rules]]
