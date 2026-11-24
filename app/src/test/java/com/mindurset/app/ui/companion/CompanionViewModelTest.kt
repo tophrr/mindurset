@@ -2,10 +2,16 @@ package com.mindurset.app.ui.companion
 
 import com.mindurset.app.data.remote.GenerationClient
 import com.mindurset.app.data.remote.GenerationTransport
+import com.mindurset.app.data.repository.AssetOfflineExerciseLibrary
+import com.mindurset.app.domain.model.CheckIn
+import com.mindurset.app.domain.model.Emotion
 import com.mindurset.app.domain.model.RiskLevel
 import com.mindurset.app.domain.model.SafetyEvent
 import com.mindurset.app.domain.model.SessionInfo
+import com.mindurset.app.domain.repository.CheckInRepository
 import com.mindurset.app.domain.repository.MemoryContextProvider
+import com.mindurset.app.domain.repository.OfflineExerciseLibrary
+import com.mindurset.app.domain.repository.PreferencesStore
 import com.mindurset.app.domain.repository.SafetyRepository
 import com.mindurset.app.domain.repository.SessionStore
 import com.mindurset.app.domain.repository.SessionSummaryScheduler
@@ -14,16 +20,20 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flowOf
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 
 class CompanionViewModelTest {
     private val fixture =
@@ -402,6 +412,75 @@ class CompanionViewModelTest {
         groundedScope.cancel()
     }
 
+    @Test
+    fun offlineFallbackAttachesMessageMatchedExerciseCard() {
+        val (viewModel, scope) = viewModelWithLibrary(OfflineTransport())
+
+        viewModel.send("I keep scrolling at night and cannot sleep")
+
+        val reply = viewModel.uiState.value.lines.last()
+        assertTrue(reply.offline)
+        assertNotNull(reply.exercise)
+        assertEquals("sleep", reply.exercise?.topic)
+        assertEquals("Sleep", reply.exercise?.title)
+        scope.cancel()
+    }
+
+    @Test
+    fun offlineFallbackUsesLatestCheckInEmotionWhenMessageIsGeneric() {
+        val checkIns = listOf(
+            CheckIn(id = "c1", userId = "u1", emotion = Emotion.ANXIOUS, intensity = 3, note = null, createdAt = 100L),
+            CheckIn(id = "c2", userId = "u1", emotion = Emotion.STRESSED, intensity = 4, note = null, createdAt = 200L),
+        )
+        val (viewModel, scope) = viewModelWithLibrary(OfflineTransport(), checkIns = checkIns)
+
+        viewModel.send("hello")
+
+        val reply = viewModel.uiState.value.lines.last()
+        assertEquals("stress", reply.exercise?.topic)
+        scope.cancel()
+    }
+
+    @Test
+    fun offlineFallbackServesIndonesianTranslationWhenAvailableAndFallsBackToEnglish() {
+        val (viewModel, scope) = viewModelWithLibrary(OfflineTransport(), language = "id")
+
+        viewModel.send("Aku begadang dan capek")
+        assertEquals("Tidur", viewModel.uiState.value.lines.last().exercise?.title)
+        assertEquals("id", viewModel.uiState.value.lines.last().exercise?.language)
+
+        viewModel.send("My thoughts are stuck in a loop")
+        assertEquals("Rumination", viewModel.uiState.value.lines.last().exercise?.title)
+        assertEquals("en", viewModel.uiState.value.lines.last().exercise?.language)
+        scope.cancel()
+    }
+
+    private fun viewModelWithLibrary(
+        transport: GenerationTransport,
+        checkIns: List<CheckIn> = emptyList(),
+        language: String = "en",
+    ): Pair<CompanionViewModel, CoroutineScope> {
+        val assetsDir = listOf(File("src/main/assets"), File("app/src/main/assets")).first { it.isDirectory }
+        val library: OfflineExerciseLibrary = AssetOfflineExerciseLibrary { path ->
+            val file = File(assetsDir, path)
+            if (file.isFile) file.readText(Charsets.UTF_8) else null
+        }
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        val viewModel = CompanionViewModel(
+            generationClient = GenerationClient("http://localhost:8787", transport),
+            safetyRepository = RecordingSafetyRepository(),
+            sessionStore = FixedSessionStore(SessionInfo(userId = "u1", email = "guest@local")),
+            checkInRepository = FixedCheckInRepository(checkIns),
+            preferencesStore = FixedPreferencesStore(language),
+            exerciseLibrary = library,
+            deviceLanguage = { language },
+            now = { 1_700_000_000_000L },
+            newId = { "event-1" },
+            externalScope = scope,
+        )
+        return viewModel to scope
+    }
+
     private fun viewModelWith(
         transport: GenerationTransport,
         baseUrl: String = "http://localhost:8787",
@@ -518,5 +597,39 @@ class CompanionViewModelTest {
         override fun enqueue(userId: String, sessionId: String, transcript: List<String>) {
             calls += Call(userId, sessionId, transcript)
         }
+    }
+    private class FixedCheckInRepository(private val items: List<CheckIn>) : CheckInRepository {
+        override fun observeAll(userId: String): Flow<List<CheckIn>> = flowOf(items.filter { it.userId == userId })
+
+        override fun observeRecent(userId: String, sinceEpochMillis: Long): Flow<List<CheckIn>> = flowOf(emptyList())
+
+        override fun count(userId: String): Flow<Int> = flowOf(items.size)
+
+        override suspend fun insert(checkIn: CheckIn) = Unit
+    }
+
+    private class FixedPreferencesStore(initialLanguage: String) : PreferencesStore {
+        private val langState = MutableStateFlow(initialLanguage)
+        override val reminderEnabled: Flow<Boolean> = flowOf(false)
+        override val reminderHour: Flow<Int> = flowOf(20)
+        override val language: Flow<String> = langState.asStateFlow()
+        override val theme: Flow<String> = flowOf("light")
+        override val memoryEnabled: Flow<Boolean> = flowOf(false)
+
+        override fun memoryNote(userId: String): Flow<String> = flowOf("")
+
+        override suspend fun setReminderEnabled(enabled: Boolean) = Unit
+
+        override suspend fun setReminderHour(hour: Int) = Unit
+
+        override suspend fun setLanguage(language: String) {
+            langState.value = language
+        }
+
+        override suspend fun setTheme(theme: String) = Unit
+
+        override suspend fun setMemoryEnabled(enabled: Boolean) = Unit
+
+        override suspend fun setMemoryNote(userId: String, note: String) = Unit
     }
 }

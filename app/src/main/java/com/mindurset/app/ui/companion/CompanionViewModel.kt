@@ -4,12 +4,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mindurset.app.data.remote.GenerationClient
 import com.mindurset.app.data.remote.GenerationResponse
+import com.mindurset.app.domain.model.Emotion
+import com.mindurset.app.domain.model.OfflineExercise
 import com.mindurset.app.domain.model.RiskLevel
 import com.mindurset.app.domain.model.SafetyEvent
+import com.mindurset.app.domain.repository.CheckInRepository
 import com.mindurset.app.domain.repository.MemoryContextProvider
+import com.mindurset.app.domain.repository.OfflineExerciseLibrary
+import com.mindurset.app.domain.repository.PreferencesStore
 import com.mindurset.app.domain.repository.SafetyRepository
 import com.mindurset.app.domain.repository.SessionStore
 import com.mindurset.app.domain.repository.SessionSummaryScheduler
+import com.mindurset.app.domain.usecase.SelectOfflineExercise
 import com.mindurset.app.safety.AsqFlow
 import com.mindurset.app.safety.RiskScreening
 import com.mindurset.app.safety.Screening
@@ -18,9 +24,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.IOException
+import java.util.Locale
 import java.util.UUID
 
 /** The same retention the check-in and journal paths apply to a safety event. */
@@ -42,6 +50,10 @@ class CompanionViewModel(
     private val generationClient: GenerationClient,
     private val safetyRepository: SafetyRepository,
     private val sessionStore: SessionStore,
+    private val checkInRepository: CheckInRepository? = null,
+    private val preferencesStore: PreferencesStore? = null,
+    private val exerciseLibrary: OfflineExerciseLibrary? = null,
+    private val deviceLanguage: () -> String = { Locale.getDefault().language },
     private val memoryContextProvider: MemoryContextProvider? = null,
     private val summaryScheduler: SessionSummaryScheduler? = null,
     private val now: () -> Long = System::currentTimeMillis,
@@ -151,13 +163,23 @@ class CompanionViewModel(
             }
 
             PendingAsq.LocalFloor, null -> {
-                _uiState.update {
-                    it.copy(
-                        lines = it.lines + CompanionLine(text = null, fromUser = false, offline = true),
-                        replyState = CompanionReplyState.Idle,
-                        resourcesOffered = false,
-                        asqSupportOffered = true,
+                scope.launch {
+                    val exercise = selectOfflineExercise(
+                        PendingRequest(message = "", mode = _uiState.value.supportMode),
                     )
+                    _uiState.update {
+                        it.copy(
+                            lines = it.lines + CompanionLine(
+                                text = null,
+                                fromUser = false,
+                                offline = true,
+                                exercise = exercise,
+                            ),
+                            replyState = CompanionReplyState.Idle,
+                            resourcesOffered = false,
+                            asqSupportOffered = true,
+                        )
+                    }
                 }
             }
         }
@@ -257,14 +279,15 @@ class CompanionViewModel(
      * The classifier could not answer. Fail closed: one tier up from the floor, and the offline copy
      * gains a way to reach a person when the raised level is the L1 affordance.
      */
-    private fun failClosed(request: PendingRequest, state: CompanionReplyState) {
+    private suspend fun failClosed(request: PendingRequest, state: CompanionReplyState) {
         val screening = RiskScreening.screenWith(request.message, classifier = null)
         if (screening.halts) {
-            addOfflineFallback(state)
+            addOfflineFallback(state, exercise = null)
             handleScreening(screening, trigger = TRIGGER_CLASSIFIER_UNAVAILABLE, heldReply = null)
             return
         }
-        addOfflineFallback(state)
+        val exercise = selectOfflineExercise(request)
+        addOfflineFallback(state, exercise = exercise)
         if (screening.level == RiskLevel.L1) {
             _uiState.update { it.copy(resourcesOffered = true) }
         }
@@ -281,10 +304,36 @@ class CompanionViewModel(
         }
     }
 
-    private fun addOfflineFallback(state: CompanionReplyState) {
+    private suspend fun selectOfflineExercise(request: PendingRequest): OfflineExercise? {
+        val library = exerciseLibrary ?: return null
+        val language = resolveExerciseLanguage()
+        val exercises = library.loadAll(language)
+        if (exercises.isEmpty()) return null
+        val emotion = latestCheckInEmotion()
+        return SelectOfflineExercise.select(
+            exercises = exercises,
+            message = request.message,
+            emotion = emotion,
+            fallbackTopic = request.mode.fallbackTopic,
+        )
+    }
+
+    private suspend fun resolveExerciseLanguage(): String {
+        val pref = preferencesStore?.language?.firstOrNull()?.lowercase()
+        val device = deviceLanguage().lowercase()
+        return if (pref == "id" || device == "id" || device == "in") "id" else "en"
+    }
+
+    private suspend fun latestCheckInEmotion(): Emotion? {
+        val repo = checkInRepository ?: return null
+        val userId = sessionStore.current()?.userId ?: return null
+        return repo.observeAll(userId).firstOrNull()?.maxByOrNull { it.createdAt }?.emotion
+    }
+
+    private fun addOfflineFallback(state: CompanionReplyState, exercise: OfflineExercise?) {
         _uiState.update {
             it.copy(
-                lines = it.lines + CompanionLine(text = null, fromUser = false, offline = true),
+                lines = it.lines + CompanionLine(text = null, fromUser = false, offline = true, exercise = exercise),
                 replyState = state,
             )
         }
