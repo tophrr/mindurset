@@ -95,7 +95,6 @@
     <!-- Companion (static preview) -->
     <string name="companion_title">Companion</string>
     <string name="companion_open_menu">Open menu</string>
-    <string name="companion_chip_personal">Personal</string>
     <string name="companion_input_placeholder">Type your message…</string>
     <string name="companion_send">Send</string>
 

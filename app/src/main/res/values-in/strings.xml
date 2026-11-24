@@ -28,8 +28,6 @@
     <string name="therapy_open">Buka</string>
 
     <!-- Companion screen additions (mode chips + preview bubbles) -->
-    <string name="companion_chip_negative_thoughts">Pikiran negatif</string>
-    <string name="companion_chip_emotion_regulation">Regulasi emosi</string>
 
     <!-- Companion preview: second and third canned exchanges per mode -->
 </resources>

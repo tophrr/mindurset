@@ -14,4 +14,18 @@
     <string name="companion_resources_call">Call 119 ext. 8</string>
     <string name="companion_asq_resources_title">Support is still one tap away</string>
     <string name="companion_asq_resources_body">Thank you for answering those questions. You can keep talking slowly here or pause anytime; if things feel heavier later, you can reach a person at 119 ext. 8.</string>
+
+    <!-- The three support modes from UC-09. The label is the chip; the description is the one
+         line shown under it, so the mode is not a bare word. -->
+    <string name="companion_chip_listen">Listen</string>
+    <string name="companion_chip_solve">Solve</string>
+    <string name="companion_chip_distract">Distract</string>
+    <string name="companion_mode_listen_description">Stay with the feeling; no advice.</string>
+    <string name="companion_mode_solve_description">One small next step you can start.</string>
+    <string name="companion_mode_distract_description">Turn attention away from the spiral.</string>
+
+    <!-- Quick replies offered before the first message, one per mode. -->
+    <string name="companion_starter_listen">I need to say this out loud</string>
+    <string name="companion_starter_solve">I want one step I can take</string>
+    <string name="companion_starter_distract">Help me get out of my head</string>
 </resources>

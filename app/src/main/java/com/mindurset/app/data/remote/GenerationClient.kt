@@ -79,7 +79,12 @@ class GenerationClient(
     }
 
     private companion object {
-        val MODES = setOf("listen", "reflect", "plan")
+        /**
+         * The Worker's `/v1/chat` mode allowlist, kept identical to `worker/src/prompts.ts`.
+         * A name the Worker would coerce to `listen` is rejected here instead, because a mode the
+         * server silently replaces is worse than a request that never leaves the device.
+         */
+        val MODES = setOf("listen", "solve", "distract")
     }
 }
 
