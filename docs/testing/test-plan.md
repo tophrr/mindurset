@@ -14,23 +14,69 @@ Every test case must trace back to a specific use case (`UC-xx`) or non-function
 | --- | --- | --- | --- | --- |
 | **JVM Unit** | Domain models, intensity calculation, triage threshold evaluation, reframe state machine transitions, the twelve red-team sentences against `LocalRiskFloor`, non-punitive copy assertions, and the action screen's grouping and validation. The Worker contract is validated in `worker/test` with Vitest, outside this module. Strictly zero Android framework imports. | Local JVM / CI runner (`flock /tmp/mindurset-gradle.lock ./gradlew testDebugUnitTest`) | Blocking on PR and CI | NFR-11, NFR-13, UC-02, UC-03, UC-04, UC-13 |
 | **Instrumented** | Room DAO CRUD operations and migrations, DataStore preference persistence, EncryptedSharedPreferences operations, WorkManager task scheduling, Repository integration against mocked Worker responses, Compose UI screen state rendering (empty, loading, shimmer, offline fallback, error, safety halted). | Android Emulator or physical test device (`./gradlew connectedDebugAndroidTest`) | Release candidate verification | NFR-02, NFR-04, NFR-06, NFR-14, UC-01, UC-04, UC-22 |
-| **Manual Device** | Physical hardware interactions, edge-to-edge IME insets under keyboard popup, dynamic theme/font scaling (up to 200%), TalkBack screen reader accessibility traversals, touch target measurement (minimum 48 dp), airplane mode transitions, system process kill simulation, external intent resolution (dialer 119 ext. 8, SMS/chat chooser for trusted contact). | Physical test devices and configured emulators | Gate R4 beta / Release sign-off | NFR-01, NFR-03, NFR-05, NFR-06, NFR-10, UC-14, UC-15, UC-21 |
+| **Manual Device** | Physical hardware interactions, edge-to-edge IME insets under keyboard popup, dynamic font scaling (up to 200%), TalkBack screen reader accessibility traversals, touch target measurement (minimum 48 dp), airplane mode / offline transitions, system process kill simulation, external intent resolution (dialer 119, SMS/chat outreach for trusted contact). | Single physical handset in R4 (Xiaomi Redmi Note 10 Pro, Android 16; see Sec. 2) | Gate R4 beta / Release sign-off | NFR-01, NFR-03, NFR-05, NFR-06, NFR-10, UC-14, UC-15, UC-21 |
 
 ---
 
-## 2. Device Matrix
+## 2. Device Matrix (R4 Single-Handset Record)
 
-| Device Name | Device Type | OS Version | API Level / ABI | Display Spec & Density | Role / Priority |
-| --- | --- | --- | --- | --- | --- |
-| **Pixel 8 emulator (AVD)** | Emulator, Android Studio | Android 15 (API 35) | SDK 35 (x86_64), `system-images;android-35;google_apis_playstore;x86_64` | 6.2" 1080×2400, 420 dpi (2.625×), 4 vCPU, 3 GB RAM | **Primary Target:** layout, edge-to-edge and IME insets, Compose states, process-kill recovery, Room persistence. Soft keyboard enabled (`hw.keyboard=no`), otherwise the IME cases cannot be executed. Not valid for launch latency, thermals, battery or real 4G. |
-| **Pixel 8 emulator, API 36** | Emulator, Android Studio | Android 16 (API 36) | SDK 36 (x86_64), `system-images;android-36;google_apis_playstore;x86_64` | 6.2" 1080×2400, 420 dpi (2.625×), 4 vCPU, 3 GB RAM | **Target-SDK reference:** replace the API 35 image with this one before Gate R4, so the behaviour that `targetSdk 36` changes is exercised rather than assumed. |
-| **Xiaomi Redmi Note 10 Pro (physical)** | Physical hardware | Android 16 | SDK 36 (arm64-v8a) | 6.67" 1080×2400, 410 dpi physical (440 override, 2.5625×), ~397 ppi | **Secondary:** the device that produced the current evidence. Real IME behaviour, real dialer intent and real touch latency. Used when the AVD is not available on a host. |
-| **Generic Phone Emulator / Testbed** | Android Virtual Device (AVD) | Android 8.0 (Oreo) | SDK 26 (x86_64 / arm64) | 5.0" LCD, 1080×1920 (~440 ppi), 60 Hz | **Baseline Target:** Validates `minSdk 26` compatibility, legacy crypto fallback, Room backwards compatibility, and absence of unsupported API calls. |
-| **Low-RAM reference profile (Android Go)** | AVD / physical testbed | Android 8.1 / 13 (Go Edition) | SDK 27 / 33 (x86_64 / arm64) | 5.5" LCD, 720×1440 (hdpi, ~293 ppi), 60 Hz | **Low-RAM Target:** the heap ceiling the proposal promises (≤ 150 MB) and the behaviour under memory pressure (`ActivityManager.isLowRamDevice() = true`). Not provisioned yet; the cases below are `NOT AVAILABLE` until it is. |
+Per the 18 November 2026 project decision, the full multi-device matrix was not pursued for R4. All
+device evidence in this round comes from **one physical handset only**: a Xiaomi Redmi Note 10 Pro
+running Android 16 (SDK 36, `arm64-v8a`). The Android emulator crashes with `SIGSEGV` at graphics
+initialisation on the development host across all tested graphics backends, and no low-end handset,
+API 26 device, or tablet was provisioned for R4.
 
-The physical phone is a personal device, so it is not always available. When it is not, cases that need
-it, such as real 4G latency, thermal behaviour, battery and wireless adb, are recorded as `NOT
-AVAILABLE` with the reason, following the policy below. They are never marked as passed.
+| Device Name | Device Type | OS Version | API Level / ABI | Display Spec & Density | Role / Priority | R4 Status & Blocker |
+| --- | --- | --- | --- | --- | --- | --- |
+| **Pixel 8 emulator (AVD)** | Emulator, Android Studio | Android 15 (API 35) | SDK 35 (x86_64), `system-images;android-35;google_apis_playstore;x86_64` | 6.2" 1080×2400, 420 dpi (2.625×), 4 vCPU, 3 GB RAM | **Primary Target (planned):** layout, edge-to-edge and IME insets, Compose states, process-kill recovery, Room persistence. | **`NOT AVAILABLE`** — emulator crashes at graphics init (`SIGSEGV`) on the development host; all graphics combinations tried. |
+| **Pixel 8 emulator, API 36** | Emulator, Android Studio | Android 16 (API 36) | SDK 36 (x86_64), `system-images;android-36;google_apis_playstore;x86_64` | 6.2" 1080×2400, 420 dpi (2.625×), 4 vCPU, 3 GB RAM | **Target-SDK reference (planned):** exercise `targetSdk 36` behaviour on an x86_64 AVD. | **`NOT AVAILABLE`** — same host emulator crash (`SIGSEGV` at graphics init); missing working AVD runtime. |
+| **Xiaomi Redmi Note 10 Pro (physical)** | Physical hardware | Android 16 | SDK 36 (`arm64-v8a`) | 6.67" 1080×2400, 410 dpi physical (`2.5625×`), ~397 ppi | **Sole R4 device executed:** produced all R4 physical-handset evidence (real IME, dialer intent, process kill, offline fallback, instrumented tests). | **`FAIL`** — executed on build `51b2c21` (25 Nov 2026) with zero unhandled crashes; passed IME, rotation, offline check-in/reframe/Companion, dialer intent, `KILL-02`, and `KILL-05`, but failed draft restoration (`KILL-01`, `KILL-03`), 200% font truncation on Home/Companion, and secondary-user SMS launch on `S-91`; TalkBack is `NOT AVAILABLE` on this ROM (details in Sec. 2.1). |
+| **Generic Phone Emulator / Testbed** | Android Virtual Device (AVD) | Android 8.0 (Oreo) | SDK 26 (x86_64 / arm64) | 5.0" LCD, 1080×1920 (~440 ppi), 60 Hz | **Baseline Target (planned):** validates `minSdk 26` compatibility, legacy crypto fallback, and Room backwards compatibility. | **`NOT AVAILABLE`** — emulator crashes at graphics init (`SIGSEGV`) on the development host and no physical API 26 hardware is provisioned. |
+| **Low-RAM reference profile (Android Go)** | AVD / physical testbed | Android 8.1 / 13 (Go Edition) | SDK 27 / 33 (x86_64 / arm64) | 5.5" LCD, 720×1440 (hdpi, ~293 ppi), 60 Hz | **Low-RAM Target (planned):** validates ≤ 150 MB heap ceiling and memory-pressure behaviour (`isLowRamDevice() = true`). | **`NOT AVAILABLE`** — no low-end (2–3 GB RAM) physical handset or working Android Go AVD provisioned for R4. |
+
+Proposal §8.3 also specifies a **tablet** target; no tablet hardware or working tablet AVD was
+provisioned for R4 (`NOT AVAILABLE` — no hardware).
+
+The physical handset is a personal device accessed via wireless adb (`192.168.67.35:47111`, secondary
+user `10` / `dev`). Cases that require a second device, cellular 4G, or unprovisioned hardware are
+recorded as `NOT AVAILABLE` with the blocking cause, following the policy below. They are never
+marked as passed.
+
+### 2.1 R4 Single-Handset Manual Execution Summary (25 November 2026)
+
+- **Build under test:** `com.mindurset.app` debug assembled from `origin/main` `51b2c21`
+- **Device executed:** Xiaomi Redmi Note 10 Pro (`M2101K6G`), Android 16 (SDK 36, `arm64-v8a`),
+  secondary user `10` (`dev`), clean guest session (`[synthetic]` inputs only)
+- **Prior 11–24 November evidence cited rather than re-run:** Indonesian localisation
+  (`20261111-i18n-consent-id.png` through `20261111-i18n-s90-crisis-id.png`), ASQ check-in /
+  journal / Companion runs (`20261113-asq-*.png`, `20261119-asq-journal-*.png`,
+  `20261124-asq-companion-*.png`), contextual memory `S-52`/`S-53` (`20261124-s52-memory-*.png`,
+  `20261124-s53-settings-memory.png`), Companion modes (`20261124-companion-modes-*.png`), and
+  offline Today's Action (`20261104-action-today-done.png`).
+
+| Area / Case | Status | Observed Behaviour on Redmi Note 10 Pro (`51b2c21`) | Evidence |
+| --- | --- | --- | --- |
+| **Keyboard & IME insets (`S-11`)** | **PASS** | Soft keyboard opened (`mInputShown=true`); selected mood, intensity `7 / 10`, `[synthetic]` note field, and `Continue` button stayed cleanly above the IME without overlap. | `docs/testing/evidence/20261125-s11-ime-keyboard.png` |
+| **Font scaling to 200%** (`font_scale=2.0`) | **FAIL** | Crisis card `S-90` wrapped cleanly with no clipping. However, Home (`S-11` card) truncated mood labels (`Hap`, `Anxi`, `Stres`, mid-word `Overw/helmed`) and clipped the Companion shortcut subtitle (`Here to listen,`); Companion clipped the `Distract` chip at the right edge and truncated the active bottom-nav label (`Compa`). | `docs/testing/evidence/20261125-s90-font-200.png`, `docs/testing/evidence/20261125-s11-font-200.png`, `docs/testing/evidence/20261125-companion-font-200.png` |
+| **TalkBack traversal on primary screens** | **`NOT AVAILABLE`** | TalkBack (`com.google.android.marvin.talkback`) is not installed on this custom Android 16 ROM (`query-services` lists only `AccessibilityMenuService` and `FreeKioskAccessibilityService`). A live `uiautomator` accessibility-tree and touch-target audit across Home, Companion, Journal (`S-12`), and Crisis Card (`S-90`) confirmed `content-desc` labels and `>= 48 dp` targets on all primary controls except Companion's middle starter chip (`I want one step I can take`, `36.3 dp` height). | `docs/testing/evidence/20261125-a11y-tree-audit.log` |
+| **Offline & airplane-mode transitions (`OFF-01`, `OFF-02`, `OFF-03`, Companion offline)** | **PASS** | Clean guest onboarding (`A-01`/`OFF-01`), check-in save (`OFF-02`), triage offer, and three-step reframe degradation (`OFF-03`) completed locally with `airplane_mode_on=1` and `restricted_networking_mode=1`. Companion degraded to the bundled WHO Stress offline exercise plus fail-closed L1 banner with `restricted_networking_mode=1` blocking all third-party app network egress (Wi-Fi remained associated for wireless adb after toggling airplane mode dropped the adb link). | `docs/testing/evidence/20261125-s11-offline-triage.png`, `docs/testing/evidence/20261125-s21-offline-reframe.png`, `docs/testing/evidence/20261125-companion-offline.png` |
+| **Rotation (`ROT-02`, `ROT-05`)** | **PASS** | `ROT-02` (`S-11`): typed text survived landscape rotation and `Continue` remained above the IME (scrolling or dismissing IME is required in landscape to view upper fields). `ROT-05` (`S-90`): crisis card stayed visible and non-dismissible in landscape with `Call 119 ext. 8` and `Message someone I trust` accessible. | `docs/testing/evidence/20261125-s11-rotated.png`, `docs/testing/evidence/20261125-s90-rotated.png` |
+| **Process kill — uncommitted check-in (`KILL-01`)** | **FAIL** | `am kill com.mindurset.app` terminated PID `13459`; relaunch (`14018`) returned to `S-11` with `Anxious` (navigation arg), but intensity reset to `5 / 10` and the uncommitted `[synthetic]` draft note was lost. | `docs/testing/evidence/20261125-s11-kill01-resume.png` |
+| **Process kill — active reframe (`KILL-02`)** | **PASS** | `am kill com.mindurset.app` terminated PID `14018` on `Step 2 of 3`; relaunch (`14442`) resumed directly at `Step 2 of 3` from Room (consistent with `20261111-s21-reframe-resumed.png`). | `docs/testing/evidence/20261125-s21-kill02-resume.png` |
+| **Process kill — journal draft (`KILL-03`)** | **FAIL** | `am kill com.mindurset.app` terminated PID `21922`; relaunch (`23239`) returned to `New reflection` (`S-12`), but the uncommitted `[synthetic]` draft text was cleared. | `docs/testing/evidence/20261125-s12-kill03-resume.png` |
+| **Process kill — L3 crisis card (`KILL-05`)** | **PASS** | `am kill com.mindurset.app` terminated PID `14442` on `S-90`; relaunch (`21922`) immediately re-rendered `S-90` without bypassing the safety halt. | `docs/testing/evidence/20261125-s90-kill05-resume.png` |
+| **Dialer intent (`OFF-08`, `S-90`)** | **PASS** | Tapping `Call 119 ext. 8` launched `com.android.dialer` via `ACTION_DIAL` prefilled with `119` with no network required (`CrisisResources.PHONE` passes `119`; extension `8` is displayed in UI copy rather than appended as `,8`). | `docs/testing/evidence/20261125-s90-dialer-intent.png` |
+| **Share sheet & trusted-contact outreach (`S-91`)** | **`NOT AVAILABLE` (share sheet) / FAIL (secondary-user SMS)** | No generic `Intent.ACTION_SEND` share sheet exists in build `51b2c21` (counselor handoff `#5` and JSON export `#53` are not merged yet). On `S-91`, saving a `[synthetic]` contact and tapping `Send a message` fired `Intent.ACTION_SENDTO` (`smsto:`) without crashing and resolved to `com.android.messaging` (sole SMS handler on user `10`, so no chooser sheet appeared), but `com.android.messaging` rejected the launch with toast `Could not start conversation` because secondary user `10` (`dev`) has SMS disabled (prior saving evidence: `20261113-contact-sheet-saved.png`, `20261113-crisis-card-contact.png`). | `docs/testing/evidence/20261125-s91-sms-intent.png` |
+
+### 2.2 Verdict for NFR-10
+
+**`NFR-10` remains `Unverified`.** All R4 execution took place on one physical device (Xiaomi Redmi
+Note 10 Pro, Android 16, SDK 36, `arm64-v8a`), leaving four target rows in the matrix `NOT AVAILABLE`
+(Pixel 8 API 35 AVD, Pixel 8 API 36 AVD, API 26 baseline target, and low-RAM Android Go target) plus
+the unprovisioned tablet target from Proposal §8.3; in addition, the project has no Crashlytics
+integration or automated zero-crash gate in CI. Although no unhandled crash occurred during the R4
+manual run on `51b2c21`, single-handset manual passes cannot satisfy Proposal §8.3 or §10 `NFR-10`,
+and this report records **one physical device**, not a device matrix.
 
 ### Meaning of "NOT AVAILABLE" in Test Reports
 
@@ -167,11 +213,12 @@ never deleted and never marked as passed.
 
 | Area | Cases | Blocked by |
 | --- | --- | --- |
-| Account, sign-in and token refresh | A-02 to A-07, A-09, KILL-06 | No Firebase project and no `google-services.json`. The app now requests the INTERNET permission for the Companion, but the only endpoint a build can reach is the debug `http://localhost:8787`, so no account call exists to test |
-| Backup and sync | OFF-09, OFF-10, A-04, A-05 | No Worker endpoint wired into the client |
-| Insights | OFF-06, KILL-04 | The Home heatmap and local aggregation tests are implemented. The device evidence covers an empty guest state; a seeded multi-source Room scenario and process-kill restoration remain to be run. |
-| Memory manager and export | DATA-03 to DATA-06 | The `session_summary` table exists; the screen and export path do not |
-| Instrumented suite | Every `connectedDebugAndroidTest` row | No `androidTest` source set yet |
+| Account, sign-in and token refresh | A-02 to A-07, A-09, KILL-06 | No Firebase project and no `google-services.json`. The app requests the INTERNET permission for Companion and reframe generation, but no account backend or auth token endpoint exists to test |
+| Backup and sync | OFF-09, OFF-10, A-04, A-05 | No backup or D1 mirror endpoint wired into the client |
+| Insights | OFF-06, KILL-04 | The Home 28-day heatmap and local aggregation tests are implemented (`20261112-home-effort-heatmap.png` and `20261125-s11-font-200.png` show single-device renders); 7/30-day breakdown (`#52`) and a seeded multi-source `KILL-04` run remain open |
+| Export & consent revocation | DATA-02, DATA-06 | `S-52` Memory Manager (`DATA-03`–`DATA-05`) landed in `#51` (`20261124-s52-memory-populated.png`); in-app JSON export (`DATA-06`) and consent revocation UI (`#53`) are not merged yet |
+| Instrumented suite | `connectedDebugAndroidTest` rows outside DAO/Consent/Crisis | 15 instrumented tests (`CheckInDaoTest`, `JournalDaoTest`, `ConsentScreenTest`, `CrisisScreenTest`) run via `am instrument` on the single Redmi Note 10 Pro handset (`TESTING.md`); remaining screens are still route-coupled (`#60`) |
+| Multi-device & Low-RAM | LOWRAM-01, LOWRAM-02, API 26, AVD API 35/36, tablet | Single-handset R4 run only (18 November decision); emulator crashes at graphics init (`SIGSEGV`) and no low-end, API 26, or tablet hardware is provisioned |
 
 ---
 
