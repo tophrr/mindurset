@@ -396,7 +396,7 @@ fun ReflectionFormScreen(
     entryId: String?,
     onSaved: () -> Unit,
     onBack: () -> Unit,
-    onCrisis: (RiskLevel) -> Unit = { onSaved() },
+    onCrisis: (RiskLevel, Boolean) -> Unit = { _, _ -> onSaved() },
 ) {
     val container = LocalAppContainer.current
     val viewModel: ReflectionFormViewModel = viewModel {
@@ -411,8 +411,9 @@ fun ReflectionFormScreen(
     LaunchedEffect(viewModel.crisisLevel) {
         val level = viewModel.crisisLevel
         if (level != null) {
+            val thirdParty = viewModel.crisisThirdParty
             viewModel.acknowledgeCrisis()
-            onCrisis(level)
+            onCrisis(level, thirdParty)
         }
     }
 

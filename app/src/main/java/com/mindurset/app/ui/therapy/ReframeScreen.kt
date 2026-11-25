@@ -46,7 +46,7 @@ import com.mindurset.app.ui.theme.PaleBlue
  * which is why reopening Therapy later resumes at the same step.
  */
 @Composable
-fun ReframeScreen(onBack: () -> Unit, onFinished: () -> Unit, onCrisis: (RiskLevel) -> Unit = {}) {
+fun ReframeScreen(onBack: () -> Unit, onFinished: () -> Unit, onCrisis: (RiskLevel, Boolean) -> Unit = { _, _ -> }) {
     val container = LocalAppContainer.current
     val vm: ReframeViewModel = viewModel {
         ReframeViewModel(
@@ -60,6 +60,7 @@ fun ReframeScreen(onBack: () -> Unit, onFinished: () -> Unit, onCrisis: (RiskLev
     }
     val state by vm.state.collectAsStateWithLifecycle()
     val crisis by vm.crisisLevel.collectAsStateWithLifecycle()
+    val crisisThirdParty by vm.crisisThirdParty.collectAsStateWithLifecycle()
     val asq by vm.asq.collectAsStateWithLifecycle()
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -67,7 +68,7 @@ fun ReframeScreen(onBack: () -> Unit, onFinished: () -> Unit, onCrisis: (RiskLev
     LaunchedEffect(crisis) {
         val level = crisis ?: return@LaunchedEffect
         vm.crisisAcknowledged()
-        onCrisis(level)
+        onCrisis(level, crisisThirdParty)
     }
 
     LaunchedEffect(asq != null) {
