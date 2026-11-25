@@ -20,9 +20,8 @@ android {
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // The Worker endpoint the app talks to. Release builds leave it empty on purpose: there is
-        // no deployed endpoint yet, so the client takes the offline path instead of calling an
-        // address that cannot exist on a user's phone.
+        // The Worker endpoint the app talks to. Release builds take the deployed Worker declared in
+        // buildTypes.release below; an empty value still means "offline only".
         buildConfigField("String", "GENERATION_BASE_URL", "\"\"")
     }
 
@@ -42,6 +41,13 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+
+            // The deployed Worker, live since 26 November. Override for a staging name or a rebuild:
+            //   ./gradlew :app:assembleRelease -Pmindurset.endpoint=https://<worker>.<subdomain>.workers.dev
+            val endpoint =
+                (project.findProperty("mindurset.endpoint") as String?)
+                    ?: "https://mindurset-worker.chrisg661.workers.dev"
+            buildConfigField("String", "GENERATION_BASE_URL", "\"$endpoint\"")
         }
     }
 
