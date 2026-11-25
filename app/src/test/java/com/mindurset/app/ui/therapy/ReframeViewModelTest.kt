@@ -4,12 +4,16 @@ import com.mindurset.app.data.remote.GenerationClient
 import com.mindurset.app.data.remote.GenerationTransport
 import com.mindurset.app.domain.model.MicroAction
 import com.mindurset.app.domain.model.ReframeSession
+import com.mindurset.app.domain.model.RiskLevel
+import com.mindurset.app.domain.model.SafetyEvent
 import com.mindurset.app.domain.model.SessionInfo
 import com.mindurset.app.domain.model.SessionMessage
 import com.mindurset.app.domain.repository.MicroActionRepository
+import com.mindurset.app.domain.repository.SafetyRepository
 import com.mindurset.app.domain.repository.SessionRepository
 import com.mindurset.app.domain.repository.SessionStore
 import com.mindurset.app.domain.repository.SessionSummaryScheduler
+import com.mindurset.app.safety.AsqFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -24,6 +28,7 @@ import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
@@ -32,6 +37,7 @@ class ReframeViewModelTest {
     private val sessions = FakeSessionRepository()
     private val actions = FakeActionRepository()
     private val scheduler = RecordingSummaryScheduler()
+    private val safety = RecordingSafetyRepository()
 
     @Test
     fun `each answer is stored before the next step`() {
@@ -203,6 +209,148 @@ class ReframeViewModelTest {
         assertEquals(listOf("thought"), sessions.messages.map { it.role })
     }
 
+    @Test
+    fun `L3 at step 0 halts at crisis without persisting or calling client`() {
+        val transport = NeverCalledTransport()
+        val viewModel = viewModel(transport)
+
+        viewModel.setThought("I want to kill myself tonight")
+        viewModel.next()
+
+        assertEquals(RiskLevel.L3, viewModel.crisisLevel.value)
+        assertNull(viewModel.asq.value)
+        assertEquals(0, viewModel.state.value.step)
+        assertTrue(sessions.messages.isEmpty())
+        assertNull(sessions.session)
+        assertEquals(0, sessions.saveCalls)
+        assertEquals(0, transport.calls)
+        val event = safety.events.single()
+        assertEquals(RiskLevel.L3, event.level)
+        assertEquals("reframe_thought", event.trigger)
+        assertEquals("en-intent", event.patternId)
+
+        viewModel.crisisAcknowledged()
+        assertNull(viewModel.crisisLevel.value)
+    }
+
+    @Test
+    fun `L2 at step 0 opens ASQ without persisting or calling client`() {
+        val transport = NeverCalledTransport()
+        val viewModel = viewModel(transport)
+
+        viewModel.setThought("aku ingin mati")
+        viewModel.next()
+
+        assertEquals(AsqFlow.State(), viewModel.asq.value)
+        assertNull(viewModel.crisisLevel.value)
+        assertEquals(0, viewModel.state.value.step)
+        assertTrue(sessions.messages.isEmpty())
+        assertNull(sessions.session)
+        assertEquals(0, sessions.saveCalls)
+        assertEquals(0, transport.calls)
+        val event = safety.events.single()
+        assertEquals(RiskLevel.L2, event.level)
+        assertEquals("reframe_thought", event.trigger)
+        assertEquals("id-hopeless", event.patternId)
+    }
+
+    @Test
+    fun `L2 then four noes persists the held thought once and runs requestGeneration`() {
+        val transport = FakeTransport(GENERATED)
+        val viewModel = viewModel(transport)
+
+        viewModel.setThought("there is no reason to live")
+        viewModel.next()
+        repeat(4) { viewModel.answerAsq(yes = false) }
+
+        assertNull(viewModel.asq.value)
+        assertNull(viewModel.crisisLevel.value)
+        assertEquals(1, viewModel.state.value.step)
+        assertEquals(1, sessions.saveCalls)
+        val thoughtMessages = sessions.messages.filter { it.role == ReframeViewModel.ROLE_THOUGHT }
+        assertEquals(1, thoughtMessages.size)
+        assertEquals("there is no reason to live", thoughtMessages.single().content)
+        assertEquals(listOf("/v1/reframe"), transport.paths)
+        assertEquals("there is no reason to live", JSONObject(transport.bodies.single()).getString("thought"))
+        assertTrue(viewModel.state.value.generated)
+    }
+
+    @Test
+    fun `L2 then one yes records asq_positive and halts without persisting or calling client`() {
+        val transport = NeverCalledTransport()
+        val viewModel = viewModel(transport)
+
+        viewModel.setThought("there is no reason to live")
+        viewModel.next()
+        viewModel.answerAsq(yes = true)
+        repeat(3) { viewModel.answerAsq(yes = false) }
+        val pending = requireNotNull(viewModel.asq.value)
+        assertEquals(AsqFlow.ID_ACUITY, AsqFlow.nextQuestion(pending)?.id)
+        assertNull(viewModel.crisisLevel.value)
+        viewModel.answerAsq(yes = false)
+
+        assertNull(viewModel.asq.value)
+        assertEquals(RiskLevel.L3, viewModel.crisisLevel.value)
+        assertEquals(0, viewModel.state.value.step)
+        assertTrue(sessions.messages.isEmpty())
+        assertNull(sessions.session)
+        assertEquals(0, sessions.saveCalls)
+        assertEquals(0, transport.calls)
+        assertEquals(2, safety.events.size)
+        val positive = safety.events.last()
+        assertEquals("asq_positive", positive.trigger)
+        assertEquals(RiskLevel.L3, positive.level)
+        assertNull(positive.patternId)
+    }
+
+    @Test
+    fun `model returning L3 on an L0 thought opens crisis without persisting generation or showing readings`() {
+        val l3Reply = JSONObject(GENERATED)
+            .put("risk_level", JSONObject().put("level", "L3").put("confidence", 0.95))
+            .toString()
+        val viewModel = viewModel(FakeTransport(l3Reply))
+
+        viewModel.setThought("I will fail no matter what")
+        viewModel.next()
+
+        assertEquals(RiskLevel.L3, viewModel.crisisLevel.value)
+        assertNull(viewModel.asq.value)
+        assertFalse(viewModel.state.value.generating)
+        assertFalse(viewModel.state.value.generated)
+        assertEquals("", viewModel.state.value.distortion)
+        assertTrue(viewModel.state.value.perspectives.isEmpty())
+        assertTrue(viewModel.state.value.sources.isEmpty())
+        assertEquals(listOf("thought"), sessions.messages.map { it.role })
+        val event = safety.events.single()
+        assertEquals(RiskLevel.L3, event.level)
+        assertEquals("reframe_classifier", event.trigger)
+    }
+
+    @Test
+    fun `model returning L2 on an L0 thought opens ASQ before showing readings`() {
+        val l2Reply = JSONObject(GENERATED)
+            .put("risk_level", JSONObject().put("level", "L2").put("confidence", 0.8))
+            .toString()
+        val viewModel = viewModel(FakeTransport(l2Reply))
+
+        viewModel.setThought("I will fail no matter what")
+        viewModel.next()
+
+        assertEquals(AsqFlow.State(), viewModel.asq.value)
+        assertNull(viewModel.crisisLevel.value)
+        assertFalse(viewModel.state.value.generated)
+        assertTrue(viewModel.state.value.perspectives.isEmpty())
+        assertEquals(listOf("thought"), sessions.messages.map { it.role })
+
+        repeat(4) { viewModel.answerAsq(yes = false) }
+
+        assertNull(viewModel.asq.value)
+        assertNull(viewModel.crisisLevel.value)
+        assertTrue(viewModel.state.value.generated)
+        assertEquals(2, viewModel.state.value.perspectives.size)
+        assertEquals(listOf("thought", ReframeViewModel.ROLE_GENERATION), sessions.messages.map { it.role })
+    }
+
     private fun viewModel(
         transport: GenerationTransport? = null,
         summaryScheduler: SessionSummaryScheduler = scheduler,
@@ -212,10 +360,22 @@ class ReframeViewModelTest {
         sessionStore = FixedSessionStore(SessionInfo("u1", "guest@local")),
         generation = transport?.let { GenerationClient("http://worker.test", it) },
         summaryScheduler = summaryScheduler,
+        safetyRepository = safety,
         now = { 1_700_000_002_000 },
         newId = { "id-${sessions.messages.size}" },
         externalScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),
     )
+}
+
+private class RecordingSafetyRepository : SafetyRepository {
+    val events = mutableListOf<SafetyEvent>()
+
+    override suspend fun record(event: SafetyEvent) {
+        events += event
+    }
+
+    override suspend fun countSince(userId: String, since: Long): Int =
+        events.count { it.userId == userId && it.createdAt >= since }
 }
 
 private class RecordingSummaryScheduler : SessionSummaryScheduler {
@@ -230,6 +390,7 @@ private class RecordingSummaryScheduler : SessionSummaryScheduler {
 
 private class FakeSessionRepository : SessionRepository {
     var session: ReframeSession? = null
+    var saveCalls = 0
     val messages = mutableListOf<SessionMessage>()
 
     override suspend fun start(userId: String, checkInId: String?, now: Long): ReframeSession {
@@ -255,6 +416,7 @@ private class FakeSessionRepository : SessionRepository {
     override suspend fun findById(id: String): ReframeSession? = session?.takeIf { it.id == id }
 
     override suspend fun save(session: ReframeSession) {
+        saveCalls += 1
         this.session = session
     }
 
@@ -326,4 +488,14 @@ private class FakeTransport(private val response: String) : GenerationTransport 
 
 private class FailingTransport : GenerationTransport {
     override suspend fun post(path: String, body: String): String = throw IOException("worker unreachable")
+}
+
+private class NeverCalledTransport : GenerationTransport {
+    var calls = 0
+        private set
+
+    override suspend fun post(path: String, body: String): String {
+        calls += 1
+        throw AssertionError("the client must not be called: $path")
+    }
 }

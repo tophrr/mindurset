@@ -22,8 +22,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,8 +33,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mindurset.app.R
 import com.mindurset.app.di.LocalAppContainer
+import com.mindurset.app.domain.model.RiskLevel
 import com.mindurset.app.ui.common.AppCard
 import com.mindurset.app.ui.profile.MindTopBar
+import com.mindurset.app.ui.safety.AsqPanel
 import com.mindurset.app.ui.theme.MutedGray
 import com.mindurset.app.ui.theme.NavyInk
 import com.mindurset.app.ui.theme.PaleBlue
@@ -42,7 +46,7 @@ import com.mindurset.app.ui.theme.PaleBlue
  * which is why reopening Therapy later resumes at the same step.
  */
 @Composable
-fun ReframeScreen(onBack: () -> Unit, onFinished: () -> Unit) {
+fun ReframeScreen(onBack: () -> Unit, onFinished: () -> Unit, onCrisis: (RiskLevel) -> Unit = {}) {
     val container = LocalAppContainer.current
     val vm: ReframeViewModel = viewModel {
         ReframeViewModel(
@@ -51,9 +55,24 @@ fun ReframeScreen(onBack: () -> Unit, onFinished: () -> Unit) {
             sessionStore = container.sessionStore,
             generation = container.generationClient,
             summaryScheduler = container.summaryWorker,
+            safetyRepository = container.safetyRepository,
         )
     }
     val state by vm.state.collectAsStateWithLifecycle()
+    val crisis by vm.crisisLevel.collectAsStateWithLifecycle()
+    val asq by vm.asq.collectAsStateWithLifecycle()
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    // Clear the flag before navigating: coming back must not push the crisis card a second time.
+    LaunchedEffect(crisis) {
+        val level = crisis ?: return@LaunchedEffect
+        vm.crisisAcknowledged()
+        onCrisis(level)
+    }
+
+    LaunchedEffect(asq != null) {
+        if (asq != null) keyboardController?.hide()
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -66,6 +85,15 @@ fun ReframeScreen(onBack: () -> Unit, onFinished: () -> Unit) {
             )
         },
     ) { innerPadding ->
+        val asqState = asq
+        if (asqState != null) {
+            AsqPanel(
+                state = asqState,
+                onAnswer = vm::answerAsq,
+                modifier = Modifier.padding(innerPadding).imePadding(),
+            )
+            return@Scaffold
+        }
         Column(
             modifier =
             Modifier
