@@ -1,0 +1,28 @@
+# Accessibility tree & touch-target audit — 2026-11-25
+# Build: com.mindurset.app debug (51b2c21)
+# Device: Xiaomi Redmi Note 10 Pro (M2101K6G), Android 16 (SDK 36, arm64-v8a), 1080x2400 @ 410 dpi (2.5625 px/dp)
+# Installed AccessibilityService check (`cmd package query-services -a android.accessibilityservice.AccessibilityService`):
+#   0: com.android.systemui.accessibility.accessibilitymenu/.AccessibilityMenuService
+#   1: com.freekiosk/.FreeKioskAccessibilityService
+# TalkBack (com.google.android.marvin.talkback): NOT INSTALLED -> live TalkBack traversal is NOT AVAILABLE on this ROM.
+
+[screen=home_s11]
+clickable_controls_checked=14
+below_48dp_count=0
+notes=Menu(48.0x48.0dp,desc=Menu), Notifications(48.0x48.0dp,desc=Notifications), 5x mood tiles(64.4x87.8dp,desc=Happy|Calm|Low|Anxious|Stressed), Continue(345.8x51.9dp), 4x bottom-nav(87.0x48.0-59.7dp,desc=Home|Therapy|Companion|Profile), 28x heatmap cells carry date+count content-desc. Bottom-of-fold Chat/Start buttons clipped by viewport edge until scrolled.
+
+[screen=companion]
+clickable_controls_checked=12
+below_48dp_count=1
+finding=Middle starter chip ("I want one step I can take") measured 162.7x36.3dp ([87,779][504,872]); vertical pitch overlaps adjacent starter chips (48.0dp above/below).
+notes=Open menu(48.0x48.0dp,desc=Open menu), Mode chips Listen/Solve/Distract(85.1-101.5x48.0dp), Message EditText(307.5x48.0dp), Send(48.0x48.0dp,desc=Send), 4x bottom-nav(87.0x48.0-59.7dp).
+
+[screen=journal_s12]
+clickable_controls_checked=5
+below_48dp_count=0
+notes=Back(48.0x48.0dp,desc=Back), Challenge EditText(345.8x112.8dp), Reframe EditText(345.8x88.6dp), Gratitude EditText(345.8x88.6dp), Save(381.7x53.9dp).
+
+[screen=crisis_s90]
+clickable_controls_checked=3
+below_48dp_count=0
+notes=Call 119 ext. 8(345.8x51.9dp), Message someone I trust(381.7x48.0dp), I am safe for now(133.5x48.0dp).
