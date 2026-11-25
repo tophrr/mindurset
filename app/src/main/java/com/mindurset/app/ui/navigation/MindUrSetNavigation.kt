@@ -306,6 +306,11 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
                     ReframeScreen(
                         onBack = { navController.popBackStack() },
                         onFinished = { goToDestination(Routes.DASHBOARD) },
+                        onCrisis = { level ->
+                            navController.navigate(Routes.crisis(level.name)) {
+                                popUpTo(Routes.DASHBOARD) { inclusive = false }
+                            }
+                        },
                     )
                 }
                 composable(Routes.COMPANION) {
