@@ -20,7 +20,7 @@ import {
   type AiBinding,
   type ModelClient,
 } from "./model";
-import { PROMPT_VERSION, readMode, type Mode } from "./prompts";
+import { PROMPT_VERSION, readContext, readMode, type Mode } from "./prompts";
 import { retrieveSemantic, type Excerpt } from "./retrieval";
 
 export const MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
@@ -228,6 +228,7 @@ export async function runGeneration(
   env: Env = {},
 ): Promise<GenerationResponse> {
   const mode = readMode(body);
+  const context = kind === "summarise" ? undefined : readContext(body);
   let floor: RiskAssessment = { level: "L0", confidence: 0.5 };
 
   try {
@@ -243,7 +244,7 @@ export async function runGeneration(
     const client = selectModelClient(env);
     if (!client) return fallback(kind, floor);
 
-    const draft = await client.generate({ kind, mode, userText, excerpts });
+    const draft = await client.generate({ kind, mode, userText, excerpts, context });
     if (!draft) return fallback(kind, floor);
 
     const normalised = normaliseDraft(draft, excerpts, floor);
