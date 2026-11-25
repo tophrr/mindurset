@@ -46,11 +46,11 @@ class CompanionViewModelTest {
         val (viewModel, scope) = viewModelWith(transport)
 
         assertEquals(CompanionReplyState.Idle, viewModel.uiState.value.replyState)
-        viewModel.selectMode(CompanionSupportMode.NEGATIVE_THOUGHTS)
+        viewModel.selectMode(CompanionSupportMode.SOLVE)
         viewModel.send("A busy day")
 
         assertEquals("/v1/chat", transport.lastPath)
-        assertEquals("reflect", JSONObject(requireNotNull(transport.lastBody)).getString("mode"))
+        assertEquals("solve", JSONObject(requireNotNull(transport.lastBody)).getString("mode"))
         assertTrue(viewModel.uiState.value.replyState is CompanionReplyState.Reply)
         assertEquals(
             listOf("who-stress-01#p3", "cbt-thought-record#s2"),
@@ -214,10 +214,10 @@ class CompanionViewModelTest {
         val (viewModel, _, scope) = viewModelWithSafety(transport)
 
         viewModel.send("aku ingin mati")
-        viewModel.selectMode(CompanionSupportMode.NEGATIVE_THOUGHTS)
+        viewModel.selectMode(CompanionSupportMode.SOLVE)
         viewModel.send("A busy day")
 
-        assertEquals(CompanionSupportMode.PERSONAL, viewModel.uiState.value.supportMode)
+        assertEquals(CompanionSupportMode.LISTEN, viewModel.uiState.value.supportMode)
         assertEquals(AsqFlow.State(), viewModel.asq.value)
         assertTrue(viewModel.uiState.value.lines.isEmpty())
         assertEquals(0, transport.calls)

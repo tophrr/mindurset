@@ -14,4 +14,18 @@
     <string name="companion_resources_call">Telepon 119 ext. 8</string>
     <string name="companion_asq_resources_title">Bantuan tetap satu ketukan dari sini</string>
     <string name="companion_asq_resources_body">Terima kasih sudah menjawab pertanyaan tadi. Kamu bisa lanjut pelan-pelan di sini atau berhenti kapan saja; kalau nanti rasanya jadi lebih berat, kamu bisa menghubungi seseorang di 119 ext. 8.</string>
+
+    <!-- Tiga mode pendampingan dari UC-09. Label dipakai di chip; deskripsi satu baris tampil
+         di bawahnya supaya mode tidak hanya berupa satu kata. -->
+    <string name="companion_chip_listen">Dengar</string>
+    <string name="companion_chip_solve">Selesaikan</string>
+    <string name="companion_chip_distract">Alihkan</string>
+    <string name="companion_mode_listen_description">Temani perasaannya; tanpa saran.</string>
+    <string name="companion_mode_solve_description">Satu langkah kecil yang bisa dimulai.</string>
+    <string name="companion_mode_distract_description">Alihkan perhatian dari pusaran pikiran.</string>
+
+    <!-- Balasan cepat sebelum pesan pertama, satu per mode. -->
+    <string name="companion_starter_listen">Aku perlu menceritakan ini</string>
+    <string name="companion_starter_solve">Aku mau satu langkah yang bisa kulakukan</string>
+    <string name="companion_starter_distract">Bantu aku keluar dari kepalaku sendiri</string>
 </resources>

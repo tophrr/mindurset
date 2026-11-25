@@ -95,7 +95,6 @@
     <!-- Companion (static preview) -->
     <string name="companion_title">Pendamping</string>
     <string name="companion_open_menu">Buka menu</string>
-    <string name="companion_chip_personal">Pribadi</string>
     <string name="companion_input_placeholder">Tulis pesanmu…</string>
     <string name="companion_send">Kirim</string>
 

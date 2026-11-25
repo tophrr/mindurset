@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,6 +48,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -170,14 +172,45 @@ fun CompanionScreen(onOpenDrawer: () -> Unit, onCrisis: (RiskLevel) -> Unit = {}
                     }
                 }
 
+                // The selected mode is not only a highlighted chip: it says what it will do, so
+                // "Distract" cannot be mistaken for another way to analyse the same thought.
+                Text(
+                    text = stringResource(state.supportMode.descriptionRes),
+                    color = MutedGray,
+                    fontSize = 12.sp,
+                    lineHeight = 17.sp,
+                    modifier = Modifier.testTag("companion_mode_description"),
+                )
+
                 if (state.lines.isEmpty()) {
                     AppCard {
-                        Text(
-                            text = stringResource(R.string.companion_empty_state),
-                            color = NavyInk,
-                            fontSize = 15.sp,
-                            lineHeight = 22.sp,
-                        )
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text(
+                                text = stringResource(R.string.companion_empty_state),
+                                color = NavyInk,
+                                fontSize = 15.sp,
+                                lineHeight = 22.sp,
+                            )
+                            // One starter per mode, in the mode's own words. A starter belongs to its
+                            // mode, so tapping it also selects that mode; the person still decides to
+                            // send the line.
+                            CompanionSupportMode.entries.forEach { mode ->
+                                val starter = stringResource(mode.starterRes)
+                                Text(
+                                    text = starter,
+                                    color = NavyDeep,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    modifier =
+                                    Modifier
+                                        .testTag("companion_starter_${mode.workerMode}")
+                                        .clickable {
+                                            vm.selectMode(mode)
+                                            draft = starter
+                                        },
+                                )
+                            }
+                        }
                     }
                 }
 
