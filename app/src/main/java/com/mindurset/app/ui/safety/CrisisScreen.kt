@@ -53,7 +53,7 @@ import com.mindurset.app.ui.theme.NavyInk
  * card can be exercised in a UI test without an Activity, a Context or a container.
  */
 @Composable
-fun CrisisRoute(level: RiskLevel = RiskLevel.L3, onAcknowledge: () -> Unit) {
+fun CrisisRoute(level: RiskLevel = RiskLevel.L3, thirdParty: Boolean = false, onAcknowledge: () -> Unit) {
     BackHandler(enabled = true) { /* acknowledgement, not the back gesture, leaves this screen */ }
 
     val container = LocalAppContainer.current
@@ -74,6 +74,7 @@ fun CrisisRoute(level: RiskLevel = RiskLevel.L3, onAcknowledge: () -> Unit) {
 
     CrisisContent(
         level = level,
+        thirdParty = thirdParty,
         onCall = dial,
         onOpenContactSheet = { sheetOpen = true },
         onAcknowledge = onAcknowledge,
@@ -100,7 +101,13 @@ fun CrisisRoute(level: RiskLevel = RiskLevel.L3, onAcknowledge: () -> Unit) {
  * this was split out of. The copy is clinically reviewed; a reworded string is a defect.
  */
 @Composable
-fun CrisisContent(level: RiskLevel, onCall: () -> Unit, onOpenContactSheet: () -> Unit, onAcknowledge: () -> Unit) {
+fun CrisisContent(
+    level: RiskLevel,
+    thirdParty: Boolean = false,
+    onCall: () -> Unit,
+    onOpenContactSheet: () -> Unit,
+    onAcknowledge: () -> Unit,
+) {
     val direct = level >= RiskLevel.L3
 
     Column(
@@ -127,6 +134,29 @@ fun CrisisContent(level: RiskLevel, onCall: () -> Unit, onOpenContactSheet: () -
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(24.dp))
+        if (thirdParty) {
+            AppCard {
+                Text(
+                    text = stringResource(R.string.crisis_third_party_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = NavyInk,
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.crisis_third_party_body),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = NavyInk,
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.crisis_third_party_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MutedGray,
+                )
+            }
+            Spacer(Modifier.height(16.dp))
+        }
         AppCard {
             Text(
                 text = stringResource(R.string.crisis_number_label),
