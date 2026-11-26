@@ -73,6 +73,27 @@ Format: `type(scope): subject`
 A pull request that does not state which traceability rows it closes is sent back, however good the
 code is.
 
+## 4a. Release builds and signing
+
+CI builds the release on every pull request and verifies its signature, so a break in the release
+path cannot reach `main` unnoticed. The keystore is never in the tree: it lives in the repository
+secret `KEYSTORE_BASE64`, with `KEYSTORE_PASSWORD`, `KEY_ALIAS` and `KEY_PASSWORD` beside it.
+
+To build a release on your own machine, create `keystore.properties` in the repository root (it is
+gitignored) with four keys, and nothing else:
+
+```
+storeFile=/absolute/path/to/mindurset-release.jks
+storePassword=...
+keyAlias=mindurset
+keyPassword=...
+```
+
+`./gradlew :app:assembleRelease` then produces a signed `app-release.apk`. Without that file and
+without the four `MINDURSET_KEYSTORE_*` / `MINDURSET_KEY_*` environment variables, the same command
+still succeeds and leaves the APK unsigned — a contributor without the key can compile, and CI fails
+the build instead of shipping an unsigned artifact.
+
 ## 5. Code rules
 
 - Kotlin style is enforced by ktlint through Spotless: run `./gradlew spotlessApply` before pushing.

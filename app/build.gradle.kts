@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -25,6 +27,34 @@ android {
         buildConfigField("String", "GENERATION_BASE_URL", "\"\"")
     }
 
+    /**
+     * The release keystore. Two sources, because the two places that build a release cannot share a
+     * file: a local `keystore.properties` (gitignored, never committed) and, in CI, the same four
+     * values passed as environment variables from repository secrets. With neither, the release build
+     * stays unsigned instead of failing, so a contributor without the key can still compile one.
+     */
+    signingConfigs {
+        create("release") {
+            val local = rootProject.file("keystore.properties")
+            if (local.exists()) {
+                val props = Properties()
+                local.inputStream().use { props.load(it) }
+                storeFile = rootProject.file(props.getProperty("storeFile"))
+                storePassword = props.getProperty("storePassword")
+                keyAlias = props.getProperty("keyAlias")
+                keyPassword = props.getProperty("keyPassword")
+            } else {
+                val path = System.getenv("MINDURSET_KEYSTORE_PATH")
+                if (path != null) {
+                    storeFile = file(path)
+                    storePassword = System.getenv("MINDURSET_KEYSTORE_PASSWORD")
+                    keyAlias = System.getenv("MINDURSET_KEY_ALIAS")
+                    keyPassword = System.getenv("MINDURSET_KEY_PASSWORD")
+                }
+            }
+        }
+    }
+
     buildTypes {
         debug {
             enableUnitTestCoverage = true
@@ -48,6 +78,11 @@ android {
                 (project.findProperty("mindurset.endpoint") as String?)
                     ?: "https://mindurset-worker.chrisg661.workers.dev"
             buildConfigField("String", "GENERATION_BASE_URL", "\"$endpoint\"")
+
+            // Only sign when a keystore was actually found; otherwise the build stays unsigned.
+            signingConfigs.findByName("release")?.takeIf { it.storeFile != null }?.let {
+                signingConfig = it
+            }
         }
     }
 
