@@ -27,12 +27,10 @@ android {
         buildConfigField("String", "GENERATION_BASE_URL", "\"\"")
     }
 
-    /**
-     * The release keystore. Two sources, because the two places that build a release cannot share a
-     * file: a local `keystore.properties` (gitignored, never committed) and, in CI, the same four
-     * values passed as environment variables from repository secrets. With neither, the release build
-     * stays unsigned instead of failing, so a contributor without the key can still compile one.
-     */
+    // The release keystore. Two sources, because the two places that build a release cannot share a
+    // file: a local `keystore.properties` (gitignored, never committed) and, in CI, the same four
+    // values passed as environment variables from repository secrets. With neither, the release build
+    // stays unsigned instead of failing, so a contributor without the key can still compile one.
     signingConfigs {
         create("release") {
             val local = rootProject.file("keystore.properties")
