@@ -68,6 +68,10 @@ class CompanionViewModel(
     private val _crisisLevel = MutableStateFlow<RiskLevel?>(null)
     val crisisLevel: StateFlow<RiskLevel?> = _crisisLevel.asStateFlow()
 
+    /** True when the halted message is a disclosure about someone else. */
+    private val _crisisThirdParty = MutableStateFlow(false)
+    val crisisThirdParty: StateFlow<Boolean> = _crisisThirdParty.asStateFlow()
+
     /**
      * Set when the floor or classifier found ambiguous hopelessness (L2): the conversation holds
      * while the four screening items are answered, because a yes reaches the crisis card and four
@@ -121,6 +125,7 @@ class CompanionViewModel(
     /** Called once the card is on screen, before navigation, so a return does not show it twice. */
     fun crisisAcknowledged() {
         _crisisLevel.value = null
+        _crisisThirdParty.value = false
     }
 
     /**
@@ -142,6 +147,11 @@ class CompanionViewModel(
         _asq.value = null
         if (result.level >= RiskLevel.L3) {
             recordSafetyEvent(level = RiskLevel.L3, patternId = null, trigger = TRIGGER_ASQ_POSITIVE)
+            _crisisThirdParty.value = when (held) {
+                is PendingAsq.ClassifierReply -> held.thirdParty
+                is PendingAsq.LocalFloor -> held.thirdParty
+                null -> false
+            }
             _crisisLevel.value = RiskLevel.L3
             return
         }
@@ -162,7 +172,7 @@ class CompanionViewModel(
                 }
             }
 
-            PendingAsq.LocalFloor, null -> {
+            is PendingAsq.LocalFloor, null -> {
                 scope.launch {
                     val exercise = selectOfflineExercise(
                         PendingRequest(message = "", mode = _uiState.value.supportMode),
@@ -296,10 +306,16 @@ class CompanionViewModel(
     private fun handleScreening(screening: Screening, trigger: String, heldReply: GenerationResponse?) {
         recordSafetyEvent(level = screening.level, patternId = screening.patternId, trigger = trigger)
         if (screening.level >= RiskLevel.L3) {
+            _crisisThirdParty.value = screening.thirdParty
             _crisisLevel.value = screening.level
         } else {
             // L2 is the ambiguous rung: the ASQ items decide, not the phrase table alone.
-            pendingAsq = if (heldReply != null) PendingAsq.ClassifierReply(heldReply) else PendingAsq.LocalFloor
+            pendingAsq =
+                if (heldReply != null) {
+                    PendingAsq.ClassifierReply(heldReply, screening.thirdParty)
+                } else {
+                    PendingAsq.LocalFloor(screening.thirdParty)
+                }
             _asq.value = AsqFlow.State()
         }
     }
@@ -342,9 +358,9 @@ class CompanionViewModel(
     private data class PendingRequest(val message: String, val mode: CompanionSupportMode)
 
     private sealed interface PendingAsq {
-        data object LocalFloor : PendingAsq
+        data class LocalFloor(val thirdParty: Boolean = false) : PendingAsq
 
-        data class ClassifierReply(val response: GenerationResponse) : PendingAsq
+        data class ClassifierReply(val response: GenerationResponse, val thirdParty: Boolean = false) : PendingAsq
     }
 }
 

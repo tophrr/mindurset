@@ -19,6 +19,7 @@ data class Screening(
     val source: ScreeningSource,
     val patternId: String?,
     val escalated: Boolean,
+    val thirdParty: Boolean = false,
 ) {
     /** True when the flow has to halt and show the crisis card instead of continuing. */
     val halts: Boolean get() = level >= RiskLevel.L2
@@ -45,6 +46,7 @@ object RiskScreening {
             source = ScreeningSource.FLOOR_ONLY,
             patternId = hit?.patternId,
             escalated = false,
+            thirdParty = hit?.thirdParty == true,
         )
     }
 
@@ -55,6 +57,7 @@ object RiskScreening {
     fun screenWith(text: String, classifier: RiskLevel?): Screening {
         val hit = LocalRiskFloor.match(text)
         val floor = hit?.level ?: RiskLevel.L0
+        val thirdParty = hit?.thirdParty == true
         if (classifier == null) {
             val raised = floor.escalate()
             return Screening(
@@ -62,6 +65,7 @@ object RiskScreening {
                 source = ScreeningSource.CLASSIFIER_UNAVAILABLE,
                 patternId = hit?.patternId,
                 escalated = raised != floor,
+                thirdParty = thirdParty,
             )
         }
         val level = maxOf(floor, classifier)
@@ -70,6 +74,7 @@ object RiskScreening {
             source = ScreeningSource.FLOOR_AND_CLASSIFIER,
             patternId = hit?.patternId,
             escalated = level != floor,
+            thirdParty = thirdParty,
         )
     }
 }

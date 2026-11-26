@@ -13,7 +13,7 @@ import com.mindurset.app.domain.repository.SafetyRepository
 import com.mindurset.app.domain.repository.SessionStore
 import com.mindurset.app.domain.usecase.EvaluateTriage
 import com.mindurset.app.safety.AsqFlow
-import com.mindurset.app.safety.LocalRiskFloor
+import com.mindurset.app.safety.RiskScreening
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -59,6 +59,11 @@ class CheckInViewModel(
 
     /** Set when the offline floor found risk in the note, so the screen shows the crisis card. */
     val crisisLevel: StateFlow<RiskLevel?> = _crisisLevel.asStateFlow()
+
+    private val _crisisThirdParty = MutableStateFlow(false)
+
+    /** True when the halted note is a disclosure about someone else. */
+    val crisisThirdParty: StateFlow<Boolean> = _crisisThirdParty.asStateFlow()
 
     private val _asq = MutableStateFlow<AsqFlow.State?>(null)
 
@@ -108,23 +113,24 @@ class CheckInViewModel(
                 val noteText = _note.value.trim()
                 // Screen before the row exists: a note that halts the flow must not reach Room,
                 // otherwise the check-in is stored unmonitored, note text and all.
-                val hit = LocalRiskFloor.match(noteText)
-                if (hit != null && hit.level >= RiskLevel.L2) {
+                val screening = RiskScreening.screenLocal(noteText)
+                if (screening.halts) {
                     val at = clock()
                     safetyRepository.record(
                         SafetyEvent(
                             id = newId(),
                             userId = userId,
-                            level = hit.level,
+                            level = screening.level,
                             trigger = TRIGGER_CHECK_IN_NOTE,
-                            patternId = hit.patternId,
+                            patternId = screening.patternId,
                             createdAt = at,
                             retentionUntil = at + SAFETY_EVENT_RETENTION_MILLIS,
                         ),
                     )
                     _saving.value = false
-                    if (hit.level >= RiskLevel.L3) {
-                        _crisisLevel.value = hit.level
+                    if (screening.level >= RiskLevel.L3) {
+                        _crisisThirdParty.value = screening.thirdParty
+                        _crisisLevel.value = screening.level
                     } else {
                         // L2 is the ambiguous rung: the ASQ items decide, not the phrase table alone.
                         pending = PendingCheckIn(
@@ -134,6 +140,7 @@ class CheckInViewModel(
                             intensity = _intensity.value,
                             note = noteText.ifBlank { null },
                             createdAt = clock(),
+                            thirdParty = screening.thirdParty,
                             onSaved = onSaved,
                         )
                         _asq.value = AsqFlow.State()
@@ -168,6 +175,7 @@ class CheckInViewModel(
     /** Called when the crisis card has been acknowledged, so it is not shown twice. */
     fun acknowledgeCrisis() {
         _crisisLevel.value = null
+        _crisisThirdParty.value = false
     }
 
     /**
@@ -206,6 +214,7 @@ class CheckInViewModel(
                     ),
                 )
                 _saving.value = false
+                _crisisThirdParty.value = held.thirdParty
                 _crisisLevel.value = RiskLevel.L3
                 return@launch
             }
@@ -226,6 +235,7 @@ class CheckInViewModel(
         val intensity: Int,
         val note: String?,
         val createdAt: Long,
+        val thirdParty: Boolean = false,
         val onSaved: () -> Unit,
     ) {
         fun toCheckIn() = CheckIn(

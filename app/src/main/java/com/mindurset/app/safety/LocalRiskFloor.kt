@@ -15,9 +15,14 @@ import com.mindurset.app.domain.model.RiskLevel
  * level further. It never lowers it.
  */
 object LocalRiskFloor {
-    data class Match(val patternId: String, val level: RiskLevel)
+    data class Match(val patternId: String, val level: RiskLevel, val thirdParty: Boolean = false)
 
-    private class Pattern(val id: String, val level: RiskLevel, val regexes: List<Regex>)
+    private class Pattern(
+        val id: String,
+        val level: RiskLevel,
+        val thirdParty: Boolean = false,
+        val regexes: List<Regex>,
+    )
 
     private val patterns: List<Pattern> =
         listOf(
@@ -71,14 +76,43 @@ object LocalRiskFloor {
                     "\\bputus asa\\b",
                 ),
             ),
+            Pattern(
+                id = "en-third-person",
+                level = RiskLevel.L2,
+                thirdParty = true,
+                regexes =
+                phrases(
+                    "\\b(friend|brother|sister|mother|father|mom|mum|dad|son|daughter|partner|" +
+                        "boyfriend|girlfriend|roommate|cousin)(?:'s)?\\b.{0,40}?\\b(" +
+                        "wants? to die|" +
+                        "kill(ing)? (him|her|them)self|" +
+                        "hurt(ing)? (him|her|them)self|" +
+                        "end(ing)? (his|her|their) life|" +
+                        "suicid)",
+                ),
+            ),
+            Pattern(
+                id = "id-third-person",
+                level = RiskLevel.L2,
+                thirdParty = true,
+                regexes =
+                phrases(
+                    "\\b(teman|sahabat|adik|kakak|ibu|bapak|pacar|anak)(ku|mu|nya)?\\b.{0,40}?\\b(" +
+                        "ingin mati|" +
+                        "mau mati|" +
+                        "bunuh diri|" +
+                        "menyakiti diri(nya)?|" +
+                        "mengakhiri hidup(nya)?)\\b",
+                ),
+            ),
         )
 
     /** The strongest hit in the text, or null when nothing matched. */
     fun match(text: String): Match? = patterns
         .asSequence()
         .filter { pattern -> pattern.regexes.any { it.containsMatchIn(text) } }
-        .maxByOrNull { it.level }
-        ?.let { Match(patternId = it.id, level = it.level) }
+        .maxWithOrNull(compareBy<Pattern>({ it.level }, { it.thirdParty }))
+        ?.let { Match(patternId = it.id, level = it.level, thirdParty = it.thirdParty) }
 
     fun level(text: String): RiskLevel = match(text)?.level ?: RiskLevel.L0
 

@@ -21,4 +21,7 @@
     <string name="crisis_contact_message">Kirim pesan</string>
     <string name="crisis_contact_message_body">Aku sedang dalam masa sulit dan tidak ingin menanggungnya sendirian.</string>
     <string name="crisis_contact_invalid">Isi nama dan nomor yang bisa dihubungi.</string>
+    <string name="crisis_third_party_title">Ini tentang orang lain</string>
+    <string name="crisis_third_party_body">Kamu yang menyadari hal ini, dan itu berarti besar. Temani dia jika bisa, dan usahakan untuk tidak meninggalkannya sendirian menghadapi ini. Kalian bisa menelepon 119 ext. 8 bersama, dan dia bisa berbicara dengan seseorang selagi kamu ada di sana.</string>
+    <string name="crisis_third_party_note">Kamu tidak harus menemukan kata-kata yang tepat. Tetap menemani, mendengarkan, dan tidak meninggalkannya sendirian sudah cukup sementara bantuan datang.</string>
 </resources>

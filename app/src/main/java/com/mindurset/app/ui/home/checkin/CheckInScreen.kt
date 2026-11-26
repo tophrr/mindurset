@@ -69,7 +69,7 @@ fun CheckInScreen(
     onDone: () -> Unit,
     onBack: () -> Unit,
     onStartReframe: () -> Unit = onDone,
-    onCrisis: (RiskLevel) -> Unit = { onDone() },
+    onCrisis: (RiskLevel, Boolean) -> Unit = { _, _ -> onDone() },
     onOpenConsent: () -> Unit = onBack,
     initialEmotion: Emotion? = null,
 ) {
@@ -89,6 +89,7 @@ fun CheckInScreen(
     val saving by vm.saving.collectAsStateWithLifecycle()
     val offerReframe by vm.offerReframe.collectAsStateWithLifecycle()
     val crisisLevel by vm.crisisLevel.collectAsStateWithLifecycle()
+    val crisisThirdParty by vm.crisisThirdParty.collectAsStateWithLifecycle()
     val needsConsent by vm.needsConsent.collectAsStateWithLifecycle()
     val asq by vm.asq.collectAsStateWithLifecycle()
 
@@ -96,7 +97,7 @@ fun CheckInScreen(
         val level = crisisLevel
         if (level != null) {
             vm.acknowledgeCrisis()
-            onCrisis(level)
+            onCrisis(level, crisisThirdParty)
         }
     }
 

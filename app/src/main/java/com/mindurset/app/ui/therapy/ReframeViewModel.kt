@@ -82,6 +82,10 @@ class ReframeViewModel(
     private val _crisisLevel = MutableStateFlow<RiskLevel?>(null)
     val crisisLevel: StateFlow<RiskLevel?> = _crisisLevel.asStateFlow()
 
+    /** True when the halted thought is a disclosure about someone else. */
+    private val _crisisThirdParty = MutableStateFlow(false)
+    val crisisThirdParty: StateFlow<Boolean> = _crisisThirdParty.asStateFlow()
+
     /**
      * Set when the floor or classifier found ambiguous hopelessness (L2): the step holds while the
      * four screening items are answered, because a yes reaches the crisis card and four no answers
@@ -116,6 +120,7 @@ class ReframeViewModel(
     /** Called once the card is on screen, before navigation, so a return does not show it twice. */
     fun crisisAcknowledged() {
         _crisisLevel.value = null
+        _crisisThirdParty.value = false
     }
 
     /**
@@ -137,7 +142,7 @@ class ReframeViewModel(
                 handleScreening(
                     screening = screening,
                     trigger = TRIGGER_REFRAME_THOUGHT,
-                    pending = PendingAsq.LocalThought(answer),
+                    pending = PendingAsq.LocalThought(answer, screening.thirdParty),
                 )
                 return
             }
@@ -164,6 +169,11 @@ class ReframeViewModel(
         _asq.value = null
         if (result.level >= RiskLevel.L3) {
             recordSafetyEvent(level = RiskLevel.L3, patternId = null, trigger = TRIGGER_ASQ_POSITIVE)
+            _crisisThirdParty.value = when (held) {
+                is PendingAsq.LocalThought -> held.thirdParty
+                is PendingAsq.ClassifierReply -> held.thirdParty
+                null -> false
+            }
             _crisisLevel.value = RiskLevel.L3
             return
         }
@@ -253,10 +263,15 @@ class ReframeViewModel(
             val classifierLevel = response.classifierLevel()
             if (classifierLevel != null && classifierLevel >= RiskLevel.L2) {
                 _state.update { it.copy(generating = false, generated = false) }
+                val screening = RiskScreening.screenWith(thought, classifierLevel)
                 handleScreening(
-                    screening = RiskScreening.screenWith(thought, classifierLevel),
+                    screening = screening,
                     trigger = TRIGGER_REFRAME_CLASSIFIER,
-                    pending = PendingAsq.ClassifierReply(response = response, sessionId = sessionId),
+                    pending = PendingAsq.ClassifierReply(
+                        response = response,
+                        sessionId = sessionId,
+                        thirdParty = screening.thirdParty,
+                    ),
                 )
                 return
             }
@@ -302,6 +317,7 @@ class ReframeViewModel(
     private fun handleScreening(screening: Screening, trigger: String, pending: PendingAsq) {
         recordSafetyEvent(level = screening.level, patternId = screening.patternId, trigger = trigger)
         if (screening.level >= RiskLevel.L3) {
+            _crisisThirdParty.value = screening.thirdParty
             _crisisLevel.value = screening.level
         } else {
             // L2 is the ambiguous rung: the ASQ items decide, not the phrase table alone.
@@ -385,9 +401,13 @@ class ReframeViewModel(
     }
 
     private sealed interface PendingAsq {
-        data class LocalThought(val thought: String) : PendingAsq
+        data class LocalThought(val thought: String, val thirdParty: Boolean = false) : PendingAsq
 
-        data class ClassifierReply(val response: GenerationResponse, val sessionId: String) : PendingAsq
+        data class ClassifierReply(
+            val response: GenerationResponse,
+            val sessionId: String,
+            val thirdParty: Boolean = false,
+        ) : PendingAsq
     }
 
     companion object {

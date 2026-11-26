@@ -218,6 +218,7 @@ class ReframeViewModelTest {
         viewModel.next()
 
         assertEquals(RiskLevel.L3, viewModel.crisisLevel.value)
+        assertFalse(viewModel.crisisThirdParty.value)
         assertNull(viewModel.asq.value)
         assertEquals(0, viewModel.state.value.step)
         assertTrue(sessions.messages.isEmpty())
@@ -314,6 +315,7 @@ class ReframeViewModelTest {
         viewModel.next()
 
         assertEquals(RiskLevel.L3, viewModel.crisisLevel.value)
+        assertFalse(viewModel.crisisThirdParty.value)
         assertNull(viewModel.asq.value)
         assertFalse(viewModel.state.value.generating)
         assertFalse(viewModel.state.value.generated)
@@ -349,6 +351,29 @@ class ReframeViewModelTest {
         assertTrue(viewModel.state.value.generated)
         assertEquals(2, viewModel.state.value.perspectives.size)
         assertEquals(listOf("thought", ReframeViewModel.ROLE_GENERATION), sessions.messages.map { it.role })
+    }
+
+    @Test
+    fun `a third-person sentence sets crisisThirdParty true when ASQ escalates to crisis`() {
+        val transport = NeverCalledTransport()
+        val viewModel = viewModel(transport)
+
+        viewModel.setThought("My best friend told me she wants to die")
+        viewModel.next()
+
+        assertEquals(AsqFlow.State(), viewModel.asq.value)
+        assertFalse(viewModel.crisisThirdParty.value)
+
+        viewModel.answerAsq(yes = true)
+        repeat(4) { viewModel.answerAsq(yes = false) }
+
+        assertEquals(RiskLevel.L3, viewModel.crisisLevel.value)
+        assertTrue(viewModel.crisisThirdParty.value)
+        assertEquals(0, transport.calls)
+
+        viewModel.crisisAcknowledged()
+        assertNull(viewModel.crisisLevel.value)
+        assertFalse(viewModel.crisisThirdParty.value)
     }
 
     private fun viewModel(

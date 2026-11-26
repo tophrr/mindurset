@@ -21,4 +21,7 @@
     <string name="crisis_contact_message">Send a message</string>
     <string name="crisis_contact_message_body">I am having a hard time right now and I did not want to be alone with it.</string>
     <string name="crisis_contact_invalid">Add a name and a number that can be dialled.</string>
+    <string name="crisis_third_party_title">This is about someone else</string>
+    <string name="crisis_third_party_body">You are the one who noticed, and that matters. Stay with them if you can, and try not to leave them alone with this. You can call 119 ext. 8 together, and they can talk to someone while you are there.</string>
+    <string name="crisis_third_party_note">You do not have to find the right words. Staying, listening, and not leaving them alone is enough while help is on the way.</string>
 </resources>

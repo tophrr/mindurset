@@ -228,8 +228,8 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
                             }
                         },
                         onOpenConsent = { navController.navigate(Routes.CONSENT) { launchSingleTop = true } },
-                        onCrisis = { level ->
-                            navController.navigate(Routes.crisis(level.name)) {
+                        onCrisis = { level, thirdParty ->
+                            navController.navigate(Routes.crisis(level.name, thirdParty)) {
                                 popUpTo(Routes.DASHBOARD) { inclusive = false }
                             }
                         },
@@ -249,12 +249,20 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
                             nullable = true
                             defaultValue = null
                         },
+                        navArgument(Routes.ARG_FRIEND) {
+                            type = NavType.BoolType
+                            defaultValue = false
+                        },
                     ),
                 ) { entry ->
                     val level = entry.arguments?.getString(Routes.ARG_LEVEL)
                         ?.let { name -> RiskLevel.entries.firstOrNull { it.name == name } }
                         ?: RiskLevel.L3
-                    CrisisRoute(level = level, onAcknowledge = { goToDestination(Routes.DASHBOARD) })
+                    CrisisRoute(
+                        level = level,
+                        thirdParty = entry.arguments?.getBoolean(Routes.ARG_FRIEND) == true,
+                        onAcknowledge = { goToDestination(Routes.DASHBOARD) },
+                    )
                 }
                 composable(Routes.REFLECTION_LIST) {
                     ReflectionListScreen(
@@ -278,8 +286,8 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
                         entryId = entry.arguments?.getString(Routes.ARG_ENTRY_ID),
                         onSaved = { navController.popBackStack() },
                         onBack = { navController.popBackStack() },
-                        onCrisis = { level ->
-                            navController.navigate(Routes.crisis(level.name)) {
+                        onCrisis = { level, thirdParty ->
+                            navController.navigate(Routes.crisis(level.name, thirdParty)) {
                                 popUpTo(Routes.DASHBOARD) { inclusive = false }
                             }
                         },
@@ -306,8 +314,8 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
                     ReframeScreen(
                         onBack = { navController.popBackStack() },
                         onFinished = { goToDestination(Routes.DASHBOARD) },
-                        onCrisis = { level ->
-                            navController.navigate(Routes.crisis(level.name)) {
+                        onCrisis = { level, thirdParty ->
+                            navController.navigate(Routes.crisis(level.name, thirdParty)) {
                                 popUpTo(Routes.DASHBOARD) { inclusive = false }
                             }
                         },
@@ -316,8 +324,8 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
                 composable(Routes.COMPANION) {
                     CompanionScreen(
                         onOpenDrawer = openDrawer,
-                        onCrisis = { level ->
-                            navController.navigate(Routes.crisis(level.name)) {
+                        onCrisis = { level, thirdParty ->
+                            navController.navigate(Routes.crisis(level.name, thirdParty)) {
                                 popUpTo(Routes.DASHBOARD) { inclusive = false }
                             }
                         },
