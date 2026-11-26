@@ -12,6 +12,7 @@ import {
   crisisResponse,
   detectLanguage,
   inspectOutput,
+  type GuardrailReason,
   type RiskAssessment,
 } from "./guardrails";
 import {
@@ -140,36 +141,73 @@ function clampText(value: unknown, maxLength: number): string | null {
 
 type NormalisedDraft = Omit<GenerationResponse, "prompt_version" | "model_version">;
 
+type NormaliseFailureReason =
+  | "no-draft"
+  | "not-record"
+  | "missing-fields"
+  | "too-few-perspectives"
+  | "invalid-micro-action"
+  | "no-cited-source";
+
+type NormaliseResult =
+  | { ok: true; value: NormalisedDraft }
+  | { ok: false; reason: NormaliseFailureReason };
+
+interface AttemptFailure {
+  stage: "normalise" | "guardrail";
+  reason: NormaliseFailureReason | GuardrailReason;
+}
+
+type AttemptOutcome =
+  | { kind: "ok"; response: GenerationResponse }
+  | { kind: "crisis" }
+  | { kind: "rejected"; failure: AttemptFailure };
+
+interface PipelineLog {
+  stage: "input" | "retrieve" | "client" | "normalise" | "guardrail" | "retry" | "error";
+  reason: string;
+  firstReason?: string;
+  outcome?: "recovered";
+  excerpts?: number;
+  model?: string;
+}
+
+/** Log structured pipeline metadata only; never include user text or draft copy. */
+function logPipelineEvent(event: PipelineLog): void {
+  console.log(JSON.stringify(event));
+}
+
 /**
  * Coerce the model's draft into the frozen shape. Anything that cannot be
- * represented without inventing a field returns null and the caller falls back.
+ * represented without inventing a field returns a failure reason so the caller
+ * can retry once or fall back.
  */
 function normaliseDraft(
   draft: unknown,
   excerpts: Excerpt[],
   floor: RiskAssessment,
-): NormalisedDraft | null {
-  if (!isRecord(draft)) return null;
+): NormaliseResult {
+  if (!isRecord(draft)) return { ok: false, reason: "not-record" };
 
   const message = clampText(draft.message, 600);
   const distortion = clampText(draft.distortion, 80);
-  if (!message || !distortion) return null;
+  if (!message || !distortion) return { ok: false, reason: "missing-fields" };
 
   const rawPerspectives = Array.isArray(draft.perspectives) ? draft.perspectives : [];
   const perspectives = rawPerspectives
     .map((value) => clampText(value, 300))
     .filter((value): value is string => value !== null)
     .slice(0, 3);
-  if (perspectives.length < 2) return null;
+  if (perspectives.length < 2) return { ok: false, reason: "too-few-perspectives" };
 
   const microAction = isRecord(draft.micro_action) ? draft.micro_action : null;
-  if (!microAction) return null;
+  if (!microAction) return { ok: false, reason: "invalid-micro-action" };
   const title = clampText(microAction.title, 120);
   const rawMinutes =
     typeof microAction.minutes === "number" && Number.isFinite(microAction.minutes)
       ? Math.round(microAction.minutes)
       : null;
-  if (!title || rawMinutes === null) return null;
+  if (!title || rawMinutes === null) return { ok: false, reason: "invalid-micro-action" };
   const minutes = Math.min(15, Math.max(1, rawMinutes));
 
   const allowed = new Set(excerpts.map((excerpt) => excerpt.sourceId));
@@ -181,7 +219,7 @@ function normaliseDraft(
       ),
     ),
   ].slice(0, 3);
-  if (sourceIds.length === 0) return null;
+  if (sourceIds.length === 0) return { ok: false, reason: "no-cited-source" };
 
   const risk = isRecord(draft.risk_level) ? draft.risk_level : null;
   const level: RiskLevel = isRiskLevel(risk?.level) ? risk.level : "L0";
@@ -192,16 +230,75 @@ function normaliseDraft(
   const finalLevel = maxRisk(floor.level, level);
 
   return {
-    message,
-    distortion,
-    perspectives,
-    micro_action: { title, minutes },
-    source_ids: sourceIds,
-    risk_level: {
-      level: finalLevel,
-      confidence: finalLevel === floor.level ? floor.confidence : confidence,
+    ok: true,
+    value: {
+      message,
+      distortion,
+      perspectives,
+      micro_action: { title, minutes },
+      source_ids: sourceIds,
+      risk_level: {
+        level: finalLevel,
+        confidence: finalLevel === floor.level ? floor.confidence : confidence,
+      },
     },
   };
+}
+
+function evaluateDraft(
+  draft: unknown,
+  excerpts: Excerpt[],
+  floor: RiskAssessment,
+  modelVersion: string,
+): AttemptOutcome {
+  if (!draft) {
+    return { kind: "rejected", failure: { stage: "normalise", reason: "no-draft" } };
+  }
+
+  const normalised = normaliseDraft(draft, excerpts, floor);
+  if (!normalised.ok) {
+    return { kind: "rejected", failure: { stage: "normalise", reason: normalised.reason } };
+  }
+
+  if (normalised.value.risk_level.level === "L3") {
+    return { kind: "crisis" };
+  }
+
+  const guardrail = inspectOutput(renderedText(normalised.value));
+  if (!guardrail.ok) {
+    return { kind: "rejected", failure: { stage: "guardrail", reason: guardrail.reason } };
+  }
+
+  return {
+    kind: "ok",
+    response: {
+      ...normalised.value,
+      prompt_version: PROMPT_VERSION,
+      model_version: modelVersion,
+    },
+  };
+}
+
+function correctionHint(failure: AttemptFailure, excerpts: Excerpt[]): string {
+  switch (failure.reason) {
+    case "no-cited-source":
+      return `source_ids must contain 1 to 3 exact ids from: ${excerpts.map((excerpt) => excerpt.sourceId).join(", ")}. Never return an empty array or invent an id.`;
+    case "no-draft":
+    case "not-record":
+      return "Return only one valid JSON object with keys: message, distortion, perspectives, micro_action, source_ids, risk_level.";
+    case "missing-fields":
+      return "message and distortion must both be non-empty strings.";
+    case "too-few-perspectives":
+      return "perspectives must contain 2 or 3 non-empty strings.";
+    case "invalid-micro-action":
+      return "micro_action must contain a non-empty title string and integer minutes between 1 and 15.";
+    case "medication":
+      return "Do not name any medication, drug, or dosage.";
+    case "diagnosis":
+      return "Do not name any clinical diagnosis, disorder, or syndrome.";
+    case "self-harm-instruction":
+      return "Do not include any self-harm method or instruction.";
+  }
 }
 
 function renderedText(draft: NormalisedDraft): string {
@@ -236,33 +333,60 @@ export async function runGeneration(
     floor = assessInputRisk(userText);
 
     if (floor.level === "L3") return crisisResponse(detectLanguage(userText));
-    if (userText.length === 0) return fallback(kind, floor);
-
-    const excerpts = await retrieveSemantic(env, userText, 3);
-    if (excerpts.length === 0) return fallback(kind, floor);
-
-    const client = selectModelClient(env);
-    if (!client) return fallback(kind, floor);
-
-    const draft = await client.generate({ kind, mode, userText, excerpts, context });
-    if (!draft) return fallback(kind, floor);
-
-    const normalised = normaliseDraft(draft, excerpts, floor);
-    if (!normalised) return fallback(kind, floor);
-
-    if (normalised.risk_level.level === "L3") {
-      return crisisResponse(detectLanguage(userText));
+    if (userText.length === 0) {
+      logPipelineEvent({ stage: "input", reason: "empty" });
+      return fallback(kind, floor);
     }
 
-    const guardrail = inspectOutput(renderedText(normalised));
-    if (!guardrail.ok) return fallback(kind, floor);
+    const excerpts = await retrieveSemantic(env, userText, 3);
+    if (excerpts.length === 0) {
+      logPipelineEvent({ stage: "retrieve", reason: "no-excerpts" });
+      return fallback(kind, floor);
+    }
 
-    return {
-      ...normalised,
-      prompt_version: PROMPT_VERSION,
-      model_version: client.version,
-    };
+    const client = selectModelClient(env);
+    if (!client) {
+      logPipelineEvent({ stage: "client", reason: "no-binding", excerpts: excerpts.length });
+      return fallback(kind, floor);
+    }
+
+    const firstDraft = await client.generate({ kind, mode, userText, excerpts, context });
+    const first = evaluateDraft(firstDraft, excerpts, floor, client.version);
+    if (first.kind === "crisis") return crisisResponse(detectLanguage(userText));
+    if (first.kind === "ok") return first.response;
+
+    const correction = correctionHint(first.failure, excerpts);
+    const retryDraft = await client.generate({
+      kind,
+      mode,
+      userText,
+      excerpts,
+      context,
+      correction,
+    });
+    const second = evaluateDraft(retryDraft, excerpts, floor, client.version);
+    if (second.kind === "crisis") return crisisResponse(detectLanguage(userText));
+    if (second.kind === "ok") {
+      logPipelineEvent({
+        stage: "retry",
+        reason: first.failure.reason,
+        outcome: "recovered",
+        excerpts: excerpts.length,
+        model: client.version,
+      });
+      return second.response;
+    }
+
+    logPipelineEvent({
+      stage: second.failure.stage,
+      reason: second.failure.reason,
+      firstReason: first.failure.reason,
+      excerpts: excerpts.length,
+      model: client.version,
+    });
+    return fallback(kind, floor);
   } catch {
+    logPipelineEvent({ stage: "error", reason: "exception" });
     return fallback(kind, floor);
   }
 }

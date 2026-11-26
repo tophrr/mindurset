@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import Ajv2020 from "ajv/dist/2020.js";
 import schema from "../../contract/generation-v1.schema.json";
 import worker from "../src/index";
@@ -689,5 +689,170 @@ describe("pipeline", () => {
     expect(body.risk_level.level).toBe("L3");
     expect(body.model_version).toBe(CRISIS_MODEL_VERSION);
     expect(body.message).not.toBe("You are fine.");
+  });
+
+  it("lists allowed source_ids explicitly in the prompt and forbids an empty array", () => {
+    const excerpts = retrieve("I panic at night", 3);
+    const messages = buildMessages({
+      kind: "chat",
+      mode: "listen",
+      userText: "I panic at night instead of revising",
+      excerpts,
+    });
+
+    expect(messages[0]?.content).toContain("Never return an empty array");
+    expect(messages[1]?.content).toContain("Allowed source_ids");
+    for (const excerpt of excerpts) {
+      expect(messages[1]?.content).toContain(excerpt.sourceId);
+    }
+  });
+
+  it("recovers via one corrective retry when the first draft omits source_ids", async () => {
+    const query = "I panic at night instead of revising";
+    const retrievedIds = ["sleep#late-night-scrolling", "rumination#scheduled-worry", "sleep#wind-down"];
+    const calls: ChatMessage[][] = [];
+    const env: Record<string, unknown> = {
+      VECTORIZE: {
+        query: async () => ({
+          matches: retrievedIds.map((id, i) => ({ id, score: 0.6 - i * 0.05 })),
+        }),
+        upsert: async () => ({ mutationId: "fake" }),
+      },
+      AI: {
+        run: async (model: string, inputs: { text?: string[]; messages?: ChatMessage[] }) => {
+          if (model === "@cf/baai/bge-m3") {
+            return { data: [[0.1, 0.2, 0.3]] };
+          }
+          const messages = inputs.messages ?? [];
+          calls.push(messages);
+          const draft =
+            calls.length === 1
+              ? draftFor(query, { source_ids: [] })
+              : draftFor(query, { source_ids: [retrievedIds[0]!] });
+          return { response: JSON.stringify(draft) };
+        },
+      },
+    };
+
+    const res = await worker.fetch(
+      new Request("http://worker.test/v1/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ message: query, mode: "listen" }),
+      }),
+      env as Env,
+    );
+    const body = (await res.json()) as GenerationResponse;
+
+    expect(res.status).toBe(200);
+    expect(validate(body)).toBe(true);
+    expect(calls).toHaveLength(2);
+    expect(calls[1]?.[1]?.content).toContain("Correction needed:");
+    expect(calls[1]?.[1]?.content).toContain("sleep#late-night-scrolling");
+    expect(body.model_version).toBe(MODEL_ID);
+    expect(body.source_ids).toEqual(["sleep#late-night-scrolling"]);
+  });
+
+  it("retries once when the output guardrail rejects the first draft and accepts the reworded retry", async () => {
+    const query = "I am worried about my exam";
+    const calls: ChatMessage[][] = [];
+    const env: Env = {
+      AI: {
+        run: async (_model, inputs) => {
+          calls.push(inputs.messages);
+          const draft =
+            calls.length === 1
+              ? draftFor(query, { message: "This sounds like panic disorder." })
+              : draftFor(query, {
+                  message:
+                    "Nighttime panic can feel overwhelming when an exam is close. What feels heaviest right now?",
+                });
+          return { response: JSON.stringify(draft) };
+        },
+      },
+    };
+
+    const res = await post("/v1/chat", { message: query, mode: "listen" }, env);
+    const body = (await res.json()) as GenerationResponse;
+
+    expect(res.status).toBe(200);
+    expect(validate(body)).toBe(true);
+    expect(calls).toHaveLength(2);
+    expect(calls[1]?.[1]?.content).toContain("Do not name any clinical diagnosis");
+    expect(calls[1]?.[1]?.content).not.toContain("panic disorder");
+    expect(body.model_version).toBe(MODEL_ID);
+    expect(body.source_ids.length).toBeGreaterThan(0);
+  });
+
+  it("logs a structured NFR-08 cause without user text or draft copy when retry still falls back", async () => {
+    const secretUserText = "unique-user-phrase-never-logged";
+    const secretDraftText = "unique-draft-phrase-never-logged";
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    try {
+      const env: Env = {
+        AI: {
+          run: async () => ({
+            response: JSON.stringify(
+              draftFor("I am worried about my exam", {
+                message: secretDraftText,
+                source_ids: [],
+              }),
+            ),
+          }),
+        },
+      };
+
+      const res = await post("/v1/chat", { message: secretUserText, mode: "listen" }, env);
+      const body = (await res.json()) as GenerationResponse;
+
+      expect(res.status).toBe(200);
+      expect(validate(body)).toBe(true);
+      expect(body.model_version).toBe(OFFLINE_MODEL_VERSION);
+      expect(spy).toHaveBeenCalledTimes(1);
+
+      const logged = String(spy.mock.calls[0]?.[0] ?? "");
+      expect(logged).not.toContain(secretUserText);
+      expect(logged).not.toContain(secretDraftText);
+      expect(JSON.parse(logged)).toMatchObject({
+        stage: "normalise",
+        reason: "no-cited-source",
+        model: MODEL_ID,
+      });
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("keeps the L3 crisis path immediate without extra retries", async () => {
+    const inputSpy = vi.fn(async () => ({ response: "{}" }));
+    const l3InputRes = await post(
+      "/v1/chat",
+      { message: "I want to kill myself tonight.", mode: "listen" },
+      { AI: { run: inputSpy } },
+    );
+    const l3InputBody = (await l3InputRes.json()) as GenerationResponse;
+
+    expect(validate(l3InputBody)).toBe(true);
+    expect(l3InputBody.model_version).toBe(CRISIS_MODEL_VERSION);
+    expect(l3InputBody.risk_level.level).toBe("L3");
+    expect(inputSpy).not.toHaveBeenCalled();
+
+    const query = "I am worried about my exam";
+    const modelSpy = vi.fn(async () => ({
+      response: JSON.stringify(
+        draftFor(query, {
+          message: "Steady message.",
+          risk_level: { level: "L3", confidence: 0.9 },
+        }),
+      ),
+    }));
+    const l3ModelRes = await post("/v1/chat", { message: query, mode: "listen" }, { AI: { run: modelSpy } });
+    const l3ModelBody = (await l3ModelRes.json()) as GenerationResponse;
+
+    expect(validate(l3ModelBody)).toBe(true);
+    expect(l3ModelBody.model_version).toBe(CRISIS_MODEL_VERSION);
+    expect(l3ModelBody.risk_level.level).toBe("L3");
+    expect(modelSpy).toHaveBeenCalledTimes(1);
   });
 });
