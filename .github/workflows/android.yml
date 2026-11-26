@@ -97,3 +97,68 @@ jobs:
         run: |
           docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest \
             detect --source=/repo --redact --verbose
+
+  # The debug job proves the code compiles; this one proves the artifact that gets submitted does.
+  # It exists because release-only breakage — a proguard rule, a resource, the endpoint field — is
+  # invisible to assembleDebug, and a release APK nobody can install is not a release.
+  release:
+    name: Release build (signed)
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+
+      - name: Set up Gradle (with cache)
+        uses: gradle/actions/setup-gradle@v4
+
+      # The keystore lives in repository secrets, never in the tree. It is written to the runner's
+      # temp directory, which is discarded with the runner.
+      - name: Decode the keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::KEYSTORE_BASE64 is not set, so the release build would be unsigned."
+            exit 1
+          fi
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/mindurset-release.jks"
+
+      - name: Assemble and bundle the release
+        env:
+          MINDURSET_KEYSTORE_PATH: ${{ runner.temp }}/mindurset-release.jks
+          MINDURSET_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          MINDURSET_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          MINDURSET_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew :app:assembleRelease :app:bundleRelease -Dorg.gradle.java.home="$JAVA_HOME" --console=plain
+
+      # An unsigned APK is exactly the failure this job exists to catch, so verify rather than trust.
+      - name: Verify the signature
+        run: |
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)
+          "$APKSIGNER" verify --print-certs app/build/outputs/apk/release/app-release.apk
+
+      - name: Upload the release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+
+      - name: Upload the release bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
