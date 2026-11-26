@@ -4,7 +4,7 @@
 
 import type { Excerpt } from "./retrieval";
 
-export const PROMPT_VERSION = "v1.3.0";
+export const PROMPT_VERSION = "v1.4.0";
 
 /** Mirrors MemoryPolicy.MAX_CONTEXT_LENGTH on the Android client. */
 export const MAX_CONTEXT_LENGTH = 1400;
@@ -67,7 +67,7 @@ Hard rules:
 - distortion: one short label for the thinking pattern, at most 80 characters, written in the same language as the user's text. If no clear pattern is present, say so in that language instead of inventing one.
 - perspectives: exactly 2 or 3 short alternatives, each at most 300 characters. Keep what is true; do not force positivity.
 - micro_action: one concrete action the person can do in 15 minutes or less. title at most 120 characters, minutes an integer from 1 to 15. No medical instruction.
-- source_ids: 1 to 3 ids copied from the excerpts you were given. Never invent an id.
+- source_ids: a non-empty array of 1 to 3 ids chosen strictly from the allowed source_ids list. Even when the connection is partial, pick the 1 to 3 closest ids from that list. Never return an empty array and never invent an id.
 - risk_level: {"level":"L0"|"L1"|"L2"|"L3","confidence":0.0-1.0}. Use L3 only if the user describes immediate danger; the server will replace an L3 answer with the crisis path. Never lower the risk you infer from the text.
 - Never name a medication, a dose, or a clinical diagnosis. Never describe or suggest a method of self-harm.
 - Do not promise confidentiality and do not claim to be a human.
@@ -107,6 +107,7 @@ export interface PromptInput {
   userText: string;
   excerpts: Excerpt[];
   context?: string;
+  correction?: string;
 }
 
 function formatSystemPrompt(context: string | undefined): string {
@@ -130,6 +131,7 @@ export function buildMessages(input: PromptInput): ChatMessage[] {
   const excerpts = input.excerpts
     .map((excerpt) => `[${excerpt.sourceId}] ${excerpt.heading}\n${excerpt.text}`)
     .join("\n\n");
+  const allowedIds = input.excerpts.map((excerpt) => excerpt.sourceId).join(", ");
 
   const safeUserText = input.userText.replace(/"""/g, '\\"\\"\\"');
 
@@ -147,9 +149,12 @@ export function buildMessages(input: PromptInput): ChatMessage[] {
         safeUserText,
         '"""',
         "",
+        `Allowed source_ids (required, pick 1 to 3 from this exact list; never empty): ${allowedIds}`,
+        "",
         "Allowed excerpts:",
         excerpts,
         "",
+        ...(input.correction ? [`Correction needed: ${input.correction}`, ""] : []),
         "Return only the JSON object described in the system prompt.",
       ].join("\n"),
     },
