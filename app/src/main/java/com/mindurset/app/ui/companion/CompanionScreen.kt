@@ -77,7 +77,7 @@ import com.mindurset.app.ui.theme.OutlineSoft
 import com.mindurset.app.ui.theme.PaleBlue
 import com.mindurset.app.ui.theme.SurfaceWhite
 @Composable
-fun CompanionScreen(onOpenDrawer: () -> Unit, onCrisis: (RiskLevel) -> Unit = {}) {
+fun CompanionScreen(onOpenDrawer: () -> Unit, onCrisis: (RiskLevel, Boolean) -> Unit = { _, _ -> }) {
     val container = LocalAppContainer.current
     val appContext = LocalContext.current.applicationContext
     val exerciseLibrary = remember(appContext) { AssetOfflineExerciseLibrary(appContext.assets) }
@@ -95,6 +95,7 @@ fun CompanionScreen(onOpenDrawer: () -> Unit, onCrisis: (RiskLevel) -> Unit = {}
     }
     val state by vm.uiState.collectAsStateWithLifecycle()
     val crisis by vm.crisisLevel.collectAsStateWithLifecycle()
+    val crisisThirdParty by vm.crisisThirdParty.collectAsStateWithLifecycle()
     val asq by vm.asq.collectAsStateWithLifecycle()
     var draft by remember { mutableStateOf("") }
     val scrollState = rememberScrollState()
@@ -105,7 +106,7 @@ fun CompanionScreen(onOpenDrawer: () -> Unit, onCrisis: (RiskLevel) -> Unit = {}
     LaunchedEffect(crisis) {
         val level = crisis ?: return@LaunchedEffect
         vm.crisisAcknowledged()
-        onCrisis(level)
+        onCrisis(level, crisisThirdParty)
     }
 
     LaunchedEffect(asq != null) {

@@ -17,6 +17,7 @@ object Routes {
     const val REFRAME = "reframe"
     const val CRISIS = "crisis"
     const val ARG_LEVEL = "level"
+    const val ARG_FRIEND = "friend"
     const val CONSENT = "consent"
     const val COMPANION = "companion"
     const val PROFILE = "profile"
@@ -27,15 +28,22 @@ object Routes {
     const val ABOUT = "about"
 
     const val CHECK_IN_ROUTE = "$CHECK_IN?$ARG_EMOTION={$ARG_EMOTION}"
-    const val CRISIS_ROUTE = "$CRISIS?$ARG_LEVEL={$ARG_LEVEL}"
+    const val CRISIS_ROUTE = "$CRISIS?$ARG_LEVEL={$ARG_LEVEL}&$ARG_FRIEND={$ARG_FRIEND}"
     const val REFLECTION_FORM_ROUTE = "$REFLECTION_FORM?$ARG_ENTRY_ID={$ARG_ENTRY_ID}"
     const val REFLECTION_DETAIL_ROUTE = "$REFLECTION_DETAIL/{$ARG_ENTRY_ID}"
 
     /** Carries the emotion picked on the home card so the check-in opens already selected. */
     fun checkIn(emotion: String? = null): String = if (emotion == null) CHECK_IN else "$CHECK_IN?$ARG_EMOTION=$emotion"
 
-    /** The crisis card renders differently for an ambiguous signal than for direct intent. */
-    fun crisis(level: String? = null): String = if (level == null) CRISIS else "$CRISIS?$ARG_LEVEL=$level"
+    /**
+     * The crisis card renders differently for an ambiguous signal than for direct intent, and speaks
+     * to the person at risk unless [thirdParty] says the sentence was about someone else.
+     */
+    fun crisis(level: String? = null, thirdParty: Boolean = false): String = when {
+        level == null -> CRISIS
+        thirdParty -> "$CRISIS?$ARG_LEVEL=$level&$ARG_FRIEND=true"
+        else -> "$CRISIS?$ARG_LEVEL=$level"
+    }
 
     fun reflectionForm(entryId: String? = null): String =
         if (entryId == null) REFLECTION_FORM else "$REFLECTION_FORM?$ARG_ENTRY_ID=$entryId"

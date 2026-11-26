@@ -13,7 +13,7 @@ import com.mindurset.app.domain.repository.SafetyRepository
 import com.mindurset.app.domain.repository.SessionStore
 import com.mindurset.app.domain.usecase.ValidateReflection
 import com.mindurset.app.safety.AsqFlow
-import com.mindurset.app.safety.LocalRiskFloor
+import com.mindurset.app.safety.RiskScreening
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -37,6 +37,9 @@ class ReflectionFormViewModel(
     val isEdit: Boolean = entryId != null
 
     var crisisLevel by mutableStateOf<RiskLevel?>(null)
+        private set
+
+    var crisisThirdParty by mutableStateOf(false)
         private set
 
     /**
@@ -143,30 +146,31 @@ class ReflectionFormViewModel(
                 )
             // Screen before the row exists, for the same reason as the check-in: a halted entry must
             // not be stored with its text.
-            val hit =
-                LocalRiskFloor.match(
+            val screening =
+                RiskScreening.screenLocal(
                     listOf(entry.challenge, entry.reframe, entry.gratitude).joinToString(" "),
                 )
-            if (hit != null && hit.level >= RiskLevel.L2) {
+            if (screening.halts) {
                 val at = clock()
                 safetyRepository.record(
                     SafetyEvent(
                         id = UUID.randomUUID().toString(),
                         userId = entry.userId,
-                        level = hit.level,
+                        level = screening.level,
                         trigger = TRIGGER_JOURNAL_ENTRY,
-                        patternId = hit.patternId,
+                        patternId = screening.patternId,
                         createdAt = at,
                         retentionUntil = at + SAFETY_EVENT_RETENTION_MILLIS,
                     ),
                 )
                 isSaving = false
-                if (hit.level >= RiskLevel.L3) {
-                    crisisLevel = hit.level
+                if (screening.level >= RiskLevel.L3) {
+                    crisisThirdParty = screening.thirdParty
+                    crisisLevel = screening.level
                 } else {
                     // L2 is the ambiguous rung: the ASQ items decide, not the phrase table alone.
                     // The entry, new or edited, is held in memory and never reaches Room here.
-                    pending = PendingEntry(entry = entry, onSaved = onSaved)
+                    pending = PendingEntry(entry = entry, thirdParty = screening.thirdParty, onSaved = onSaved)
                     asq = AsqFlow.State()
                 }
                 return@launch
@@ -213,6 +217,7 @@ class ReflectionFormViewModel(
                     ),
                 )
                 isSaving = false
+                crisisThirdParty = held.thirdParty
                 crisisLevel = RiskLevel.L3
                 return@launch
             }
@@ -225,10 +230,11 @@ class ReflectionFormViewModel(
     /** Clears the flag after the crisis card was shown, so it does not repeat. */
     fun acknowledgeCrisis() {
         crisisLevel = null
+        crisisThirdParty = false
     }
 
     /** The entry and the callback that the ASQ step holds while it asks its questions. */
-    private data class PendingEntry(val entry: JournalEntry, val onSaved: () -> Unit)
+    private data class PendingEntry(val entry: JournalEntry, val thirdParty: Boolean = false, val onSaved: () -> Unit)
 
     private companion object {
         const val TRIGGER_JOURNAL_ENTRY = "journal_entry"

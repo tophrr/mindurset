@@ -2,6 +2,7 @@ package com.mindurset.app.safety
 
 import com.mindurset.app.domain.model.RiskLevel
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -101,5 +102,55 @@ class LocalRiskFloorTest {
         val match = LocalRiskFloor.match("aku tidak ingin hidup lagi dan mau bunuh diri")
         assertEquals(RiskLevel.L3, match?.level)
         assertEquals("id-intent", match?.patternId)
+    }
+
+    @Test
+    fun `third-person disclosures fire at L2 with thirdParty true`() {
+        val english = listOf(
+            "My best friend told me she wants to die",
+            "My brother said he is thinking about killing himself",
+            "My roommate might end their life",
+        )
+        english.forEach { text ->
+            val match = LocalRiskFloor.match(text)
+            assertNotNull("expected match for: $text", match)
+            assertEquals(RiskLevel.L2, match?.level)
+            assertEquals("en-third-person", match?.patternId)
+            assertTrue("expected thirdParty=true for: $text", match?.thirdParty == true)
+        }
+
+        val indonesian = listOf(
+            "Teman sekamarku baru saja bilang dia ingin mati dan sudah putus asa.",
+            "Adikku bilang dia mau mati",
+        )
+        indonesian.forEach { text ->
+            val match = LocalRiskFloor.match(text)
+            assertNotNull("expected match for: $text", match)
+            assertEquals(RiskLevel.L2, match?.level)
+            assertEquals("id-third-person", match?.patternId)
+            assertTrue("expected thirdParty=true for: $text", match?.thirdParty == true)
+        }
+    }
+
+    @Test
+    fun `third-person negative controls do not match`() {
+        listOf(
+            "My friend moved away",
+            "my mother is dying",
+        ).forEach { text ->
+            assertNull("unexpected hit for: $text", LocalRiskFloor.match(text))
+        }
+    }
+
+    @Test
+    fun `first-person L3 still reports thirdParty false and beats third-person L2`() {
+        val direct = LocalRiskFloor.match("I want to kill myself tonight")
+        assertEquals(RiskLevel.L3, direct?.level)
+        assertFalse(direct?.thirdParty == true)
+
+        val mixed = LocalRiskFloor.match("My friend wants to die and I want to kill myself")
+        assertEquals(RiskLevel.L3, mixed?.level)
+        assertEquals("en-intent", mixed?.patternId)
+        assertFalse(mixed?.thirdParty == true)
     }
 }

@@ -84,4 +84,37 @@ class RiskScreeningTest {
         assertEquals(RiskLevel.L1, screening.level)
         assertFalse(screening.halts)
     }
+
+    @Test
+    fun `thirdParty flag survives screenLocal and screenWith`() {
+        val localThirdParty = RiskScreening.screenLocal("My friend told me he wants to die")
+        assertEquals(RiskLevel.L2, localThirdParty.level)
+        assertTrue(localThirdParty.thirdParty)
+
+        val withClassifier = RiskScreening.screenWith(
+            "Temanku bilang dia ingin mati",
+            classifier = RiskLevel.L3,
+        )
+        assertEquals(RiskLevel.L3, withClassifier.level)
+        assertTrue(withClassifier.thirdParty)
+
+        val unavailable = RiskScreening.screenWith(
+            "My friend told me he wants to die",
+            classifier = null,
+        )
+        assertEquals(RiskLevel.L3, unavailable.level)
+        assertEquals(ScreeningSource.CLASSIFIER_UNAVAILABLE, unavailable.source)
+        assertTrue(unavailable.thirdParty)
+    }
+
+    @Test
+    fun `classifier L2 or L3 on a first-person sentence keeps thirdParty false`() {
+        val firstPersonL2 = RiskScreening.screenWith("I feel completely empty", classifier = RiskLevel.L2)
+        assertEquals(RiskLevel.L2, firstPersonL2.level)
+        assertFalse(firstPersonL2.thirdParty)
+
+        val firstPersonL3 = RiskScreening.screenWith("I want to kill myself tonight", classifier = RiskLevel.L3)
+        assertEquals(RiskLevel.L3, firstPersonL3.level)
+        assertFalse(firstPersonL3.thirdParty)
+    }
 }
