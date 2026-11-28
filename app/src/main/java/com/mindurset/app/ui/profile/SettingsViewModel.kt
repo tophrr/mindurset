@@ -2,6 +2,7 @@ package com.mindurset.app.ui.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mindurset.app.data.prefs.AppLocale
 import com.mindurset.app.domain.repository.PreferencesStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
@@ -14,7 +15,7 @@ data class SettingsUiState(
     val loading: Boolean = true,
     val reminderEnabled: Boolean = false,
     val reminderHour: Int = 19,
-    val language: String = "en",
+    val language: String = AppLocale.SYSTEM,
     val theme: String = "system",
     val memoryEnabled: Boolean = true,
 )
@@ -39,7 +40,7 @@ class SettingsViewModel(private val preferencesStore: PreferencesStore, external
                 loading = false,
                 reminderEnabled = enabled,
                 reminderHour = hour,
-                language = language,
+                language = AppLocale.normalizeStoredLanguage(language),
                 theme = theme,
                 memoryEnabled = memoryEnabled,
             )
@@ -53,8 +54,12 @@ class SettingsViewModel(private val preferencesStore: PreferencesStore, external
         scope.launch { preferencesStore.setReminderHour(hour) }
     }
 
-    fun setLanguage(language: String) {
-        scope.launch { preferencesStore.setLanguage(language) }
+    fun setLanguage(language: String, onPersisted: () -> Unit = {}) {
+        val normalized = AppLocale.normalizeStoredLanguage(language)
+        scope.launch {
+            preferencesStore.setLanguage(normalized)
+            onPersisted()
+        }
     }
 
     fun setMemoryEnabled(enabled: Boolean) {

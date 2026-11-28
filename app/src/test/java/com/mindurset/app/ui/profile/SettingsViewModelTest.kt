@@ -8,6 +8,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -32,12 +33,38 @@ class SettingsViewModelTest {
         collector.cancel()
         scope.cancel()
     }
+
+    @Test
+    fun `setLanguage persists normalized choice and invokes callback`() {
+        val prefs = FakeSettingsPreferencesStore(initialLanguage = "system")
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        val vm = SettingsViewModel(prefs, externalScope = scope)
+        val collector = scope.launch { vm.uiState.collect {} }
+
+        assertEquals("system", vm.uiState.value.language)
+
+        var persistedCalls = 0
+        vm.setLanguage("id") { persistedCalls += 1 }
+        assertEquals("id", vm.uiState.value.language)
+        assertEquals(1, persistedCalls)
+
+        vm.setLanguage("en") { persistedCalls += 1 }
+        assertEquals("en", vm.uiState.value.language)
+        assertEquals(2, persistedCalls)
+
+        vm.setLanguage("fr") { persistedCalls += 1 }
+        assertEquals("system", vm.uiState.value.language)
+        assertEquals(3, persistedCalls)
+
+        collector.cancel()
+        scope.cancel()
+    }
 }
 
-private class FakeSettingsPreferencesStore : PreferencesStore {
+private class FakeSettingsPreferencesStore(initialLanguage: String = "en") : PreferencesStore {
     private val _reminderEnabled = MutableStateFlow(false)
     private val _reminderHour = MutableStateFlow(19)
-    private val _language = MutableStateFlow("en")
+    private val _language = MutableStateFlow(initialLanguage)
     private val _theme = MutableStateFlow("system")
     private val _memoryEnabled = MutableStateFlow(true)
 
