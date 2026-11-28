@@ -19,6 +19,7 @@ object Routes {
     const val ARG_LEVEL = "level"
     const val ARG_FRIEND = "friend"
     const val CONSENT = "consent"
+    const val ONBOARDING = "onboarding"
     const val COMPANION = "companion"
     const val PROFILE = "profile"
     const val PROFILE_EDIT = "profile_edit"

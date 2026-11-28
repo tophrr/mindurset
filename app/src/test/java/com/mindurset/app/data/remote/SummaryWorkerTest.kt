@@ -280,6 +280,7 @@ private class InMemoryPreferencesStore(memoryEnabled: Boolean) : PreferencesStor
     override val language: Flow<String> = MutableStateFlow("en")
     override val theme: Flow<String> = MutableStateFlow("system")
     override val memoryEnabled: Flow<Boolean> = _memoryEnabled
+    override val onboardingCompleted: Flow<Boolean> = MutableStateFlow(false)
 
     override fun memoryNote(userId: String): Flow<String> = notes.map { it[userId].orEmpty() }
 
@@ -294,6 +295,8 @@ private class InMemoryPreferencesStore(memoryEnabled: Boolean) : PreferencesStor
     override suspend fun setMemoryEnabled(enabled: Boolean) {
         _memoryEnabled.value = enabled
     }
+
+    override suspend fun setOnboardingCompleted(completed: Boolean) = Unit
 
     override suspend fun setMemoryNote(userId: String, note: String) {
         notes.update { current -> if (note.isBlank()) current - userId else current + (userId to note) }

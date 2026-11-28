@@ -4,6 +4,7 @@ import com.mindurset.app.domain.model.CheckIn
 import com.mindurset.app.domain.model.ConsentRecord
 import com.mindurset.app.domain.model.JournalEntry
 import com.mindurset.app.domain.model.MicroAction
+import com.mindurset.app.domain.model.OnboardingBaseline
 import com.mindurset.app.domain.model.ReframeSession
 import com.mindurset.app.domain.model.SafetyEvent
 import com.mindurset.app.domain.model.SessionInfo
@@ -72,6 +73,7 @@ interface PreferencesStore {
     val language: Flow<String>
     val theme: Flow<String>
     val memoryEnabled: Flow<Boolean>
+    val onboardingCompleted: Flow<Boolean>
 
     fun memoryNote(userId: String): Flow<String>
 
@@ -85,9 +87,19 @@ interface PreferencesStore {
 
     suspend fun setMemoryEnabled(enabled: Boolean)
 
+    suspend fun setOnboardingCompleted(completed: Boolean)
+
     suspend fun setMemoryNote(userId: String, note: String)
 
     suspend fun clearAll() = Unit
+}
+
+interface OnboardingBaselineRepository {
+    suspend fun findForUser(userId: String): OnboardingBaseline?
+
+    fun observeForUser(userId: String): Flow<OnboardingBaseline?>
+
+    suspend fun save(baseline: OnboardingBaseline)
 }
 
 /** A reframe session and its messages. Steps run 0..2, step 3 means completed. */

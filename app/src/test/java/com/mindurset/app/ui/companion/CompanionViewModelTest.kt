@@ -615,6 +615,7 @@ class CompanionViewModelTest {
         override val language: Flow<String> = langState.asStateFlow()
         override val theme: Flow<String> = flowOf("light")
         override val memoryEnabled: Flow<Boolean> = flowOf(false)
+        override val onboardingCompleted: Flow<Boolean> = flowOf(false)
 
         override fun memoryNote(userId: String): Flow<String> = flowOf("")
 
@@ -629,6 +630,8 @@ class CompanionViewModelTest {
         override suspend fun setTheme(theme: String) = Unit
 
         override suspend fun setMemoryEnabled(enabled: Boolean) = Unit
+
+        override suspend fun setOnboardingCompleted(completed: Boolean) = Unit
 
         override suspend fun setMemoryNote(userId: String, note: String) = Unit
     }

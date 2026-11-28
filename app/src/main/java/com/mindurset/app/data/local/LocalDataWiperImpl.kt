@@ -32,6 +32,6 @@ class LocalDataWiperImpl(
 
     companion object {
         private const val TAG = "MindUrSetDataWipe"
-        const val DATABASE_TABLE_COUNT = 11
+        const val DATABASE_TABLE_COUNT = 12
     }
 }

@@ -50,6 +50,8 @@ import com.mindurset.app.domain.model.ConsentPolicy
 import com.mindurset.app.domain.model.Emotion
 import com.mindurset.app.domain.model.RiskLevel
 import com.mindurset.app.domain.model.UserProfile
+import com.mindurset.app.domain.usecase.EntryDestination
+import com.mindurset.app.domain.usecase.ResolveEntryDestination
 import com.mindurset.app.ui.action.ActionScreen
 import com.mindurset.app.ui.auth.LoginScreen
 import com.mindurset.app.ui.auth.RegisterScreen
@@ -62,6 +64,7 @@ import com.mindurset.app.ui.info.AboutScreen
 import com.mindurset.app.ui.info.DataConsentScreen
 import com.mindurset.app.ui.memory.MemoryManagerRoute
 import com.mindurset.app.ui.menu.AppDrawer
+import com.mindurset.app.ui.onboarding.OnboardingScreen
 import com.mindurset.app.ui.profile.ProfileEditScreen
 import com.mindurset.app.ui.profile.ProfileScreen
 import com.mindurset.app.ui.profile.SettingsScreen
@@ -74,6 +77,7 @@ import com.mindurset.app.ui.theme.CardShadow
 import com.mindurset.app.ui.theme.SurfaceWhite
 import com.mindurset.app.ui.therapy.ReframeScreen
 import com.mindurset.app.ui.therapy.TherapyScreen
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
@@ -118,7 +122,7 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
 
     var logoutDialogVisible by remember { mutableStateOf(false) }
 
-    // After sign-in or a guest start, the person lands on the consent gate until a row exists.
+    // After sign-in or a guest start, the person lands on consent, then onboarding once, before Home.
     val authScope = rememberCoroutineScope()
     val afterAuth: () -> Unit = {
         authScope.launch {
@@ -128,10 +132,22 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
                     container.consentRepository
                         .find(userId, ConsentPolicy.KIND)
                         ?.let { it.revokedAt == null } == true
-            if (granted) {
-                navController.toDashboard()
-            } else {
-                navController.navigate(Routes.CONSENT) { popUpTo(0) { inclusive = true } }
+            val onboarded = if (granted) container.preferencesStore.onboardingCompleted.first() else false
+            when (
+                ResolveEntryDestination.resolve(
+                    hasSession = userId != null,
+                    hasConsent = granted,
+                    onboardingCompleted = onboarded,
+                )
+            ) {
+                EntryDestination.LOGIN -> navController.navigate(Routes.LOGIN) { popUpTo(0) { inclusive = true } }
+
+                EntryDestination.CONSENT -> navController.navigate(Routes.CONSENT) { popUpTo(0) { inclusive = true } }
+
+                EntryDestination.ONBOARDING ->
+                    navController.navigate(Routes.ONBOARDING) { popUpTo(0) { inclusive = true } }
+
+                EntryDestination.DASHBOARD -> navController.toDashboard()
             }
         }
     }
@@ -237,8 +253,21 @@ fun MindUrSetNavigation(startDestination: String, container: AppContainer = Loca
                 }
                 composable(Routes.CONSENT) {
                     ConsentRoute(
-                        onAgreed = { goToDestination(Routes.DASHBOARD) },
+                        onAgreed = {
+                            authScope.launch {
+                                if (container.preferencesStore.onboardingCompleted.first()) {
+                                    goToDestination(Routes.DASHBOARD)
+                                } else {
+                                    navController.navigate(Routes.ONBOARDING) { popUpTo(0) { inclusive = true } }
+                                }
+                            }
+                        },
                         onLater = { goToDestination(Routes.DASHBOARD) },
+                    )
+                }
+                composable(Routes.ONBOARDING) {
+                    OnboardingScreen(
+                        onFinished = { navController.toDashboard() },
                     )
                 }
                 composable(

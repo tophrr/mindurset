@@ -40,12 +40,14 @@ private class FakeSettingsPreferencesStore : PreferencesStore {
     private val _language = MutableStateFlow("en")
     private val _theme = MutableStateFlow("system")
     private val _memoryEnabled = MutableStateFlow(true)
+    private val _onboardingCompleted = MutableStateFlow(false)
 
     override val reminderEnabled: Flow<Boolean> = _reminderEnabled
     override val reminderHour: Flow<Int> = _reminderHour
     override val language: Flow<String> = _language
     override val theme: Flow<String> = _theme
     override val memoryEnabled: Flow<Boolean> = _memoryEnabled
+    override val onboardingCompleted: Flow<Boolean> = _onboardingCompleted
 
     override fun memoryNote(userId: String): Flow<String> = MutableStateFlow("")
 
@@ -67,6 +69,10 @@ private class FakeSettingsPreferencesStore : PreferencesStore {
 
     override suspend fun setMemoryEnabled(enabled: Boolean) {
         _memoryEnabled.value = enabled
+    }
+
+    override suspend fun setOnboardingCompleted(completed: Boolean) {
+        _onboardingCompleted.value = completed
     }
 
     override suspend fun setMemoryNote(userId: String, note: String) = Unit

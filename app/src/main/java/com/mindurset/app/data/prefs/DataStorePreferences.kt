@@ -35,6 +35,7 @@ class DataStorePreferences(context: Context) :
         val language = stringPreferencesKey("language")
         val theme = stringPreferencesKey("theme")
         val memoryEnabled = booleanPreferencesKey("memory_enabled")
+        val onboardingCompleted = booleanPreferencesKey("onboarding_completed")
 
         fun memoryNote(userId: String) = stringPreferencesKey("memory_note_$userId")
     }
@@ -72,6 +73,8 @@ class DataStorePreferences(context: Context) :
 
     override val memoryEnabled: Flow<Boolean> = store.data.map { it[Keys.memoryEnabled] ?: true }
 
+    override val onboardingCompleted: Flow<Boolean> = store.data.map { it[Keys.onboardingCompleted] ?: false }
+
     override fun memoryNote(userId: String): Flow<String> = store.data.map { it[Keys.memoryNote(userId)].orEmpty() }
 
     override suspend fun setReminderEnabled(enabled: Boolean) {
@@ -92,6 +95,10 @@ class DataStorePreferences(context: Context) :
 
     override suspend fun setMemoryEnabled(enabled: Boolean) {
         store.edit { it[Keys.memoryEnabled] = enabled }
+    }
+
+    override suspend fun setOnboardingCompleted(completed: Boolean) {
+        store.edit { it[Keys.onboardingCompleted] = completed }
     }
 
     override suspend fun setMemoryNote(userId: String, note: String) {

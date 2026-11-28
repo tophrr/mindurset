@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_intro_title">Selamat datang di Mind-Ur-Set</string>
+    <string name="onboarding_intro_subtitle">Ruang tenang untuk menyadari perasaanmu dan melangkah perlahan.</string>
+    <string name="onboarding_intro_does_title">Yang dilakukan aplikasi ini</string>
+    <string name="onboarding_intro_does_body">Mind-Ur-Set membantumu mencatat check-in suasana hati harian, menulis refleksi singkat, mencoba reframe pikiran, dan mengobrol dengan pendamping yang tenang.</string>
+    <string name="onboarding_intro_not_title">Yang tidak dilakukan aplikasi ini</string>
+    <string name="onboarding_intro_not_body">Aplikasi ini tidak mendiagnosis kondisi, tidak menggantikan terapis, dan tidak memberi layanan medis. Jika kamu butuh bantuan mendesak, nomor krisis selalu berjarak satu ketukan.</string>
+    <string name="onboarding_intro_data_title">Tempat datamu tersimpan</string>
+    <string name="onboarding_intro_data_body">Check-in, refleksi, dan gambaran awalmu tetap tersimpan di ponsel ini. Hanya pesan pendamping yang dikirim saat kamu memilih mengobrol, dan kamu bisa mengekspor atau menghapus semuanya kapan saja.</string>
+    <string name="onboarding_intro_continue">Lanjut</string>
+    <string name="onboarding_intro_skip">Lewati</string>
+
+    <string name="onboarding_baseline_title">Gambaran awal singkat</string>
+    <string name="onboarding_baseline_subtitle">Empat pilihan singkat agar aplikasi memulai dari kondisimu hari ini. Tidak perlu mengetik.</string>
+    <string name="onboarding_question_mood">1. Bagaimana suasana hatimu akhir-akhir ini?</string>
+    <string name="onboarding_question_sleep">2. Bagaimana tidurmu dalam seminggu terakhir?</string>
+    <string name="onboarding_question_support">3. Seberapa didukung kamu merasa saat ini?</string>
+    <string name="onboarding_question_focus">4. Hal apa yang paling ingin kamu bantu?</string>
+
+    <string name="onboarding_sleep_restful">Sebagian besar nyenyak</string>
+    <string name="onboarding_sleep_mixed">Tidak menentu</string>
+    <string name="onboarding_sleep_light">Ringan atau sering terbangun</string>
+    <string name="onboarding_sleep_too_little">Kurang tidur</string>
+
+    <string name="onboarding_support_strong">Ada seseorang yang bisa diandalkan</string>
+    <string name="onboarding_support_some">Ada sedikit dukungan di sekitar</string>
+    <string name="onboarding_support_alone">Sebagian besar menghadapi sendiri</string>
+    <string name="onboarding_support_unsure">Belum yakin saat ini</string>
+
+    <string name="onboarding_focus_worry">Menenangkan rasa cemas atau tegang</string>
+    <string name="onboarding_focus_thoughts">Mengurai pikiran yang terasa berat</string>
+    <string name="onboarding_focus_rhythm">Membangun ritme harian yang lebih stabil</string>
+    <string name="onboarding_focus_exploring">Sekadar melihat-lihat dulu</string>
+
+    <string name="onboarding_baseline_continue">Simpan dan lanjut</string>
+
+    <string name="onboarding_done_title">Semua siap</string>
+    <string name="onboarding_done_summary_happy">Gambaran awalmu tersimpan—akhir-akhir ini terasa cerah, dan Mind-Ur-Set siap kapan saja saat kamu ingin check-in atau berefleksi.</string>
+    <string name="onboarding_done_summary_calm">Gambaran awalmu tersimpan—memulai dari rasa tenang memberimu pijakan yang stabil untuk kembali.</string>
+    <string name="onboarding_done_summary_low">Gambaran awalmu tersimpan—saat energi terasa lesu, ini ruang yang ramah untuk melangkah sesuai ritmemu.</string>
+    <string name="onboarding_done_summary_anxious">Gambaran awalmu tersimpan—kita jaga tetap sederhana dan menenangkan saat rasa cemas datang.</string>
+    <string name="onboarding_done_summary_stressed">Gambaran awalmu tersimpan—satu langkah kecil yang tenang sudah cukup saat hari terasa berat.</string>
+    <string name="onboarding_done_summary_default">Gambaran awalmu tersimpan, dan kamu siap memulai sesuai ritmemu sendiri.</string>
+    <string name="onboarding_done_start">Mulai</string>
+</resources>
