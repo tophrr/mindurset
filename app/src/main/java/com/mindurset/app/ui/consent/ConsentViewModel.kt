@@ -4,8 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mindurset.app.domain.model.ConsentPolicy
 import com.mindurset.app.domain.model.ConsentRecord
+import com.mindurset.app.domain.model.SessionInfo
+import com.mindurset.app.domain.repository.AuthRepository
 import com.mindurset.app.domain.repository.ConsentRepository
 import com.mindurset.app.domain.repository.SessionStore
+import com.mindurset.app.ui.auth.LoginViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +26,7 @@ class ConsentViewModel(
     private val clock: () -> Long = System::currentTimeMillis,
     private val newId: () -> String = { UUID.randomUUID().toString() },
     externalScope: CoroutineScope? = null,
+    private val authRepository: AuthRepository? = null,
 ) : ViewModel() {
     private val scope: CoroutineScope = externalScope ?: viewModelScope
 
@@ -46,7 +50,21 @@ class ConsentViewModel(
         if (_saving.value) return
         _saving.value = true
         scope.launch {
-            val userId = sessionStore.current()?.userId
+            var userId = sessionStore.current()?.userId
+            if (userId == null && authRepository != null) {
+                val account = runCatching {
+                    authRepository.findAccount(LoginViewModel.GUEST_EMAIL)
+                        ?: authRepository.register(LoginViewModel.GUEST_EMAIL, LoginViewModel.GUEST_PASSWORD)
+                }.getOrElse {
+                    runCatching {
+                        authRepository.signIn(LoginViewModel.GUEST_EMAIL, LoginViewModel.GUEST_PASSWORD)
+                    }.getOrNull()
+                }
+                if (account != null) {
+                    sessionStore.signIn(SessionInfo(account.id, account.email))
+                    userId = account.id
+                }
+            }
             if (userId != null) {
                 val existing = consentRepository.find(userId, ConsentPolicy.KIND)
                 consentRepository.grant(

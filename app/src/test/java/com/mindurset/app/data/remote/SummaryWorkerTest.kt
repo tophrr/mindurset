@@ -1,8 +1,10 @@
 package com.mindurset.app.data.remote
 
 import com.mindurset.app.domain.model.MemoryPolicy
+import com.mindurset.app.domain.model.SessionInfo
 import com.mindurset.app.domain.model.SessionSummary
 import com.mindurset.app.domain.repository.PreferencesStore
+import com.mindurset.app.domain.repository.SessionStore
 import com.mindurset.app.domain.repository.SessionSummaryRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -164,6 +166,45 @@ class SummaryWorkerTest {
 
         client.reframe("I will fail", null)
         assertFalse(JSONObject(requireNotNull(transport.lastBody)).has("context"))
+    }
+
+    @Test
+    fun `cancelPending or cleared session prevents summary write after wipe`() = runTest {
+        val summaryReply = JSONObject(fixture).put("message", "Should not be stored").toString()
+        val repo = InMemorySummaryRepository()
+        val prefs = InMemoryPreferencesStore(memoryEnabled = true)
+        val sessionState = MutableStateFlow<SessionInfo?>(SessionInfo("u1", "guest@local"))
+        val sessionStore = object : SessionStore {
+            override val session = sessionState
+            override suspend fun current() = sessionState.value
+            override suspend fun signIn(session: SessionInfo) {
+                sessionState.value = session
+            }
+            override suspend fun signOut() {
+                sessionState.value = null
+            }
+        }
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        lateinit var worker: SummaryWorker
+        val cancellingTransport = object : GenerationTransport {
+            override suspend fun post(path: String, body: String): String {
+                worker.cancelPending()
+                sessionStore.signOut()
+                return summaryReply
+            }
+        }
+        worker = SummaryWorker(
+            generationClient = GenerationClient("http://localhost:8787", cancellingTransport),
+            summaryRepository = repo,
+            preferencesStore = prefs,
+            scope = scope,
+            sessionStore = sessionStore,
+        )
+
+        assertNull(worker.summariseNow("u1", "sess-1", listOf("First line")))
+        assertNull(worker.summariseNow("u1", "sess-2", listOf("Post-wipe line")))
+        assertTrue(repo.rows.value.isEmpty())
+        scope.cancel()
     }
 }
 

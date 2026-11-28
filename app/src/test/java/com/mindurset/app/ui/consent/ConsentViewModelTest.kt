@@ -2,6 +2,8 @@ package com.mindurset.app.ui.consent
 
 import com.mindurset.app.domain.model.ConsentRecord
 import com.mindurset.app.domain.model.SessionInfo
+import com.mindurset.app.domain.model.UserAccount
+import com.mindurset.app.domain.repository.AuthRepository
 import com.mindurset.app.domain.repository.ConsentRepository
 import com.mindurset.app.domain.repository.SessionStore
 import kotlinx.coroutines.CoroutineScope
@@ -83,6 +85,33 @@ class ConsentViewModelTest {
         val viewModel = viewModel()
 
         assertFalse(viewModel.granted.value ?: true)
+    }
+
+    @Test
+    fun `granting after full wipe provisions a guest session before saving consent`() {
+        val sessionStore = FixedSessionStore(null)
+        val authRepo = object : AuthRepository {
+            override suspend fun findAccount(email: String): UserAccount? = null
+            override suspend fun register(email: String, password: String) =
+                UserAccount(id = "u-fresh", email = email, createdAt = 1_700_000_002_000)
+            override suspend fun signIn(email: String, password: String): UserAccount? = null
+            override suspend fun deleteAccount(userId: String) = Unit
+        }
+        val viewModel = ConsentViewModel(
+            consentRepository = repository,
+            sessionStore = sessionStore,
+            clock = { 1_700_000_002_000 },
+            newId = { "consent-fresh" },
+            externalScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),
+            authRepository = authRepo,
+        )
+        var done = false
+
+        viewModel.grant { done = true }
+
+        assertEquals("u-fresh", sessionStore.session.value?.userId)
+        assertEquals("u-fresh", repository.row?.userId)
+        assertTrue(done)
     }
 
     private fun viewModel(): ConsentViewModel = ConsentViewModel(

@@ -8,6 +8,16 @@
     <string name="consent_gate_later">Nanti saja</string>
     <string name="consent_gate_later_note">Tanpa izin ini, check-in tidak bisa disimpan. Bagian lain tetap bisa dibuka.</string>
     <string name="consent_withdraw">Tarik persetujuan</string>
+    <string name="consent_export_button">Ekspor data saya (JSON)</string>
+    <string name="consent_export_description">Simpan salinan JSON yang mudah dibaca berisi profil, check-in, catatan jurnal, sesi reframe, aksi, kontak tepercaya, dan riwayat kejadian keamanan ke file pilihanmu.</string>
+    <string name="consent_export_in_progress">Menyiapkan ekspor…</string>
+    <string name="consent_export_saved">Ekspor tersimpan.</string>
+    <string name="consent_export_failed">Tidak bisa menulis file ekspor. Coba lokasi lain.</string>
+    <string name="consent_withdraw_dialog_title">Tarik persetujuan dan hapus semua data lokal?</string>
+    <string name="consent_withdraw_dialog_body">Ini menghapus permanen semua yang tersimpan di ponsel ini: profil, check-in, catatan jurnal, sesi dan pesan reframe, aksi kecil, ringkasan sesi, catatan memori, kontak tepercaya, kejadian keamanan, dan catatan persetujuan. Tindakan ini tidak dapat dibatalkan, dan kamu akan kembali ke layar persetujuan.</string>
+    <string name="consent_withdraw_cancel">Simpan data saya</string>
+    <string name="consent_withdraw_confirm">Hapus semua data &amp; tarik persetujuan</string>
+    <string name="consent_withdrawing">Menghapus data lokal…</string>
     <string name="checkin_consent_needed">Setujui penggunaan datamu sebelum check-in pertama.</string>
     <string name="checkin_consent_review">Tinjau persetujuan</string>
 </resources>

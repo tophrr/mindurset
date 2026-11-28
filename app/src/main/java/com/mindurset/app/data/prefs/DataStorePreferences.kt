@@ -101,4 +101,8 @@ class DataStorePreferences(context: Context) :
             if (clean.isEmpty()) prefs.remove(key) else prefs[key] = clean
         }
     }
+
+    override suspend fun clearAll() {
+        store.edit { it.clear() }
+    }
 }

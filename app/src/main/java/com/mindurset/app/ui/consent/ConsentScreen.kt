@@ -37,7 +37,11 @@ import com.mindurset.app.ui.theme.NavyInk
 fun ConsentRoute(onAgreed: () -> Unit, onLater: () -> Unit) {
     val container = LocalAppContainer.current
     val viewModel: ConsentViewModel = viewModel {
-        ConsentViewModel(container.consentRepository, container.sessionStore)
+        ConsentViewModel(
+            consentRepository = container.consentRepository,
+            sessionStore = container.sessionStore,
+            authRepository = container.authRepository,
+        )
     }
     val saving by viewModel.saving.collectAsStateWithLifecycle()
 

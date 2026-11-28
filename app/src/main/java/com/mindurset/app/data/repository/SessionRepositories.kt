@@ -50,6 +50,8 @@ class SessionRepositoryImpl(private val sessionDao: ReframeSessionDao, private v
     override suspend fun latestCompleted(userId: String): ReframeSession? =
         sessionDao.latestCompleted(userId)?.toModel()
 
+    override suspend fun all(userId: String): List<ReframeSession> = sessionDao.allForUser(userId).map { it.toModel() }
+
     override suspend fun save(session: ReframeSession) {
         sessionDao.upsert(session.toEntity(session.startedAt))
     }
@@ -88,6 +90,8 @@ class SafetyRepositoryImpl(private val dao: SafetyEventDao) : SafetyRepository {
     }
 
     override suspend fun countSince(userId: String, since: Long): Int = dao.countSince(userId, since)
+
+    override suspend fun all(userId: String): List<SafetyEvent> = dao.allForUser(userId).map { it.toModel() }
 }
 
 class ConsentRepositoryImpl(private val dao: ConsentRecordDao) : ConsentRepository {
@@ -181,6 +185,16 @@ private fun SafetyEvent.toEntity() = SafetyEventEntity(
     id = id,
     userId = userId,
     level = level.name,
+    trigger = trigger,
+    patternId = patternId,
+    createdAt = createdAt,
+    retentionUntil = retentionUntil,
+)
+
+private fun SafetyEventEntity.toModel() = SafetyEvent(
+    id = id,
+    userId = userId,
+    level = RiskLevel.fromName(level),
     trigger = trigger,
     patternId = patternId,
     createdAt = createdAt,
