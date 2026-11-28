@@ -17,6 +17,17 @@
     <string name="profile_mood_weekly">Weekly</string>
     <string name="profile_mood_monthly">Monthly</string>
     <string name="profile_mood_week_empty">Your weekly mood trend will appear here once you have a few check-ins.</string>
+    <string name="profile_mood_week_latest_caption">Days with multiple check-ins show the latest mood.</string>
+    <string name="profile_mood_week_cd">Seven-day mood trend chart</string>
+    <string name="profile_mood_breakdown_title">Mood breakdown</string>
+    <string name="profile_mood_window_7d">7 days</string>
+    <string name="profile_mood_window_30d">30 days</string>
+    <string name="profile_mood_breakdown_empty">No check-ins recorded in the last %1$d days yet.</string>
+    <plurals name="profile_mood_breakdown_total">
+        <item quantity="one">%1$d check-in in the last %2$d days</item>
+        <item quantity="other">%1$d check-ins in the last %2$d days</item>
+    </plurals>
+    <string name="profile_mood_breakdown_value" translatable="false">%1$d (%2$d%%)</string>
     <string name="profile_avatar_initial_note">Your avatar uses the first letter of your display name.</string>
     <string-array name="profile_weekday_short">
         <item>S</item>
@@ -45,8 +56,9 @@
     <string name="profile_reminder_enabled">Remind me to check in</string>
     <string name="profile_reminder_time">Reminder time</string>
     <string name="profile_language_label">Language</string>
+    <string name="profile_language_system">System</string>
     <string name="profile_language_en">English</string>
-    <string name="profile_language_id">Indonesian</string>
+    <string name="profile_language_id">Bahasa Indonesia</string>
     <string name="profile_save_button">Save changes</string>
     <string name="profile_saving">Saving…</string>
     <string name="profile_back">Back</string>

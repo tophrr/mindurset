@@ -22,10 +22,10 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
  * Session and preference storage. The session is a local pointer to the signed-in
  * account row; no password or long-lived token is kept here.
  */
-class DataStorePreferences(context: Context) :
+class DataStorePreferences internal constructor(private val store: DataStore<Preferences>) :
     SessionStore,
     PreferencesStore {
-    private val store = context.applicationContext.dataStore
+    constructor(context: Context) : this(context.applicationContext.dataStore)
 
     private object Keys {
         val sessionUserId = stringPreferencesKey("session_user_id")
@@ -67,7 +67,7 @@ class DataStorePreferences(context: Context) :
 
     override val reminderHour: Flow<Int> = store.data.map { it[Keys.reminderHour] ?: 19 }
 
-    override val language: Flow<String> = store.data.map { it[Keys.language] ?: "en" }
+    override val language: Flow<String> = store.data.map { AppLocale.normalizeStoredLanguage(it[Keys.language]) }
 
     override val theme: Flow<String> = store.data.map { it[Keys.theme] ?: "system" }
 
@@ -86,7 +86,7 @@ class DataStorePreferences(context: Context) :
     }
 
     override suspend fun setLanguage(language: String) {
-        store.edit { it[Keys.language] = language }
+        store.edit { it[Keys.language] = AppLocale.normalizeStoredLanguage(language) }
     }
 
     override suspend fun setTheme(theme: String) {
