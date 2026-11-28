@@ -8,6 +8,16 @@
     <string name="consent_gate_later">Not now</string>
     <string name="consent_gate_later_note">Without this, a check-in cannot be saved. Everything else still opens.</string>
     <string name="consent_withdraw">Withdraw consent</string>
+    <string name="consent_export_button">Export my data (JSON)</string>
+    <string name="consent_export_description">Save a readable JSON copy of your profile, check-ins, journal entries, reframe sessions, actions, trusted contact, and safety event history to a file you choose.</string>
+    <string name="consent_export_in_progress">Preparing export…</string>
+    <string name="consent_export_saved">Export saved.</string>
+    <string name="consent_export_failed">Could not write the export file. Try another location.</string>
+    <string name="consent_withdraw_dialog_title">Withdraw consent and delete all local data?</string>
+    <string name="consent_withdraw_dialog_body">This permanently deletes everything stored on this phone: your profile, check-ins, journal entries, reframe sessions and messages, micro actions, session summaries, memory note, trusted contact, safety events, and consent record. This cannot be undone, and you will return to the consent screen.</string>
+    <string name="consent_withdraw_cancel">Keep my data</string>
+    <string name="consent_withdraw_confirm">Delete all data &amp; withdraw</string>
+    <string name="consent_withdrawing">Deleting local data…</string>
     <string name="checkin_consent_needed">Agree to how your data is used before the first check-in.</string>
     <string name="checkin_consent_review">Review consent</string>
 </resources>

@@ -3,14 +3,17 @@ package com.mindurset.app.data.remote
 import com.mindurset.app.domain.model.MemoryPolicy
 import com.mindurset.app.domain.model.SessionSummary
 import com.mindurset.app.domain.repository.PreferencesStore
+import com.mindurset.app.domain.repository.SessionStore
 import com.mindurset.app.domain.repository.SessionSummaryRepository
 import com.mindurset.app.domain.repository.SessionSummaryScheduler
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Generates and stores a short session summary at the end of a reframe or companion session
@@ -24,17 +27,36 @@ class SummaryWorker(
     private val summaryRepository: SessionSummaryRepository,
     private val preferencesStore: PreferencesStore,
     private val scope: CoroutineScope,
+    private val sessionStore: SessionStore? = null,
     private val now: () -> Long = System::currentTimeMillis,
     private val newId: () -> String = { UUID.randomUUID().toString() },
 ) : SessionSummaryScheduler {
+    private val generation = AtomicLong(0L)
+
     override fun enqueue(userId: String, sessionId: String, transcript: List<String>) {
+        val expectedGeneration = generation.get()
         scope.launch {
-            summariseNow(userId = userId, sessionId = sessionId, transcript = transcript)
+            summariseNow(
+                userId = userId,
+                sessionId = sessionId,
+                transcript = transcript,
+                expectedGeneration = expectedGeneration,
+            )
         }
     }
 
-    suspend fun summariseNow(userId: String, sessionId: String, transcript: List<String>): SessionSummary? {
-        if (!preferencesStore.memoryEnabled.first()) return null
+    override fun cancelPending() {
+        generation.incrementAndGet()
+        scope.coroutineContext.cancelChildren()
+    }
+
+    suspend fun summariseNow(
+        userId: String,
+        sessionId: String,
+        transcript: List<String>,
+        expectedGeneration: Long = generation.get(),
+    ): SessionSummary? {
+        if (!canPersist(userId, expectedGeneration)) return null
         val cleanLines = transcript.map { it.trim() }.filter { it.isNotEmpty() }
         if (cleanLines.isEmpty()) return null
 
@@ -51,6 +73,7 @@ class SummaryWorker(
         }
 
         if (response.riskLevel.level == "L3") return null
+        if (!canPersist(userId, expectedGeneration)) return null
 
         val cleanSummary = response.message
             .trim()
@@ -69,5 +92,11 @@ class SummaryWorker(
         )
         summaryRepository.saveAndTrim(entry, now = at)
         return entry
+    }
+
+    private suspend fun canPersist(userId: String, expectedGeneration: Long): Boolean {
+        if (generation.get() != expectedGeneration) return false
+        if (sessionStore != null && sessionStore.current()?.userId != userId) return false
+        return preferencesStore.memoryEnabled.first()
     }
 }

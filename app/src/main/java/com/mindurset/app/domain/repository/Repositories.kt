@@ -86,6 +86,8 @@ interface PreferencesStore {
     suspend fun setMemoryEnabled(enabled: Boolean)
 
     suspend fun setMemoryNote(userId: String, note: String)
+
+    suspend fun clearAll() = Unit
 }
 
 /** A reframe session and its messages. Steps run 0..2, step 3 means completed. */
@@ -97,6 +99,8 @@ interface SessionRepository {
     suspend fun findById(id: String): ReframeSession?
 
     suspend fun latestCompleted(userId: String): ReframeSession? = null
+
+    suspend fun all(userId: String): List<ReframeSession> = emptyList()
 
     suspend fun save(session: ReframeSession)
 
@@ -123,6 +127,8 @@ interface SafetyRepository {
     suspend fun record(event: SafetyEvent)
 
     suspend fun countSince(userId: String, since: Long): Int
+
+    suspend fun all(userId: String): List<SafetyEvent> = emptyList()
 }
 
 interface ConsentRepository {
@@ -175,4 +181,13 @@ interface MemoryContextProvider {
 /** Schedules background session summarisation when a reframe or companion session closes. */
 interface SessionSummaryScheduler {
     fun enqueue(userId: String, sessionId: String, transcript: List<String>)
+
+    fun cancelPending() = Unit
+}
+
+data class WipeResult(val completed: Boolean, val tableCount: Int)
+
+/** Wipes every local table and preference store on consent withdrawal. */
+interface LocalDataWiper {
+    suspend fun wipeAll(): WipeResult
 }

@@ -5,6 +5,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import com.mindurset.app.BuildConfig
 import com.mindurset.app.data.local.CheckInDraftStore
 import com.mindurset.app.data.local.DataStoreCheckInDraftStore
+import com.mindurset.app.data.local.LocalDataWiperImpl
 import com.mindurset.app.data.local.MindUrSetDatabase
 import com.mindurset.app.data.prefs.DataStorePreferences
 import com.mindurset.app.data.remote.GenerationClient
@@ -25,6 +26,7 @@ import com.mindurset.app.domain.repository.AuthRepository
 import com.mindurset.app.domain.repository.CheckInRepository
 import com.mindurset.app.domain.repository.ConsentRepository
 import com.mindurset.app.domain.repository.JournalRepository
+import com.mindurset.app.domain.repository.LocalDataWiper
 import com.mindurset.app.domain.repository.MemoryContextProvider
 import com.mindurset.app.domain.repository.MicroActionRepository
 import com.mindurset.app.domain.repository.PreferencesStore
@@ -34,6 +36,7 @@ import com.mindurset.app.domain.repository.SessionRepository
 import com.mindurset.app.domain.repository.SessionStore
 import com.mindurset.app.domain.repository.SessionSummaryRepository
 import com.mindurset.app.domain.repository.TrustedContactRepository
+import com.mindurset.app.domain.usecase.ExportLocalData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -97,6 +100,7 @@ class AppContainer(context: Context) {
             summaryRepository = sessionSummaryRepository,
             preferencesStore = preferencesStore,
             scope = backgroundScope,
+            sessionStore = sessionStore,
         )
 
     val dashboardEffortRepository: DashboardEffortRepository =
@@ -108,6 +112,29 @@ class AppContainer(context: Context) {
 
     val trustedContactRepository: TrustedContactRepository =
         TrustedContactRepositoryImpl(database.trustedContactDao())
+
+    val exportLocalData: ExportLocalData =
+        ExportLocalData(
+            sessionStore = sessionStore,
+            profileRepository = profileRepository,
+            preferencesStore = preferencesStore,
+            checkInRepository = checkInRepository,
+            sessionRepository = sessionRepository,
+            journalRepository = journalRepository,
+            microActionRepository = microActionRepository,
+            sessionSummaryRepository = sessionSummaryRepository,
+            trustedContactRepository = trustedContactRepository,
+            safetyRepository = safetyRepository,
+            consentRepository = consentRepository,
+            appVersionName = BuildConfig.VERSION_NAME,
+        )
+
+    val localDataWiper: LocalDataWiper =
+        LocalDataWiperImpl(
+            database = database,
+            preferencesStore = preferencesStore,
+            summaryScheduler = summaryWorker,
+        )
 }
 
 val LocalAppContainer =

@@ -94,6 +94,9 @@ interface ReframeSessionDao {
     @Query("SELECT * FROM reframe_session WHERE userId = :userId ORDER BY createdAt DESC LIMIT :limit")
     suspend fun recent(userId: String, limit: Int): List<ReframeSessionEntity>
 
+    @Query("SELECT * FROM reframe_session WHERE userId = :userId ORDER BY startedAt ASC, id ASC")
+    suspend fun allForUser(userId: String): List<ReframeSessionEntity>
+
     @Query("SELECT * FROM reframe_session WHERE userId = :userId AND status = 'completed' AND completedAt >= :since")
     fun observeCompletedSince(userId: String, since: Long): Flow<List<ReframeSessionEntity>>
 
@@ -192,6 +195,9 @@ interface SafetyEventDao {
 
     @Query("SELECT * FROM safety_event WHERE userId = :userId ORDER BY createdAt DESC LIMIT :limit")
     suspend fun recent(userId: String, limit: Int): List<SafetyEventEntity>
+
+    @Query("SELECT * FROM safety_event WHERE userId = :userId ORDER BY createdAt ASC, id ASC")
+    suspend fun allForUser(userId: String): List<SafetyEventEntity>
 
     @Query("DELETE FROM safety_event WHERE retentionUntil < :now")
     suspend fun deleteExpired(now: Long)
