@@ -56,8 +56,9 @@
     <string name="profile_reminder_enabled">Remind me to check in</string>
     <string name="profile_reminder_time">Reminder time</string>
     <string name="profile_language_label">Language</string>
+    <string name="profile_language_system">System</string>
     <string name="profile_language_en">English</string>
-    <string name="profile_language_id">Indonesian</string>
+    <string name="profile_language_id">Bahasa Indonesia</string>
     <string name="profile_save_button">Save changes</string>
     <string name="profile_saving">Saving…</string>
     <string name="profile_back">Back</string>

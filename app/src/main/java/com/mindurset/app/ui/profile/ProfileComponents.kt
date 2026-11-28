@@ -474,17 +474,17 @@ fun MoodLegend(modifier: Modifier = Modifier) {
 /** First letter of a display name, for the avatar. Falls back to "?" for a blank name. */
 fun initialOf(name: String): String = name.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "?"
 
-private val MonthYearFormatter: DateTimeFormatter =
-    DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
+private fun monthYearFormatter(): DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
 
 /** Formats a join timestamp as "April 2026" style text for "Member since". */
 fun formatMonthYear(epochMillis: Long): String = Instant.ofEpochMilli(epochMillis)
     .atZone(ZoneId.systemDefault())
     .toLocalDate()
-    .format(MonthYearFormatter)
+    .format(monthYearFormatter())
 
 /** Formats a year + month as "September 2026", the monthly calendar's title. */
-fun formatMonth(year: Int, monthValue: Int): String = YearMonth.of(year, monthValue).atDay(1).format(MonthYearFormatter)
+fun formatMonth(year: Int, monthValue: Int): String =
+    YearMonth.of(year, monthValue).atDay(1).format(monthYearFormatter())
 
 /** Hour-of-day picker backed by a real value, used by settings. */
 @Composable

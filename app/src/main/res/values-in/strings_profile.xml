@@ -54,8 +54,9 @@
     <string name="profile_reminder_enabled">Ingatkan saya untuk check-in</string>
     <string name="profile_reminder_time">Waktu pengingat</string>
     <string name="profile_language_label">Bahasa</string>
+    <string name="profile_language_system">Sistem</string>
     <string name="profile_language_en">Inggris</string>
-    <string name="profile_language_id">Indonesia</string>
+    <string name="profile_language_id">Bahasa Indonesia</string>
     <string name="profile_save_button">Simpan perubahan</string>
     <string name="profile_saving">Menyimpan…</string>
     <string name="profile_back">Kembali</string>

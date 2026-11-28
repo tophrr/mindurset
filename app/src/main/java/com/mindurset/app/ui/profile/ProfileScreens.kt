@@ -1,5 +1,8 @@
 package com.mindurset.app.ui.profile
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -46,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mindurset.app.R
+import com.mindurset.app.data.prefs.AppLocale
 import com.mindurset.app.di.LocalAppContainer
 import com.mindurset.app.ui.common.AppCard
 import com.mindurset.app.ui.common.FloatingNavSpace
@@ -487,17 +492,33 @@ fun SettingsScreen(onBack: () -> Unit, onDataConsent: () -> Unit = onBack, onOpe
                 }
 
                 SettingsSection(title = stringResource(R.string.profile_language_label)) {
+                    val context = LocalContext.current
+                    val selectLanguage: (String) -> Unit = { code ->
+                        if (code != state.language) {
+                            vm.setLanguage(code) {
+                                context.findActivity()?.let { activity ->
+                                    AppLocale.applyLanguage(activity, code)
+                                }
+                            }
+                        }
+                    }
                     LanguageRow(
-                        code = "en",
-                        labelRes = R.string.profile_language_en,
+                        code = AppLocale.SYSTEM,
+                        labelRes = R.string.profile_language_system,
                         selected = state.language,
-                        onSelect = vm::setLanguage,
+                        onSelect = selectLanguage,
                     )
                     LanguageRow(
-                        code = "id",
+                        code = AppLocale.ENGLISH,
+                        labelRes = R.string.profile_language_en,
+                        selected = state.language,
+                        onSelect = selectLanguage,
+                    )
+                    LanguageRow(
+                        code = AppLocale.INDONESIAN,
                         labelRes = R.string.profile_language_id,
                         selected = state.language,
-                        onSelect = vm::setLanguage,
+                        onSelect = selectLanguage,
                     )
                 }
 
@@ -580,4 +601,10 @@ private fun themeLabel(theme: String): String = when (theme) {
     "light" -> stringResource(R.string.profile_theme_value_light)
     "dark" -> stringResource(R.string.profile_theme_value_dark)
     else -> stringResource(R.string.profile_theme_value_system)
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
