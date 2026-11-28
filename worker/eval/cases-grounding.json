@@ -1,0 +1,381 @@
+[
+  {
+    "id": "GND-01",
+    "language": "en",
+    "topic": "action",
+    "expected_source_id": "action#the-two-minute-start",
+    "expected_keyword": "two-minute",
+    "endpoint": "/v1/reframe",
+    "text": "[synthetic] I keep staring at my blank thesis document and cannot bring myself to start writing."
+  },
+  {
+    "id": "GND-02",
+    "language": "id",
+    "topic": "action",
+    "expected_source_id": "action#the-two-minute-start",
+    "expected_keyword": "start",
+    "endpoint": "/v1/reframe",
+    "text": "[synthetic] Aku menunda terus ngerjain laporan praktikum karena rasanya berat sekali untuk mulai."
+  },
+  {
+    "id": "GND-03",
+    "language": "en",
+    "topic": "action",
+    "expected_source_id": "action#make-the-step-concrete",
+    "expected_keyword": "concrete",
+    "endpoint": "/v1/reframe",
+    "text": "[synthetic] My to-do list just says study biology and I end up procrastinating for hours because it feels too vague."
+  },
+  {
+    "id": "GND-04",
+    "language": "id",
+    "topic": "action",
+    "expected_source_id": "action#make-the-step-concrete",
+    "expected_keyword": "specific",
+    "endpoint": "/v1/chat",
+    "mode": "solve",
+    "text": "[synthetic] Tugas kuliahku menumpuk dan aku bingung mau mulai dari langkah yang mana supaya tidak macet."
+  },
+  {
+    "id": "GND-05",
+    "language": "en",
+    "topic": "action",
+    "expected_source_id": "action#when-the-task-is-vague",
+    "expected_keyword": "questions",
+    "endpoint": "/v1/reframe",
+    "text": "[synthetic] I do not even understand what the professor wants on this lab prompt so I am completely stuck."
+  },
+  {
+    "id": "GND-06",
+    "language": "en",
+    "topic": "action",
+    "expected_source_id": "action#when-the-task-is-vague",
+    "expected_keyword": "information",
+    "endpoint": "/v1/chat",
+    "mode": "solve",
+    "text": "[synthetic] I feel stupid because I still do not know how to begin my research project without clearer instructions."
+  },
+  {
+    "id": "GND-07",
+    "language": "en",
+    "topic": "all-or-nothing",
+    "expected_source_id": "all-or-nothing#what-it-sounds-like",
+    "expected_keyword": "perfect",
+    "endpoint": "/v1/reframe",
+    "text": "[synthetic] If my presentation is not completely perfect tomorrow then the whole semester is worthless."
+  },
+  {
+    "id": "GND-08",
+    "language": "id",
+    "topic": "all-or-nothing",
+    "expected_source_id": "all-or-nothing#what-it-sounds-like",
+    "expected_keyword": "always",
+    "endpoint": "/v1/reframe",
+    "text": "[synthetic] Aku selalu gagal kalau presentasi di depan kelas dan tidak pernah cukup bagus."
+  },
+  {
+    "id": "GND-09",
+    "language": "en",
+    "topic": "all-or-nothing",
+    "expected_source_id": "all-or-nothing#evidence-from-the-week",
+    "expected_keyword": "counter-example",
+    "endpoint": "/v1/reframe",
+    "text": "[synthetic] I got one low quiz grade today and now my brain says I always mess everything up."
+  },
+  {
+    "id": "GND-10",
+    "language": "en",
+    "topic": "all-or-nothing",
+    "expected_source_id": "all-or-nothing#evidence-from-the-week",
+    "expected_keyword": "evidence",
+    "endpoint": "/v1/chat",
+    "mode": "listen",
+    "text": "[synthetic] Even though I passed two assignments last week, I feel like I never do anything right."
+  },
+  {
+    "id": "GND-11",
+    "language": "en",
+    "topic": "all-or-nothing",
+    "expected_source_id": "all-or-nothing#a-fairer-sentence",
+    "expected_keyword": "accurate",
+    "endpoint": "/v1/reframe",
+    "text": "[synthetic] I bombed one organic chemistry midterm so I am basically a total failure as a student."
+  },
+  {
+    "id": "GND-12",
+    "language": "id",
+    "topic": "all-or-nothing",
+    "expected_source_id": "all-or-nothing#a-fairer-sentence",
+    "expected_keyword": "failure",
+    "endpoint": "/v1/reframe",
+    "text": "[synthetic] Nilai esai minggu ini jelek, rasanya aku memang gagal total di jurusan ini."
+  },
+  {
+    "id": "GND-13",
+    "language": "en",
+    "topic": "rumination",
+    "expected_source_id": "rumination#the-loop",
+    "expected_keyword": "loop",
+    "endpoint": "/v1/reframe",
+    "text": "[synthetic] I keep replaying an awkward comment I made in seminar over and over in my head."
+  },
+  {
+    "id": "GND-14",
+    "language": "id",
+    "topic": "rumination",
+    "expected_source_id": "rumination#the-loop",
+    "expected_keyword": "replay",
+    "endpoint": "/v1/reframe",
+    "text": "[synthetic] Aku overthinking terus memutar ulang obrolan sama dosen tadi siang tanpa ada ujungnya."
+  },
+  {
+    "id": "GND-15",
+    "language": "en",
+    "topic": "rumination",
+    "expected_source_id": "rumination#scheduled-worry",
+    "expected_keyword": "worry",
+    "endpoint": "/v1/chat",
+    "mode": "solve",
+    "text": "[synthetic] My mind keeps worrying about internship applications all day while I am trying to study."
+  },
+  {
+    "id": "GND-16",
+    "language": "en",
+    "topic": "rumination",
+    "expected_source_id": "rumination#scheduled-worry",
+    "expected_keyword": "page",
+    "endpoint": "/v1/reframe",
+    "text": "[synthetic] I cannot stop thinking about what might go wrong next month and it runs in the background nonstop."
+  },
+  {
+    "id": "GND-17",
+    "language": "en",
+    "topic": "rumination",
+    "expected_source_id": "rumination#grounding",
+    "expected_keyword": "exhale",
+    "endpoint": "/v1/chat",
+    "mode": "distract",
+    "text": "[synthetic] My anxious thoughts are spinning so loudly right now that I need something to bring me back to the room."
+  },
+  {
+    "id": "GND-18",
+    "language": "id",
+    "topic": "rumination",
+    "expected_source_id": "rumination#grounding",
+    "expected_keyword": "breaths",
+    "endpoint": "/v1/chat",
+    "mode": "distract",
+    "text": "[synthetic] Pikiran cemas ini muter terus dan berisik banget di kepala, aku butuh cara cepat buat tenang."
+  },
+  {
+    "id": "GND-19",
+    "language": "en",
+    "topic": "safety-plan",
+    "expected_source_id": "safety-plan#immediate-support",
+    "expected_keyword": "119",
+    "endpoint": "/v1/chat",
+    "mode": "solve",
+    "text": "[synthetic] What emergency number does this app keep ready in Indonesia if someone is ever in immediate crisis?"
+  },
+  {
+    "id": "GND-20",
+    "language": "en",
+    "topic": "safety-plan",
+    "expected_source_id": "safety-plan#trusted-person",
+    "expected_keyword": "trusted",
+    "endpoint": "/v1/chat",
+    "mode": "solve",
+    "text": "[synthetic] I want to set up a safety plan and pick a friend I could text when I feel overwhelmed and alone."
+  },
+  {
+    "id": "GND-21",
+    "language": "id",
+    "topic": "safety-plan",
+    "expected_source_id": "safety-plan#trusted-person",
+    "expected_keyword": "contact",
+    "endpoint": "/v1/chat",
+    "mode": "solve",
+    "text": "[synthetic] Aku lagi menyusun rencana keselamatan diri dan bingung mau kirim pesan apa ke teman kalau sedang merasa sendirian."
+  },
+  {
+    "id": "GND-22",
+    "language": "en",
+    "topic": "safety-plan",
+    "expected_source_id": "safety-plan#crisis-lines",
+    "expected_keyword": "crisis line",
+    "endpoint": "/v1/chat",
+    "mode": "listen",
+    "text": "[synthetic] How does calling a crisis support line work if a person feels nervous and does not know what to say?"
+  },
+  {
+    "id": "GND-23",
+    "language": "en",
+    "topic": "self-compassion",
+    "expected_source_id": "self-compassion#a-friend-s-voice",
+    "expected_keyword": "friend",
+    "endpoint": "/v1/reframe",
+    "text": "[synthetic] I am beating myself up so harshly for missing a small detail in my group project."
+  },
+  {
+    "id": "GND-24",
+    "language": "id",
+    "topic": "self-compassion",
+    "expected_source_id": "self-compassion#a-friend-s-voice",
+    "expected_keyword": "respect",
+    "endpoint": "/v1/reframe",
+    "text": "[synthetic] Aku merasa malu banget dan terus menyalahkan diri sendiri karena salah jawab waktu diskusi."
+  },
+  {
+    "id": "GND-25",
+    "language": "en",
+    "topic": "self-compassion",
+    "expected_source_id": "self-compassion#common-humanity",
+    "expected_keyword": "shared",
+    "endpoint": "/v1/reframe",
+    "text": "[synthetic] Everyone else on campus seems to have it together and I feel like I am uniquely behind."
+  },
+  {
+    "id": "GND-26",
+    "language": "en",
+    "topic": "self-compassion",
+    "expected_source_id": "self-compassion#common-humanity",
+    "expected_keyword": "self-doubt",
+    "endpoint": "/v1/chat",
+    "mode": "listen",
+    "text": "[synthetic] Struggling with deadlines and self-doubt makes me feel like something is broken in me compared to my classmates."
+  },
+  {
+    "id": "GND-27",
+    "language": "en",
+    "topic": "self-compassion",
+    "expected_source_id": "self-compassion#one-kind-act",
+    "expected_keyword": "water",
+    "endpoint": "/v1/chat",
+    "mode": "solve",
+    "text": "[synthetic] I have been harsh on myself all day after a rough critique and forgot to even eat or take care of myself."
+  },
+  {
+    "id": "GND-28",
+    "language": "id",
+    "topic": "self-compassion",
+    "expected_source_id": "self-compassion#one-kind-act",
+    "expected_keyword": "outside",
+    "endpoint": "/v1/chat",
+    "mode": "solve",
+    "text": "[synthetic] Rasanya harga diriku jatuh hari ini dan aku cuma butuh satu hal baik kecil untuk diriku sendiri."
+  },
+  {
+    "id": "GND-29",
+    "language": "en",
+    "topic": "sleep",
+    "expected_source_id": "sleep#wind-down",
+    "expected_keyword": "wind-down",
+    "endpoint": "/v1/chat",
+    "mode": "solve",
+    "text": "[synthetic] I lie awake in bed for an hour after studying late because my brain cannot switch into sleep mode."
+  },
+  {
+    "id": "GND-30",
+    "language": "id",
+    "topic": "sleep",
+    "expected_source_id": "sleep#wind-down",
+    "expected_keyword": "sleep",
+    "endpoint": "/v1/reframe",
+    "text": "[synthetic] Setiap malam aku susah tidur karena langsung rebahan setelah ngerjain tugas sampai larut."
+  },
+  {
+    "id": "GND-31",
+    "language": "en",
+    "topic": "sleep",
+    "expected_source_id": "sleep#late-night-scrolling",
+    "expected_keyword": "scrolling",
+    "endpoint": "/v1/chat",
+    "mode": "solve",
+    "text": "[synthetic] I stay up past 2 a.m. scrolling on my phone because it feels like my only quiet time of the day."
+  },
+  {
+    "id": "GND-32",
+    "language": "id",
+    "topic": "sleep",
+    "expected_source_id": "sleep#late-night-scrolling",
+    "expected_keyword": "phone",
+    "endpoint": "/v1/chat",
+    "mode": "solve",
+    "text": "[synthetic] Aku sering begadang main hp sampai tengah malam padahal besok pagi ada kelas jam tujuh."
+  },
+  {
+    "id": "GND-33",
+    "language": "en",
+    "topic": "sleep",
+    "expected_source_id": "sleep#morning-light",
+    "expected_keyword": "morning light",
+    "endpoint": "/v1/chat",
+    "mode": "solve",
+    "text": "[synthetic] My sleep schedule flipped after finals week and I keep waking up groggy at noon."
+  },
+  {
+    "id": "GND-34",
+    "language": "en",
+    "topic": "sleep",
+    "expected_source_id": "sleep#morning-light",
+    "expected_keyword": "rhythm",
+    "endpoint": "/v1/reframe",
+    "text": "[synthetic] Trying to force an early bedtime just makes me stare at the ceiling tired and frustrated."
+  },
+  {
+    "id": "GND-35",
+    "language": "en",
+    "topic": "stress",
+    "expected_source_id": "stress#what-stress-does-to-a-body",
+    "expected_keyword": "shoulders",
+    "endpoint": "/v1/reframe",
+    "text": "[synthetic] My heart is racing and my shoulders feel super tight before my studio critique."
+  },
+  {
+    "id": "GND-36",
+    "language": "id",
+    "topic": "stress",
+    "expected_source_id": "stress#what-stress-does-to-a-body",
+    "expected_keyword": "breathing",
+    "endpoint": "/v1/reframe",
+    "text": "[synthetic] Badanku terasa tegang, napasku pendek, dan dadaku berdebar karena tekanan tugas minggu ini."
+  },
+  {
+    "id": "GND-37",
+    "language": "en",
+    "topic": "stress",
+    "expected_source_id": "stress#exam-pressure",
+    "expected_keyword": "exam",
+    "endpoint": "/v1/reframe",
+    "text": "[synthetic] This statistics exam tomorrow feels like it will decide my entire future and degree."
+  },
+  {
+    "id": "GND-38",
+    "language": "id",
+    "topic": "stress",
+    "expected_source_id": "stress#exam-pressure",
+    "expected_keyword": "exam",
+    "endpoint": "/v1/reframe",
+    "text": "[synthetic] Besok ujian akhir semester dan rasanya satu ujian ini menentukan seluruh hidupku."
+  },
+  {
+    "id": "GND-39",
+    "language": "en",
+    "topic": "stress",
+    "expected_source_id": "stress#a-smaller-reset",
+    "expected_keyword": "shrink",
+    "endpoint": "/v1/chat",
+    "mode": "solve",
+    "text": "[synthetic] Three deadlines hit this week and the workload feels way too huge to handle all at once."
+  },
+  {
+    "id": "GND-40",
+    "language": "id",
+    "topic": "stress",
+    "expected_source_id": "stress#a-smaller-reset",
+    "expected_keyword": "pressure",
+    "endpoint": "/v1/chat",
+    "mode": "solve",
+    "text": "[synthetic] Aku kewalahan sama beban kerja minggu ini karena semua tenggat waktunya numpuk barengan."
+  }
+]
