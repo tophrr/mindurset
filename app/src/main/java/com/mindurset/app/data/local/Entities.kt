@@ -129,3 +129,14 @@ data class ConsentRecordEntity(
     val grantedAt: Long,
     val revokedAt: Long?,
 )
+
+@Entity(tableName = "onboarding_baseline", indices = [Index(value = ["userId"], unique = true)])
+data class OnboardingBaselineEntity(
+    @PrimaryKey val id: String,
+    val userId: String,
+    val recentMood: String,
+    val sleepQuality: String,
+    val supportLevel: String,
+    val primaryFocus: String,
+    val createdAt: Long,
+)

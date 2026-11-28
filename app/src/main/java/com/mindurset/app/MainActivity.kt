@@ -17,6 +17,8 @@ import com.mindurset.app.data.prefs.AppLocale
 import com.mindurset.app.di.LocalAppContainer
 import com.mindurset.app.domain.model.ConsentPolicy
 import com.mindurset.app.domain.model.SessionInfo
+import com.mindurset.app.domain.usecase.EntryDestination
+import com.mindurset.app.domain.usecase.ResolveEntryDestination
 import com.mindurset.app.ui.common.LoadingState
 import com.mindurset.app.ui.navigation.MindUrSetNavigation
 import com.mindurset.app.ui.navigation.Routes
@@ -95,15 +97,30 @@ class MainActivity : ComponentActivity() {
                                             ?.let { it.revokedAt == null } ?: false
                                     }
                             }
+                            val onboardingCompleted by produceState<Boolean?>(null, userId) {
+                                value =
+                                    if (userId == null) {
+                                        null
+                                    } else {
+                                        container.preferencesStore.onboardingCompleted.first()
+                                    }
+                            }
                             val start =
-                                remember(state.session, consent) {
-                                    when {
-                                        state.session == null -> Routes.LOGIN
-                                        consent == false -> Routes.CONSENT
-                                        else -> Routes.DASHBOARD
+                                remember(state.session, consent, onboardingCompleted) {
+                                    when (
+                                        ResolveEntryDestination.resolve(
+                                            hasSession = state.session != null,
+                                            hasConsent = consent == true,
+                                            onboardingCompleted = onboardingCompleted == true,
+                                        )
+                                    ) {
+                                        EntryDestination.LOGIN -> Routes.LOGIN
+                                        EntryDestination.CONSENT -> Routes.CONSENT
+                                        EntryDestination.ONBOARDING -> Routes.ONBOARDING
+                                        EntryDestination.DASHBOARD -> Routes.DASHBOARD
                                     }
                                 }
-                            if (state.session != null && consent == null) {
+                            if (state.session != null && (consent == null || onboardingCompleted == null)) {
                                 LoadingState()
                             } else {
                                 MindUrSetNavigation(startDestination = start, container = container)

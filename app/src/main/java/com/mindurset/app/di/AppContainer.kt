@@ -17,6 +17,7 @@ import com.mindurset.app.data.repository.DashboardEffortRepository
 import com.mindurset.app.data.repository.JournalRepositoryImpl
 import com.mindurset.app.data.repository.MemoryContextProviderImpl
 import com.mindurset.app.data.repository.MicroActionRepositoryImpl
+import com.mindurset.app.data.repository.OnboardingBaselineRepositoryImpl
 import com.mindurset.app.data.repository.ProfileRepositoryImpl
 import com.mindurset.app.data.repository.SafetyRepositoryImpl
 import com.mindurset.app.data.repository.SessionRepositoryImpl
@@ -29,6 +30,7 @@ import com.mindurset.app.domain.repository.JournalRepository
 import com.mindurset.app.domain.repository.LocalDataWiper
 import com.mindurset.app.domain.repository.MemoryContextProvider
 import com.mindurset.app.domain.repository.MicroActionRepository
+import com.mindurset.app.domain.repository.OnboardingBaselineRepository
 import com.mindurset.app.domain.repository.PreferencesStore
 import com.mindurset.app.domain.repository.ProfileRepository
 import com.mindurset.app.domain.repository.SafetyRepository
@@ -66,6 +68,7 @@ class AppContainer(context: Context) {
             journalDao = database.journalDao(),
             checkInDao = database.checkInDao(),
             sessionSummaryDao = database.sessionSummaryDao(),
+            onboardingBaselineDao = database.onboardingBaselineDao(),
         )
 
     val journalRepository: JournalRepository = JournalRepositoryImpl(database.journalDao())
@@ -109,6 +112,9 @@ class AppContainer(context: Context) {
     val safetyRepository: SafetyRepository = SafetyRepositoryImpl(database.safetyEventDao())
 
     val consentRepository: ConsentRepository = ConsentRepositoryImpl(database.consentRecordDao())
+
+    val onboardingBaselineRepository: OnboardingBaselineRepository =
+        OnboardingBaselineRepositoryImpl(database.onboardingBaselineDao())
 
     val trustedContactRepository: TrustedContactRepository =
         TrustedContactRepositoryImpl(database.trustedContactDao())

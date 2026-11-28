@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_intro_title">Welcome to Mind-Ur-Set</string>
+    <string name="onboarding_intro_subtitle">A quiet place to notice how you feel and take small, steady steps.</string>
+    <string name="onboarding_intro_does_title">What this app does</string>
+    <string name="onboarding_intro_does_body">Mind-Ur-Set helps you log daily mood check-ins, write short reflections, try gentle thought reframes, and chat with a calm companion.</string>
+    <string name="onboarding_intro_not_title">What it does not do</string>
+    <string name="onboarding_intro_not_body">It does not diagnose conditions, replace a therapist, or offer medical care. If you ever need urgent help, crisis numbers stay one tap away.</string>
+    <string name="onboarding_intro_data_title">Where your data lives</string>
+    <string name="onboarding_intro_data_body">Your check-ins, reflections, and baseline stay on this phone. Only companion messages leave your device when you choose to chat, and you can export or delete everything anytime.</string>
+    <string name="onboarding_intro_continue">Continue</string>
+    <string name="onboarding_intro_skip">Skip</string>
+
+    <string name="onboarding_baseline_title">A quick baseline</string>
+    <string name="onboarding_baseline_subtitle">Four quick choices so the app starts from where you are today. No typing needed.</string>
+    <string name="onboarding_question_mood">1. How has your mood been lately?</string>
+    <string name="onboarding_question_sleep">2. How has your sleep been in the last week?</string>
+    <string name="onboarding_question_support">3. How supported do you feel right now?</string>
+    <string name="onboarding_question_focus">4. What do you want help with most?</string>
+
+    <string name="onboarding_sleep_restful">Mostly restful</string>
+    <string name="onboarding_sleep_mixed">Up and down</string>
+    <string name="onboarding_sleep_light">Light or interrupted</string>
+    <string name="onboarding_sleep_too_little">Not enough sleep</string>
+
+    <string name="onboarding_support_strong">I have someone I can lean on</string>
+    <string name="onboarding_support_some">A little support around me</string>
+    <string name="onboarding_support_alone">Mostly handling things on my own</string>
+    <string name="onboarding_support_unsure">Not sure right now</string>
+
+    <string name="onboarding_focus_worry">Calming worry or tension</string>
+    <string name="onboarding_focus_thoughts">Stepping back from heavy thoughts</string>
+    <string name="onboarding_focus_rhythm">Building a steadier daily rhythm</string>
+    <string name="onboarding_focus_exploring">Just looking around for now</string>
+
+    <string name="onboarding_baseline_continue">Save and continue</string>
+
+    <string name="onboarding_done_title">All set</string>
+    <string name="onboarding_done_summary_happy">Your baseline is saved—things feel bright lately, and Mind-Ur-Set is ready whenever you want to check in or reflect.</string>
+    <string name="onboarding_done_summary_calm">Your baseline is saved—starting from a calm place gives you steady ground to return to.</string>
+    <string name="onboarding_done_summary_low">Your baseline is saved—when energy feels low, this is a gentle space to move at your own pace.</string>
+    <string name="onboarding_done_summary_anxious">Your baseline is saved—we\'ll keep things simple and grounding while worry is around.</string>
+    <string name="onboarding_done_summary_stressed">Your baseline is saved—one small, steady step at a time is enough when days feel heavy.</string>
+    <string name="onboarding_done_summary_default">Your baseline is saved, and you\'re ready to begin at your own pace.</string>
+    <string name="onboarding_done_start">Start</string>
+</resources>

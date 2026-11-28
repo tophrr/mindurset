@@ -229,3 +229,18 @@ interface ConsentRecordDao {
     @Query("UPDATE consent_record SET revokedAt = :at WHERE id = :id")
     suspend fun revoke(id: String, at: Long)
 }
+
+@Dao
+interface OnboardingBaselineDao {
+    @Query("SELECT * FROM onboarding_baseline WHERE userId = :userId LIMIT 1")
+    suspend fun findForUser(userId: String): OnboardingBaselineEntity?
+
+    @Query("SELECT * FROM onboarding_baseline WHERE userId = :userId LIMIT 1")
+    fun observeForUser(userId: String): Flow<OnboardingBaselineEntity?>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(baseline: OnboardingBaselineEntity)
+
+    @Query("DELETE FROM onboarding_baseline WHERE userId = :userId")
+    suspend fun deleteForUser(userId: String)
+}

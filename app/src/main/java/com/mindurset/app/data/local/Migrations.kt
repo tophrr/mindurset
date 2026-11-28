@@ -87,3 +87,18 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
         db.execSQL("ALTER TABLE `session_message` ADD COLUMN `modelVersion` TEXT")
     }
 }
+
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `onboarding_baseline` (" +
+                "`id` TEXT NOT NULL, `userId` TEXT NOT NULL, `recentMood` TEXT NOT NULL, " +
+                "`sleepQuality` TEXT NOT NULL, `supportLevel` TEXT NOT NULL, " +
+                "`primaryFocus` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        )
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS `index_onboarding_baseline_userId` " +
+                "ON `onboarding_baseline` (`userId`)",
+        )
+    }
+}

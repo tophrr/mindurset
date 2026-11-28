@@ -18,8 +18,9 @@ import androidx.room.RoomDatabase
         SafetyEventEntity::class,
         TrustedContactEntity::class,
         ConsentRecordEntity::class,
+        OnboardingBaselineEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class MindUrSetDatabase : RoomDatabase() {
@@ -45,12 +46,14 @@ abstract class MindUrSetDatabase : RoomDatabase() {
 
     abstract fun consentRecordDao(): ConsentRecordDao
 
+    abstract fun onboardingBaselineDao(): OnboardingBaselineDao
+
     companion object {
         const val NAME = "mindurset.db"
 
         fun build(context: Context): MindUrSetDatabase =
             Room.databaseBuilder(context.applicationContext, MindUrSetDatabase::class.java, NAME)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                 .build()
     }
 }

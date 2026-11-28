@@ -219,12 +219,14 @@ private class FakeExportRepositories(
             override val language: Flow<String> = flowOf(profile?.language ?: "en")
             override val theme: Flow<String> = flowOf("system")
             override val memoryEnabled: Flow<Boolean> = flowOf(true)
+            override val onboardingCompleted: Flow<Boolean> = flowOf(false)
             override fun memoryNote(userId: String): Flow<String> = flowOf(memoryNote)
             override suspend fun setReminderEnabled(enabled: Boolean) = Unit
             override suspend fun setReminderHour(hour: Int) = Unit
             override suspend fun setLanguage(language: String) = Unit
             override suspend fun setTheme(theme: String) = Unit
             override suspend fun setMemoryEnabled(enabled: Boolean) = Unit
+            override suspend fun setOnboardingCompleted(completed: Boolean) = Unit
             override suspend fun setMemoryNote(userId: String, note: String) = Unit
         },
         checkInRepository = object : CheckInRepository {

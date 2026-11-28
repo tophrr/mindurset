@@ -129,6 +129,10 @@ private class FakePrefs : PreferencesStore {
     override val language: Flow<String> = flowOf("en")
     override val theme: Flow<String> = flowOf("system")
     override val memoryEnabled: Flow<Boolean> = flowOf(true)
+
+    override val onboardingCompleted: Flow<Boolean> get() = flowOf(false)
+
+    override suspend fun setOnboardingCompleted(completed: Boolean) = Unit
     override fun memoryNote(userId: String): Flow<String> = flowOf("")
     override suspend fun setReminderEnabled(enabled: Boolean) = Unit
     override suspend fun setReminderHour(hour: Int) = Unit
