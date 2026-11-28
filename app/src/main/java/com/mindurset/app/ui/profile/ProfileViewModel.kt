@@ -9,6 +9,8 @@ import com.mindurset.app.domain.repository.CheckInRepository
 import com.mindurset.app.domain.repository.PreferencesStore
 import com.mindurset.app.domain.repository.ProfileRepository
 import com.mindurset.app.domain.repository.SessionStore
+import com.mindurset.app.domain.usecase.BuildMoodInsights
+import com.mindurset.app.domain.usecase.MoodInsights
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,9 +21,10 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import java.time.YearMonth
-import java.time.ZoneId
 
 /** Everything the profile screen shows, derived from the live session, Room and check-ins. */
 data class ProfileUiState(
@@ -34,6 +37,9 @@ data class ProfileUiState(
     val monthValue: Int = 0,
     /** Day-of-month -> dominant emotion recorded that day, for the current month only. */
     val dayEmotions: Map<Int, Emotion> = emptyMap(),
+    val weeklyTrend: MoodInsights = MoodInsights.empty(BuildMoodInsights.WEEKLY_WINDOW_DAYS),
+    val breakdownWindowDays: Int = BuildMoodInsights.WEEKLY_WINDOW_DAYS,
+    val breakdown: MoodInsights = MoodInsights.empty(BuildMoodInsights.WEEKLY_WINDOW_DAYS),
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -43,19 +49,31 @@ class ProfileViewModel(
     private val sessionStore: SessionStore,
     private val preferencesStore: PreferencesStore,
     private val checkInRepository: CheckInRepository,
+    private val clock: Clock = Clock.systemDefaultZone(),
 ) : ViewModel() {
     /** Flips to true once sign-out has actually completed, so the screen can navigate. */
     private val _loggedOut = MutableStateFlow(false)
     val loggedOut: StateFlow<Boolean> = _loggedOut.asStateFlow()
 
+    private val selectedBreakdownWindow = MutableStateFlow(BuildMoodInsights.WEEKLY_WINDOW_DAYS)
+
+    private val today: LocalDate = Instant.ofEpochMilli(clock.millis()).atZone(clock.zone).toLocalDate()
+
     /** The month the calendar renders: the current local month, fixed for the VM's lifetime. */
-    private val month: YearMonth = YearMonth.now()
+    private val month: YearMonth = YearMonth.from(today)
     private val monthStartMillis: Long =
         month
             .atDay(1)
-            .atStartOfDay(ZoneId.systemDefault())
+            .atStartOfDay(clock.zone)
             .toInstant()
             .toEpochMilli()
+    private val thirtyDayStartMillis: Long =
+        today
+            .minusDays(BuildMoodInsights.MONTHLY_WINDOW_DAYS - 1L)
+            .atStartOfDay(clock.zone)
+            .toInstant()
+            .toEpochMilli()
+    private val observeSinceMillis: Long = minOf(monthStartMillis, thirtyDayStartMillis)
 
     val uiState: StateFlow<ProfileUiState> =
         sessionStore.session
@@ -65,8 +83,9 @@ class ProfileViewModel(
                 } else {
                     combine(
                         profileRepository.observe(session.userId),
-                        checkInRepository.observeRecent(session.userId, monthStartMillis),
-                    ) { profile, checkIns ->
+                        checkInRepository.observeRecent(session.userId, observeSinceMillis),
+                        selectedBreakdownWindow,
+                    ) { profile, checkIns, windowDays ->
                         ProfileUiState(
                             loading = false,
                             signedOut = false,
@@ -78,6 +97,19 @@ class ProfileViewModel(
                             year = month.year,
                             monthValue = month.monthValue,
                             dayEmotions = dominantPerDay(checkIns, month),
+                            weeklyTrend =
+                            BuildMoodInsights.build(
+                                checkIns = checkIns,
+                                windowDays = BuildMoodInsights.WEEKLY_WINDOW_DAYS,
+                                clock = clock,
+                            ),
+                            breakdownWindowDays = windowDays,
+                            breakdown =
+                            BuildMoodInsights.build(
+                                checkIns = checkIns,
+                                windowDays = windowDays,
+                                clock = clock,
+                            ),
                         )
                     }
                 }
@@ -92,6 +124,13 @@ class ProfileViewModel(
                     profileRepository.ensureProfile(session.userId, session.email)
                 }
             }
+        }
+    }
+
+    /** Switches the breakdown window between 7 and 30 days. */
+    fun selectBreakdownWindow(days: Int) {
+        if (days == BuildMoodInsights.WEEKLY_WINDOW_DAYS || days == BuildMoodInsights.MONTHLY_WINDOW_DAYS) {
+            selectedBreakdownWindow.value = days
         }
     }
 
@@ -113,7 +152,7 @@ class ProfileViewModel(
 
     /** Picks the most frequent emotion per calendar day within [month]. */
     private fun dominantPerDay(checkIns: List<CheckIn>, month: YearMonth): Map<Int, Emotion> {
-        val zone = ZoneId.systemDefault()
+        val zone = clock.zone
         return checkIns
             .mapNotNull { checkIn ->
                 val date = Instant.ofEpochMilli(checkIn.createdAt).atZone(zone).toLocalDate()

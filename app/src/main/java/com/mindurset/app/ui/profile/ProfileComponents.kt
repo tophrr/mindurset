@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -32,15 +33,25 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mindurset.app.R
 import com.mindurset.app.domain.model.Emotion
+import com.mindurset.app.domain.usecase.BuildMoodInsights
+import com.mindurset.app.domain.usecase.EmotionBreakdownItem
+import com.mindurset.app.domain.usecase.MoodInsights
+import com.mindurset.app.ui.common.SectionTitle
+import com.mindurset.app.ui.common.SegmentedTabs
+import com.mindurset.app.ui.common.emotionLabel
 import com.mindurset.app.ui.common.tint
 import com.mindurset.app.ui.theme.AppIcons
 import com.mindurset.app.ui.theme.MoodAnxious
@@ -57,6 +68,7 @@ import java.time.Instant
 import java.time.YearMonth
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -105,11 +117,118 @@ fun ProfileMenuRow(
 }
 
 /**
- * Weekly mood view placeholder. Per the design brief the weekly graph is intentionally
- * not drawn: a soft PaleBlue panel shows a thin dashed baseline and a muted note.
+ * Seven-day mood trend rendered from [insights]. Shows a plain empty panel when [insights]
+ * has no data in the window; otherwise plots one point per day with gaps for empty days.
  */
 @Composable
-fun MoodWeeklyPlaceholder(modifier: Modifier = Modifier) {
+fun MoodWeeklyTrend(insights: MoodInsights, modifier: Modifier = Modifier) {
+    if (insights.series.isEmpty()) {
+        MoodWeeklyEmptyPanel(modifier = modifier)
+        return
+    }
+
+    val chartDescription = stringResource(R.string.profile_mood_week_cd)
+    val guideColor = MutedGray.copy(alpha = 0.16f)
+    val connectorColor = NavyDeep.copy(alpha = 0.35f)
+    val locale = LocalConfiguration.current.locales[0]
+
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(PaleBlue)
+                .padding(horizontal = 12.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Canvas(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(124.dp)
+                    .semantics { contentDescription = chartDescription },
+            ) {
+                val points = insights.series
+                val slotWidth = size.width / points.size
+                val verticalPadding = 12.dp.toPx()
+                val plotHeight = (size.height - verticalPadding * 2f).coerceAtLeast(1f)
+                val levelCount = Emotion.entries.size
+
+                for (level in 0 until levelCount) {
+                    val y = verticalPadding + (level.toFloat() / (levelCount - 1)) * plotHeight
+                    drawLine(
+                        color = guideColor,
+                        start = Offset(0f, y),
+                        end = Offset(size.width, y),
+                        strokeWidth = 1.dp.toPx(),
+                    )
+                }
+
+                val offsets =
+                    points.mapIndexed { index, point ->
+                        point.emotion?.let { emotion ->
+                            val x = slotWidth * index + slotWidth / 2f
+                            val normalized = (emotion.score - 1) / (levelCount - 1).toFloat()
+                            val y = verticalPadding + (1f - normalized) * plotHeight
+                            Offset(x, y) to emotion.tint()
+                        }
+                    }
+
+                val strokeWidth = 2.5.dp.toPx()
+                for (i in 0 until offsets.lastIndex) {
+                    val current = offsets[i]
+                    val next = offsets[i + 1]
+                    if (current != null && next != null) {
+                        drawLine(
+                            color = connectorColor,
+                            start = current.first,
+                            end = next.first,
+                            strokeWidth = strokeWidth,
+                            cap = StrokeCap.Round,
+                        )
+                    }
+                }
+
+                val haloRadius = 8.dp.toPx()
+                val dotRadius = 5.5.dp.toPx()
+                offsets.forEach { entry ->
+                    if (entry != null) {
+                        drawCircle(color = SurfaceWhite, radius = haloRadius, center = entry.first)
+                        drawCircle(color = entry.second, radius = dotRadius, center = entry.first)
+                    }
+                }
+            }
+
+            Row(Modifier.fillMaxWidth()) {
+                insights.series.forEach { point ->
+                    val label =
+                        remember(point.date, locale) {
+                            point.date.dayOfWeek.getDisplayName(TextStyle.SHORT, locale)
+                        }
+                    Text(
+                        text = label,
+                        modifier = Modifier.weight(1f),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MutedGray,
+                        maxLines = 1,
+                        softWrap = false,
+                    )
+                }
+            }
+        }
+
+        Text(
+            text = stringResource(R.string.profile_mood_week_latest_caption),
+            style = MaterialTheme.typography.bodySmall,
+            color = MutedGray,
+        )
+
+        MoodLegend(Modifier.padding(top = 2.dp))
+    }
+}
+
+@Composable
+private fun MoodWeeklyEmptyPanel(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -137,6 +256,115 @@ fun MoodWeeklyPlaceholder(modifier: Modifier = Modifier) {
             color = MutedGray,
             textAlign = TextAlign.Center,
         )
+    }
+}
+
+/** Counts and percentage share per [Emotion] for a 7-day or 30-day window. */
+@Composable
+fun MoodBreakdownContent(
+    insights: MoodInsights,
+    windowDays: Int,
+    onSelectWindow: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        SectionTitle(text = stringResource(R.string.profile_mood_breakdown_title))
+        SegmentedTabs(
+            options = listOf(
+                stringResource(R.string.profile_mood_window_7d),
+                stringResource(R.string.profile_mood_window_30d),
+            ),
+            selectedIndex = if (windowDays == BuildMoodInsights.WEEKLY_WINDOW_DAYS) 0 else 1,
+            onSelect = { index ->
+                val targetWindow =
+                    if (index == 0) {
+                        BuildMoodInsights.WEEKLY_WINDOW_DAYS
+                    } else {
+                        BuildMoodInsights.MONTHLY_WINDOW_DAYS
+                    }
+                onSelectWindow(targetWindow)
+            },
+        )
+        if (insights.totalCheckIns == 0) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(PaleBlue)
+                    .padding(horizontal = 20.dp, vertical = 22.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = stringResource(R.string.profile_mood_breakdown_empty, windowDays),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MutedGray,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        } else {
+            Text(
+                text = pluralStringResource(
+                    R.plurals.profile_mood_breakdown_total,
+                    insights.totalCheckIns,
+                    insights.totalCheckIns,
+                    windowDays,
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MutedGray,
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                insights.breakdown.forEach { item ->
+                    EmotionBreakdownRow(item = item)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmotionBreakdownRow(item: EmotionBreakdownItem) {
+    val percent = (item.share * 100f).roundToInt()
+    val tint = item.emotion.tint()
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Box(Modifier.size(10.dp).clip(CircleShape).background(tint))
+                Text(
+                    text = emotionLabel(item.emotion),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = NavyInk,
+                )
+            }
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = stringResource(R.string.profile_mood_breakdown_value, item.count, percent),
+                style = MaterialTheme.typography.labelMedium,
+                color = MutedGray,
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(RoundedCornerShape(50))
+                .background(PaleBlue),
+        ) {
+            if (item.share > 0f) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(item.share.coerceIn(0f, 1f))
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(50))
+                        .background(tint),
+                )
+            }
+        }
     }
 }
 

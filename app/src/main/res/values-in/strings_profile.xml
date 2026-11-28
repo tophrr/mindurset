@@ -17,6 +17,15 @@
     <string name="profile_mood_weekly">Mingguan</string>
     <string name="profile_mood_monthly">Bulanan</string>
     <string name="profile_mood_week_empty">Tren suasana hati mingguanmu akan muncul di sini setelah kamu punya beberapa check-in.</string>
+    <string name="profile_mood_week_latest_caption">Hari dengan lebih dari satu check-in menampilkan suasana hati terbaru.</string>
+    <string name="profile_mood_week_cd">Grafik tren suasana hati tujuh hari</string>
+    <string name="profile_mood_breakdown_title">Ringkasan suasana hati</string>
+    <string name="profile_mood_window_7d">7 hari</string>
+    <string name="profile_mood_window_30d">30 hari</string>
+    <string name="profile_mood_breakdown_empty">Belum ada check-in yang tercatat dalam %1$d hari terakhir.</string>
+    <plurals name="profile_mood_breakdown_total">
+        <item quantity="other">%1$d check-in dalam %2$d hari terakhir</item>
+    </plurals>
     <string name="profile_avatar_initial_note">Avatar menampilkan huruf pertama dari nama tampilanmu.</string>
     <string-array name="profile_weekday_short">
         <item>M</item>
