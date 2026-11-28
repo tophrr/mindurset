@@ -2,6 +2,8 @@ package com.mindurset.app.ui.home.checkin
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mindurset.app.data.local.CheckInDraft
+import com.mindurset.app.data.local.CheckInDraftStore
 import com.mindurset.app.domain.model.CheckIn
 import com.mindurset.app.domain.model.ConsentPolicy
 import com.mindurset.app.domain.model.Emotion
@@ -15,6 +17,8 @@ import com.mindurset.app.domain.usecase.EvaluateTriage
 import com.mindurset.app.safety.AsqFlow
 import com.mindurset.app.safety.RiskScreening
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,6 +35,7 @@ class CheckInViewModel(
     private val sessionStore: SessionStore,
     private val safetyRepository: SafetyRepository,
     private val consentRepository: ConsentRepository,
+    private val draftStore: CheckInDraftStore,
     /** Emotion already picked on the home card, so the form opens pre-filled. */
     initialEmotion: Emotion? = null,
     private val clock: () -> Long = System::currentTimeMillis,
@@ -80,20 +85,74 @@ class CheckInViewModel(
     /** Set when a save was refused because no consent row exists for this person. */
     val needsConsent: StateFlow<Boolean> = _needsConsent.asStateFlow()
 
+    private var draftSaveJob: Job? = null
+    private var draftDirty = false
+    private var draftSaved = false
+
+    init {
+        scope.launch {
+            val draft = draftStore.load(clock())
+            if (draft != null && !draftDirty && !draftSaved) {
+                _emotion.value = draft.emotion ?: initialEmotion
+                _intensity.value = draft.intensity.coerceIn(MIN_INTENSITY, MAX_INTENSITY)
+                _note.value = draft.note
+            }
+        }
+    }
+
     fun dismissConsentPrompt() {
         _needsConsent.value = false
     }
 
     fun selectEmotion(emotion: Emotion) {
+        if (_emotion.value == emotion) return
         _emotion.value = emotion
+        onDraftChanged()
     }
 
     fun setIntensity(value: Int) {
-        _intensity.value = value.coerceIn(MIN_INTENSITY, MAX_INTENSITY)
+        val clamped = value.coerceIn(MIN_INTENSITY, MAX_INTENSITY)
+        if (_intensity.value == clamped) return
+        _intensity.value = clamped
+        onDraftChanged()
     }
 
     fun setNote(value: String) {
+        if (_note.value == value) return
         _note.value = value
+        onDraftChanged()
+    }
+
+    private fun onDraftChanged() {
+        draftDirty = true
+        draftSaved = false
+        draftSaveJob?.cancel()
+        draftSaveJob = scope.launch {
+            delay(DRAFT_DEBOUNCE_MILLIS)
+            if (draftSaved) return@launch
+            val currentEmotion = _emotion.value
+            val currentIntensity = _intensity.value
+            val currentNote = _note.value
+            if (currentEmotion == null && currentIntensity == DEFAULT_INTENSITY && currentNote.isEmpty()) {
+                draftStore.clear()
+            } else {
+                draftStore.save(
+                    CheckInDraft(
+                        emotion = currentEmotion,
+                        intensity = currentIntensity,
+                        note = currentNote,
+                        updatedAtMillis = clock(),
+                    ),
+                )
+            }
+        }
+    }
+
+    private suspend fun clearDraft() {
+        draftSaved = true
+        draftSaveJob?.cancel()
+        draftSaveJob = null
+        draftStore.clear()
     }
 
     /** Inserts the check-in for the signed-in user, then runs [onSaved] on the main thread. */
@@ -157,6 +216,7 @@ class CheckInViewModel(
                         createdAt = clock(),
                     ),
                 )
+                clearDraft()
             }
             _saving.value = false
             val offer =
@@ -219,6 +279,7 @@ class CheckInViewModel(
                 return@launch
             }
             checkInRepository.insert(held.toCheckIn())
+            clearDraft()
             _saving.value = false
             val offer =
                 EvaluateTriage.evaluate(held.emotion, held.intensity) == EvaluateTriage.Offer.Reframe
@@ -249,9 +310,10 @@ class CheckInViewModel(
     }
 
     companion object {
-        const val MIN_INTENSITY = 1
-        const val MAX_INTENSITY = 10
-        private const val DEFAULT_INTENSITY = 5
+        const val MIN_INTENSITY = CheckInDraft.MIN_INTENSITY
+        const val MAX_INTENSITY = CheckInDraft.MAX_INTENSITY
+        const val DRAFT_DEBOUNCE_MILLIS = 300L
+        private const val DEFAULT_INTENSITY = CheckInDraft.DEFAULT_INTENSITY
         private const val TRIGGER_CHECK_IN_NOTE = "checkin_note"
         private const val TRIGGER_ASQ_POSITIVE = "asq_positive"
 
