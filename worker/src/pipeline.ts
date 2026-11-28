@@ -2,8 +2,10 @@
 //
 // Flow: local risk floor -> keyword retrieval over the bundled corpus ->
 // prompt v1 -> Workers AI -> normalise into the frozen shape -> output
-// guardrails. Any failure on that path returns the offline fallback with HTTP
-// 200 and model_version "offline-fallback"; a 500 is never a fallback.
+// guardrails. Network/binding/normalisation failures return the offline
+// fallback with HTTP 200 and model_version "offline-fallback"; a repeated
+// output guardrail rejection returns the authored signpost with
+// model_version "guardrail-signpost-v1"; a 500 is never a fallback.
 
 import fixture from "../../contract/fixtures/generation-ok.json";
 import { maxRisk, isRiskLevel, type GenerationResponse, type RiskLevel } from "./contract";
@@ -11,6 +13,8 @@ import {
   assessInputRisk,
   crisisResponse,
   detectLanguage,
+  GUARDRAIL_SIGNPOST_MODEL_VERSION,
+  guardrailSignpostResponse,
   inspectOutput,
   type GuardrailReason,
   type RiskAssessment,
@@ -27,6 +31,7 @@ import { retrieveSemantic, type Excerpt } from "./retrieval";
 export const MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 export const OFFLINE_MODEL_VERSION = "offline-fallback";
 export const CRISIS_MODEL_VERSION = "crisis-path-v1";
+export { GUARDRAIL_SIGNPOST_MODEL_VERSION };
 
 export type { AiBinding } from "./model";
 export { extractModelText } from "./model";
@@ -153,10 +158,9 @@ type NormaliseResult =
   | { ok: true; value: NormalisedDraft }
   | { ok: false; reason: NormaliseFailureReason };
 
-interface AttemptFailure {
-  stage: "normalise" | "guardrail";
-  reason: NormaliseFailureReason | GuardrailReason;
-}
+type AttemptFailure =
+  | { stage: "normalise"; reason: NormaliseFailureReason }
+  | { stage: "guardrail"; reason: GuardrailReason };
 
 type AttemptOutcome =
   | { kind: "ok"; response: GenerationResponse }
@@ -167,7 +171,7 @@ interface PipelineLog {
   stage: "input" | "retrieve" | "client" | "normalise" | "guardrail" | "retry" | "error";
   reason: string;
   firstReason?: string;
-  outcome?: "recovered";
+  outcome?: "recovered" | "guardrail-signpost";
   excerpts?: number;
   model?: string;
 }
@@ -375,6 +379,23 @@ export async function runGeneration(
         model: client.version,
       });
       return second.response;
+    }
+
+    if (second.failure.stage === "guardrail") {
+      logPipelineEvent({
+        stage: second.failure.stage,
+        reason: second.failure.reason,
+        firstReason: first.failure.reason,
+        outcome: "guardrail-signpost",
+        excerpts: excerpts.length,
+        model: client.version,
+      });
+      return guardrailSignpostResponse(
+        second.failure.reason,
+        detectLanguage(userText),
+        excerpts.slice(0, 3).map((excerpt) => excerpt.sourceId),
+        floor,
+      );
     }
 
     logPipelineEvent({

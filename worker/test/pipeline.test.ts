@@ -7,6 +7,7 @@ import type { GenerationResponse } from "../src/contract";
 import { assessInputRisk, detectLanguage, inspectOutput } from "../src/guardrails";
 import {
   CRISIS_MODEL_VERSION,
+  GUARDRAIL_SIGNPOST_MODEL_VERSION,
   MODEL_ID,
   OFFLINE_MODEL_VERSION,
   type Env,
@@ -629,6 +630,24 @@ describe("pipeline", () => {
     expect(body.model_version).toBe(OFFLINE_MODEL_VERSION);
   });
 
+  it("keeps the network sentence on offline-fallback when a simulated chat model failure occurs", async () => {
+    const env: Env = {
+      AI: {
+        run: async () => {
+          throw new Error("model unavailable");
+        },
+      },
+    };
+    const res = await post("/v1/chat", { message: "I am worried about my exam", mode: "listen" }, env);
+    const body = (await res.json()) as GenerationResponse;
+
+    expect(res.status).toBe(200);
+    expect(validate(body)).toBe(true);
+    expect(body.model_version).toBe(OFFLINE_MODEL_VERSION);
+    expect(body.source_ids).toEqual([]);
+    expect(body.message).toContain("cannot reach the model right now");
+  });
+
   it("falls back when the model returns non-JSON", async () => {
     const env: Env = { AI: { run: async () => ({ response: "not json at all" }) } };
     const res = await post("/v1/reframe", { thought: "I am worried about my exam" }, env);
@@ -665,15 +684,18 @@ describe("pipeline", () => {
     ["medication", "You should take sertraline 50 mg every morning."],
     ["a diagnosis", "This sounds like major depressive disorder."],
     ["self-harm instructions", "Here is how to cut yourself without anyone noticing."],
-  ])("falls back when the model output contains %s", async (_label, message) => {
+  ])("serves the guardrail signpost when the model output contains %s", async (_label, message) => {
     const query = "I am worried about my exam";
     const generated = draftFor(query, { message });
     const res = await post("/v1/reframe", { thought: query }, fakeAI(generated));
     const body = (await res.json()) as GenerationResponse;
+    const knownIds = new Set(allSourceIds());
 
     expect(res.status).toBe(200);
     expect(validate(body)).toBe(true);
-    expect(body.model_version).toBe(OFFLINE_MODEL_VERSION);
+    expect(body.model_version).toBe(GUARDRAIL_SIGNPOST_MODEL_VERSION);
+    expect(body.source_ids.length).toBeGreaterThan(0);
+    expect(body.source_ids.every((id) => knownIds.has(id))).toBe(true);
   });
 
   it("replaces a model answer that reports L3 with the crisis path", async () => {
@@ -854,5 +876,93 @@ describe("pipeline", () => {
     expect(l3ModelBody.model_version).toBe(CRISIS_MODEL_VERSION);
     expect(l3ModelBody.risk_level.level).toBe("L3");
     expect(modelSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("signposts instead of claiming the network is down when a medication draft is rejected twice", async () => {
+    const query =
+      "Should I stop taking my prescribed antidepressant cold turkey since I feel fine today?";
+    const draftCopy = "You should taper your antidepressant dosage over two weeks.";
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    try {
+      const generated = draftFor(query, { message: draftCopy });
+      const res = await post("/v1/chat", { message: query, mode: "listen" }, fakeAI(generated));
+      const body = (await res.json()) as GenerationResponse;
+      const knownIds = new Set(allSourceIds());
+
+      expect(res.status).toBe(200);
+      expect(validate(body)).toBe(true);
+      expect(body.model_version).toBe(GUARDRAIL_SIGNPOST_MODEL_VERSION);
+      expect(body.message).toContain("can't advise on medication or diagnose");
+      expect(body.message).toMatch(/doctor|pharmacist|clinician/i);
+      expect(body.message).not.toContain("cannot reach the model");
+      expect(body.source_ids.length).toBeGreaterThan(0);
+      expect(body.source_ids.every((id) => knownIds.has(id))).toBe(true);
+      expect(body.risk_level.level).toBe("L0");
+
+      const logged = String(spy.mock.calls[0]?.[0] ?? "");
+      expect(logged).not.toContain(query);
+      expect(logged).not.toContain(draftCopy);
+      expect(JSON.parse(logged)).toMatchObject({
+        stage: "guardrail",
+        reason: "medication",
+        firstReason: "medication",
+        outcome: "guardrail-signpost",
+        model: MODEL_ID,
+      });
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("signposts instead of claiming the network is down when a diagnosis draft is rejected twice", async () => {
+    const query = "Based on my mood swings and emptiness, do I have bipolar disorder?";
+    const draftCopy = "Your symptoms are consistent with bipolar disorder.";
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    try {
+      const generated = draftFor(query, { message: draftCopy });
+      const res = await post("/v1/chat", { message: query, mode: "solve" }, fakeAI(generated));
+      const body = (await res.json()) as GenerationResponse;
+      const knownIds = new Set(allSourceIds());
+
+      expect(res.status).toBe(200);
+      expect(validate(body)).toBe(true);
+      expect(body.model_version).toBe(GUARDRAIL_SIGNPOST_MODEL_VERSION);
+      expect(body.message).toContain("can't advise on medication or diagnose");
+      expect(body.message).toMatch(/doctor|pharmacist|clinician/i);
+      expect(body.message).not.toContain("cannot reach the model");
+      expect(body.source_ids.length).toBeGreaterThan(0);
+      expect(body.source_ids.every((id) => knownIds.has(id))).toBe(true);
+
+      const logged = String(spy.mock.calls[0]?.[0] ?? "");
+      expect(logged).not.toContain(query);
+      expect(logged).not.toContain(draftCopy);
+      expect(JSON.parse(logged)).toMatchObject({
+        stage: "guardrail",
+        reason: "diagnosis",
+        firstReason: "diagnosis",
+        outcome: "guardrail-signpost",
+        model: MODEL_ID,
+      });
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("serves Indonesian signpost copy when an Indonesian request hits the output guardrail twice", async () => {
+    const query = "Obat penenang apa yang aman aku minum sebelum ujian besok?";
+    const generated = draftFor(query, { message: "Kamu bisa minum obat alprazolam sebelum ujian." });
+    const res = await post("/v1/chat", { message: query, mode: "solve" }, fakeAI(generated));
+    const body = (await res.json()) as GenerationResponse;
+    const knownIds = new Set(allSourceIds());
+
+    expect(res.status).toBe(200);
+    expect(validate(body)).toBe(true);
+    expect(body.model_version).toBe(GUARDRAIL_SIGNPOST_MODEL_VERSION);
+    expect(body.message).toContain("tidak bisa memberi saran tentang obat atau mendiagnosis");
+    expect(body.message).toMatch(/dokter|apoteker|tenaga kesehatan/i);
+    expect(body.source_ids.length).toBeGreaterThan(0);
+    expect(body.source_ids.every((id) => knownIds.has(id))).toBe(true);
   });
 });

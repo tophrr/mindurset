@@ -85,7 +85,7 @@ still returns `offline-fallback`.
 | `src/corpus/` | Corpus v1: one markdown file per topic plus `version.json` |
 | `src/retrieval.ts` | Deterministic keyword retrieval, top-k excerpts, real source ids |
 | `src/prompts.ts` | Prompt text at `v1.3.0`, exported with its version string, the three support modes, and optional memory context framing |
-| `src/guardrails.ts` | Local risk floor, medication/diagnosis/self-harm output checks, crisis copy |
+| `src/guardrails.ts` | Local risk floor, medication/diagnosis/self-harm output checks, crisis and signpost copy |
 | `src/model.ts` | `ModelClient` boundary: Workers AI client plus the deterministic local adapter |
 | `src/pipeline.ts` | Orchestration, normalisation into the frozen shape, fallback |
 | `src/index.ts` | The four HTTP endpoints |
@@ -97,13 +97,21 @@ A request that matches the local L3 floor (explicit intent to end one's life, in
 Indonesian) never reaches the model. It returns the crisis path with `model_version:
 "crisis-path-v1"` and the same contract shape. A model that reports L3 is replaced the same way.
 
-## Fallback and citations
+## Fallback, signposting, and citations
 
-Every failure path returns HTTP 200 with `model_version: "offline-fallback"` and **empty
+When the model is not reached, throws, returns unusable output, or omits required citations after
+retry, the Worker returns HTTP 200 with `model_version: "offline-fallback"` and **empty
 `source_ids`**. That is deliberate: a fallback retrieved nothing, so it claims nothing. The frozen
 fixture still carries the ids it was written with, but they name documents corpus v1 does not have,
 and a client that shows them as sources would cite something it cannot resolve. The Android client
 treats an empty `source_ids` as ungrounded and shows its own offline copy.
+
+When the model is reached but both attempts are rejected by `inspectOutput` (`medication`,
+`diagnosis`, or `self-harm-instruction`), the Worker returns HTTP 200 with `model_version:
+"guardrail-signpost-v1"`. That response names the boundary ("I can't advise on medication or
+diagnose", or the self-harm safety boundary), signposts to a clinician (doctor, pharmacist, or
+clinician), preserves `risk_level` from the local floor, and keeps the retrieved `source_ids`
+(never invented) so the client can distinguish a guardrail refusal from an unreachable model.
 
 The same rule applies to text: nothing from the request is interpolated into a response field. The
 mode is read from an allowlist and is no longer rendered in the fallback copy at all.
