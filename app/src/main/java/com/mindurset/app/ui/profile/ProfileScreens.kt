@@ -143,7 +143,7 @@ fun ProfileScreen(
                             onSelect = { moodTab = it },
                         )
                         if (moodTab == 0) {
-                            MoodWeeklyPlaceholder()
+                            MoodWeeklyTrend(insights = state.weeklyTrend)
                         } else {
                             MoodMonthlyCalendar(
                                 year = state.year,
@@ -152,6 +152,14 @@ fun ProfileScreen(
                             )
                         }
                     }
+                }
+
+                AppCard {
+                    MoodBreakdownContent(
+                        insights = state.breakdown,
+                        windowDays = state.breakdownWindowDays,
+                        onSelectWindow = vm::selectBreakdownWindow,
+                    )
                 }
 
                 AppCard(contentPadding = PaddingValues(0.dp)) {
