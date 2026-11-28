@@ -3,6 +3,8 @@ package com.mindurset.app.di
 import android.content.Context
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.mindurset.app.BuildConfig
+import com.mindurset.app.data.local.CheckInDraftStore
+import com.mindurset.app.data.local.DataStoreCheckInDraftStore
 import com.mindurset.app.data.local.LocalDataWiperImpl
 import com.mindurset.app.data.local.MindUrSetDatabase
 import com.mindurset.app.data.prefs.DataStorePreferences
@@ -50,6 +52,8 @@ class AppContainer(context: Context) {
     val preferences: DataStorePreferences = DataStorePreferences(context)
 
     val sessionStore: SessionStore = preferences
+
+    val checkInDraftStore: CheckInDraftStore = DataStoreCheckInDraftStore(context)
 
     val generationClient: GenerationClient = GenerationClient(BuildConfig.GENERATION_BASE_URL)
 

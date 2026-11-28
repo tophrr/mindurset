@@ -80,6 +80,7 @@ fun CheckInScreen(
             sessionStore = container.sessionStore,
             safetyRepository = container.safetyRepository,
             consentRepository = container.consentRepository,
+            draftStore = container.checkInDraftStore,
             initialEmotion = initialEmotion,
         )
     }
