@@ -6,8 +6,10 @@
 // is now the offline fallback, not the normal path.
 //
 // Real generation runs through Workers AI behind the `AI` platform binding. A
-// missing binding, a model error, malformed model output, or a guardrail hit
-// all return a contract-valid 200 with model_version "offline-fallback".
+// missing binding, a model error, or malformed model output returns a
+// contract-valid 200 with model_version "offline-fallback"; repeated output
+// guardrail rejections return a contract-valid 200 with
+// model_version "guardrail-signpost-v1".
 
 import { health, runGeneration, type Env, type GenerationKind } from "./pipeline";
 

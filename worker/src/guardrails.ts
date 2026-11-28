@@ -4,8 +4,8 @@
 //  - input: a local risk floor that mirrors the Android LocalRiskFloor ladder,
 //    so an explicit L3 intent never reaches the model;
 //  - output: reject rendered text that names medication or a diagnosis, or that
-//    gives instructions for self-harm. Rejection means the caller returns the
-//    offline fallback, never a 500.
+//    gives instructions for self-harm. Two failed attempts return the authored
+//    guardrail signpost rather than the offline network fallback, never a 500.
 //
 // This is a floor, not a classifier. A miss proves nothing, which is why the
 // crisis path is also triggered by the model's own L3 report.
@@ -157,6 +157,88 @@ const CRISIS_COPY = {
     action: "Telepon 119 ext. 8 atau orang yang kamu percaya",
   },
 } as const;
+
+export const GUARDRAIL_SIGNPOST_MODEL_VERSION = "guardrail-signpost-v1";
+
+interface SignpostCopy {
+  message: string;
+  distortion: string;
+  perspectives: [string, string];
+  action: string;
+}
+
+const CLINICAL_SIGNPOST_COPY: Record<"en" | "id", SignpostCopy> = {
+  en: {
+    message:
+      "I can't advise on medication or diagnose. Please talk to a doctor, pharmacist, or clinician who knows your care before making changes.",
+    distortion: "outside reflection scope",
+    perspectives: [
+      "A reflection app can help you notice patterns, while medical or diagnostic questions belong with a clinician.",
+      "Writing down what you have noticed today can make that conversation with a doctor or pharmacist easier.",
+    ],
+    action: "Write one question for a doctor, pharmacist, or clinician",
+  },
+  id: {
+    message:
+      "Saya tidak bisa memberi saran tentang obat atau mendiagnosis kondisi. Silakan berbicara dengan dokter, apoteker, atau tenaga kesehatan profesional sebelum mengambil keputusan.",
+    distortion: "di luar jangkauan refleksi",
+    perspectives: [
+      "Aplikasi refleksi membantu mengenali pola pikir, sedangkan pertanyaan medis atau diagnosis perlu dibahas bersama tenaga kesehatan.",
+      "Mencatat apa yang kamu rasakan hari ini dapat memudahkan percakapan dengan dokter atau apoteker.",
+    ],
+    action: "Catat satu pertanyaan untuk dokter atau apoteker",
+  },
+};
+
+const SELF_HARM_SIGNPOST_COPY: Record<"en" | "id", SignpostCopy> = {
+  en: {
+    message:
+      "I can't provide suggestions or instructions for self-harm. If things feel heavy right now, please reach out to a clinician, someone you trust, or call 119 ext. 8.",
+    distortion: "safety first",
+    perspectives: [
+      "You do not have to carry this alone right now.",
+      "A clinician, a trusted person, or a crisis line can support you safely.",
+    ],
+    action: "Reach out to a clinician, trusted person, or 119 ext. 8",
+  },
+  id: {
+    message:
+      "Saya tidak bisa memberikan saran atau instruksi untuk menyakiti diri sendiri. Jika keadaan terasa berat sekarang, hubungi tenaga kesehatan profesional, orang yang kamu percaya, atau telepon 119 ext. 8.",
+    distortion: "keselamatan dulu",
+    perspectives: [
+      "Kamu tidak harus menanggung ini sendirian sekarang.",
+      "Tenaga kesehatan, orang yang kamu percaya, atau layanan krisis dapat mendampingimu dengan aman.",
+    ],
+    action: "Hubungi tenaga kesehatan, orang terpercaya, atau 119 ext. 8",
+  },
+};
+
+/**
+ * Authored signpost returned when the output guardrail rejects the draft
+ * after retry. Keeps the frozen contract shape with retrieved source_ids and
+ * the local risk floor, and never passes through the model or user text.
+ */
+export function guardrailSignpostResponse(
+  reason: GuardrailReason,
+  language: "en" | "id",
+  sourceIds: string[],
+  risk: RiskAssessment,
+): GenerationResponse {
+  const copy =
+    reason === "self-harm-instruction"
+      ? SELF_HARM_SIGNPOST_COPY[language]
+      : CLINICAL_SIGNPOST_COPY[language];
+  return {
+    message: copy.message,
+    distortion: copy.distortion,
+    perspectives: [...copy.perspectives],
+    micro_action: { title: copy.action, minutes: 5 },
+    source_ids: sourceIds.slice(0, 3),
+    risk_level: { level: risk.level, confidence: risk.confidence },
+    prompt_version: PROMPT_VERSION,
+    model_version: GUARDRAIL_SIGNPOST_MODEL_VERSION,
+  };
+}
 
 /**
  * The only answer allowed when the risk is L3. It stays inside contract v1
