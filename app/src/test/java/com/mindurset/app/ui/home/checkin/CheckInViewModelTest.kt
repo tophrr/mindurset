@@ -1,5 +1,8 @@
 package com.mindurset.app.ui.home.checkin
 
+import com.mindurset.app.data.local.CheckInDraft
+import com.mindurset.app.data.local.CheckInDraftStore
+import com.mindurset.app.data.local.isCheckInDraftExpired
 import com.mindurset.app.domain.model.CheckIn
 import com.mindurset.app.domain.model.ConsentRecord
 import com.mindurset.app.domain.model.Emotion
@@ -13,12 +16,16 @@ import com.mindurset.app.domain.repository.SessionStore
 import com.mindurset.app.safety.AsqFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -178,14 +185,22 @@ class CheckInViewModelTest {
         assertEquals(1, onDoneCalls)
     }
 
-    private fun viewModel(consent: Boolean = true): CheckInViewModel = CheckInViewModel(
+    private fun viewModel(
+        consent: Boolean = true,
+        draftStore: CheckInDraftStore = FakeCheckInDraftStore(),
+        initialEmotion: Emotion? = null,
+        clock: () -> Long = { 1_700_000_000_000 },
+        externalScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),
+    ): CheckInViewModel = CheckInViewModel(
         checkInRepository = RecordingCheckInRepository(saved),
         sessionStore = FixedSessionStore(SessionInfo(userId = "u1", email = "guest@local")),
         safetyRepository = safety,
         consentRepository = FakeConsentRepository(granted = consent),
-        clock = { 1_700_000_000_000 },
+        draftStore = draftStore,
+        initialEmotion = initialEmotion,
+        clock = clock,
         newId = { "checkin-1" },
-        externalScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),
+        externalScope = externalScope,
     )
 
     @Test
@@ -199,6 +214,155 @@ class CheckInViewModelTest {
 
         assertTrue(vm.needsConsent.value)
         assertFalse(callbackRan)
+    }
+
+    @Test
+    fun `init restores an unexpired draft into UI state`() = runTest {
+        val now = 1_700_000_000_000L
+        val draftStore = FakeCheckInDraftStore(
+            CheckInDraft(
+                emotion = Emotion.STRESSED,
+                intensity = 9,
+                note = "unfinished note",
+                updatedAtMillis = now - 60_000L,
+            ),
+        )
+
+        val vm = viewModel(
+            draftStore = draftStore,
+            initialEmotion = Emotion.HAPPY,
+            clock = { now },
+            externalScope = backgroundScope,
+        )
+        runCurrent()
+
+        assertEquals(Emotion.STRESSED, vm.emotion.value)
+        assertEquals(9, vm.intensity.value)
+        assertEquals("unfinished note", vm.note.value)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `draft writes are debounced for 300ms across emotion intensity and note edits`() = runTest {
+        val now = 1_700_000_000_000L
+        val draftStore = FakeCheckInDraftStore()
+        val vm = viewModel(
+            draftStore = draftStore,
+            clock = { now },
+            externalScope = backgroundScope,
+        )
+        runCurrent()
+
+        vm.selectEmotion(Emotion.ANXIOUS)
+        advanceTimeBy(150)
+        vm.setIntensity(8)
+        advanceTimeBy(150)
+        vm.setNote("halfway typed")
+        advanceTimeBy(299)
+        runCurrent()
+
+        assertEquals(0, draftStore.saveCalls)
+
+        advanceTimeBy(1)
+        runCurrent()
+
+        assertEquals(1, draftStore.saveCalls)
+        assertEquals(
+            CheckInDraft(
+                emotion = Emotion.ANXIOUS,
+                intensity = 8,
+                note = "halfway typed",
+                updatedAtMillis = now,
+            ),
+            draftStore.stored,
+        )
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `saving cancels pending draft write and clears draft so reopen does not resurrect it`() = runTest {
+        val now = 1_700_000_000_000L
+        val draftStore = FakeCheckInDraftStore()
+        val vm = viewModel(
+            draftStore = draftStore,
+            clock = { now },
+            externalScope = backgroundScope,
+        )
+        runCurrent()
+
+        vm.selectEmotion(Emotion.CALM)
+        vm.setIntensity(3)
+        vm.setNote("already done")
+        vm.save { onDoneCalls++ }
+        advanceTimeBy(500)
+        runCurrent()
+
+        assertEquals(1, saved.size)
+        assertNull(draftStore.stored)
+        assertEquals(0, draftStore.saveCalls)
+
+        val reopened = viewModel(
+            draftStore = draftStore,
+            clock = { now },
+            externalScope = backgroundScope,
+        )
+        runCurrent()
+        assertNull(reopened.emotion.value)
+        assertEquals(5, reopened.intensity.value)
+        assertEquals("", reopened.note.value)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `saving through negative ASQ clears the draft`() = runTest {
+        val now = 1_700_000_000_000L
+        val draftStore = FakeCheckInDraftStore()
+        val vm = viewModel(
+            draftStore = draftStore,
+            clock = { now },
+            externalScope = backgroundScope,
+        )
+        runCurrent()
+
+        vm.selectEmotion(Emotion.LOW)
+        vm.setIntensity(4)
+        vm.setNote("aku ingin mati")
+        advanceTimeBy(CheckInViewModel.DRAFT_DEBOUNCE_MILLIS)
+        runCurrent()
+        assertTrue(draftStore.stored != null)
+
+        vm.save { onDoneCalls++ }
+        runCurrent()
+        assertTrue("draft stays until ASQ completes", draftStore.stored != null)
+
+        repeat(4) { vm.answerAsq(yes = false) }
+        runCurrent()
+        assertNull(draftStore.stored)
+    }
+
+    @Test
+    fun `expired draft is ignored on init`() = runTest {
+        val now = 1_700_000_000_000L
+        val draftStore = FakeCheckInDraftStore(
+            CheckInDraft(
+                emotion = Emotion.LOW,
+                intensity = 7,
+                note = "stale",
+                updatedAtMillis = now - CheckInDraft.MAX_AGE_MILLIS - 1L,
+            ),
+        )
+
+        val vm = viewModel(
+            draftStore = draftStore,
+            clock = { now },
+            externalScope = backgroundScope,
+        )
+        runCurrent()
+
+        assertNull(vm.emotion.value)
+        assertEquals(5, vm.intensity.value)
+        assertEquals("", vm.note.value)
+        assertNull(draftStore.stored)
     }
 }
 
@@ -259,4 +423,28 @@ private class FakeConsentRepository(private val granted: Boolean) : ConsentRepos
     override suspend fun grant(record: ConsentRecord) = Unit
 
     override suspend fun revoke(id: String, at: Long) = Unit
+}
+
+private class FakeCheckInDraftStore(initial: CheckInDraft? = null) : CheckInDraftStore {
+    var stored: CheckInDraft? = initial
+    var saveCalls = 0
+        private set
+
+    override suspend fun load(nowMillis: Long): CheckInDraft? {
+        val current = stored ?: return null
+        if (isCheckInDraftExpired(current.updatedAtMillis, nowMillis)) {
+            stored = null
+            return null
+        }
+        return current
+    }
+
+    override suspend fun save(draft: CheckInDraft) {
+        saveCalls++
+        stored = draft
+    }
+
+    override suspend fun clear() {
+        stored = null
+    }
 }
